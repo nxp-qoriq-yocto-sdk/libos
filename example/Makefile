@@ -8,7 +8,7 @@
 
 CROSS_COMPILE=powerpc-e500mc-linux-gnu-
 LIBFDT_DIR := ../../dtc/libfdt
-LIBOS_DIR := ../libos
+LIBOS_DIR := ../lib
 
 CC=$(CROSS_COMPILE)gcc
 #CC_OPTS=-m32 -nostdinc -Wa,-me500

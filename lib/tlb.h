@@ -112,9 +112,12 @@
 
 #define UV_TID	0	/* TLB TID to use for UV translations */
 
+#define BASE_TLB_ENTRY 15
+
 #if !defined(_ASM)
 
 #include <os.h>
+
 
 typedef struct tlb_entry {
 	uint32_t mas1;
