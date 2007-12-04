@@ -1,0 +1,10 @@
+
+LIBOS_ALL_OBJS = $(LIBOS_STARTUP_OBJS) $(LIBOS_TLB_OBJS) $(LIBOS_EXCEPTION_OBJS) \
+	$(LIBOS_LIB_OBJS) $(LIBOS_CONSOLE_OBJS) $(LIBOS_HCALL_OBJS)
+
+LIBOS_STARTUP_OBJS := bin/head.o
+LIBOS_TLB_OBJS := bin/tlb.o
+LIBOS_EXCEPTION_OBJS := bin/exceptions.o bin/trap.o
+LIBOS_LIB_OBJS := bin/sprintf.o bin/string.o
+LIBOS_CONSOLE_OBJS := bin/uart.o bin/console.o
+LIBOS_HCALL_OBJS := bin/hcall.o bin/hcall_wrapper.o
