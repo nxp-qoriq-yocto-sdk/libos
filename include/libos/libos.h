@@ -1,14 +1,9 @@
-
-#ifndef _OS_H
-#define	_OS_H
-
-#define HVBASE 0
-
-#if !defined(_ASM)
+#ifndef LIBOS_H
+#define LIBOS_H
 
 #include <stddef.h>
 #include <stdint.h>
-#include <console.h>
+#include <libos/console.h>
 
 
 #define stopsim() do { \
@@ -48,5 +43,3 @@ typedef int register_t;
 void *alloc(unsigned long size, unsigned long align);
 
 #endif
-
-#endif /* !_OS_H */

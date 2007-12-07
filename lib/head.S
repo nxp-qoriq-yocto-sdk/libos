@@ -4,9 +4,8 @@
  *
  */
 
-#include "os.h"
-#include "spr.h"
-#include "tlb.h"
+#include <libos/spr.h>
+#include <libos/fsl-booke-tlb.h>
 
 .text
 
@@ -34,8 +33,8 @@ _start:
 1:	mflr	%r15
 
 	/* Find entry that maps current address */
-	mfspr	%r17, SPR_PID0
-	slwi	%r17, %r17, MAS6_SPID0_SHIFT
+	mfspr	%r17, SPR_PID
+	slwi	%r17, %r17, MAS6_SPID_SHIFT
 	mtspr	SPR_MAS6, %r17
 	isync
 	tlbsx	0, %r15
@@ -114,7 +113,7 @@ _start:
 	bl	tlb1_inval_entry
 
 /*
- * Setup final mapping in TLB1[15] and switch to it
+ * Setup final mapping in TLB1[BASE_TLB_ENTRY] and switch to it
  */
 	/* Final kernel mapping, map in 16 MB of RAM */
 	lis	%r16, MAS0_TLBSEL1@h	/* Select TLB1 */
@@ -123,13 +122,13 @@ _start:
 	mtspr	SPR_MAS0, %r16
 	isync
 
-	li	%r16, (TLB_SIZE_16M << MAS1_TSIZE_SHIFT)@l
+	li	%r16, (TLB_TSIZE_16M << MAS1_TSIZE_SHIFT)@l
 	oris	%r16, %r16, (MAS1_VALID | MAS1_IPROT)@h
 	mtspr	SPR_MAS1, %r16
 	isync
 
-	lis	%r19, HVBASE@h
-	ori	%r19, %r19, HVBASE@l
+	lis	%r19, PHYSBASE@h
+	ori	%r19, %r19, PHYSBASE@l
 	mtspr	SPR_MAS2, %r19		/* Set final EPN, clear WIMG */
 	isync
 
@@ -158,11 +157,6 @@ _start:
 	mtspr   SPR_SRR1, %r21
 	rfi
 
-	/* Save load address for later use */
-	lis	%r24, uvload@ha
-	addi	%r24, %r24, uvload@l
-	stw	%r25, 0(%r24)
-
 /*
  * Invalidate temp mapping
  */
@@ -175,28 +169,24 @@ _start:
  *        need to programmatically compute this
  *        from some base
  */
-	lis	%r1, (uv_stack_top - 16)@ha
-	addi	%r1, %r1, (uv_stack_top - 16)@l
+	lis	%r1, (init_stack_top - 16)@ha
+	addi	%r1, %r1, (init_stack_top - 16)@l
 
 /* 
  * set SPRG0 to point to the vcpu struct
  * (for the exception handlers)
  * -TODO: this will need to be per-core eventually
  */
-	lis	%r2, hcpu0@ha
-	addi	%r2, %r2, hcpu0@l
+	lis	%r2, cpu0@ha
+	addi	%r2, %r2, cpu0@l
 	mtsprg0	%r2
 
 	bl	clear_bss
 	bl	ivor_setup
-	bl	init
 	bl	start
 
         mr      21,21   /* this is a magic inst that cause the Simics sim to stop */
-
-_busy_loop:
-	b	_busy_loop
-
+1:	b	1b
 
 tlb1_inval_entry:
 	lis	%r17, MAS0_TLBSEL1@h	/* Select TLB1 */
@@ -267,42 +257,23 @@ ivor_setup:
 	blr
 
 clear_bss:
-	lis	%r3, (bss_start - 4)@h
-	lis	%r4, (bss_end - 4)@h
-	ori	%r3, %r3, (bss_start - 4)@l
-	ori	%r4, %r4, (bss_end - 4)@l
+	lis	%r23, (bss_start - 4)@h
+	lis	%r24, (bss_end - 4)@h
+	ori	%r23, %r23, (bss_start - 4)@l
+	ori	%r24, %r24, (bss_end - 4)@l
 
-	sub	%r5, %r4, %r3
-	srawi	%r5, %r5, 2
-	mtctr	%r5
+	sub	%r25, %r24, %r23
+	mtctr	%r25
 
-	li	%r6, 0
-1:	stwu	%r6, 4(%r3)
+	li	%r26, 0
+1:	stbu	%r26, 1(%r23)
 	bdnz	1b
 
 	blr
 
-/*
- * r3 = target address of guest
- * -this needs to change to support the full ePAPR interface
- * 
- */
-.globl branch_to_guest
-branch_to_guest:
-	mfmsr	%r0
-	oris	%r0, %r0, 0x1000	/* Switch to GS 1. */
-
-	mtspr	SPR_SRR0, %r8
-	mtspr	SPR_SRR1, %r0
-	
-	rfi				/* Switch context */
-
 	.section .bss
 	.align 4
 	/* Initial boot stack */
-uv_stack_bottom:
 	.space 4096
-uv_stack_top:
-
-uvload:
-        .long
+	.global init_stack_top
+init_stack_top:

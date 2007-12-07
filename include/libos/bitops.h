@@ -1,8 +1,8 @@
-#ifndef BITOPS_H
-#define BITOPS_H
+#ifndef LIBOS_BITOPS_H
+#define LIBOS_BITOPS_H
 
-#include "os.h"
-#include "spr.h"
+#include <libos/libos.h>
+#include <libos/spr.h>
 
 // Returns non-zero if the operation succeeded.
 static inline int compare_and_swap(unsigned long *ptr,

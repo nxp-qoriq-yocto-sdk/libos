@@ -1,7 +1,7 @@
-#ifndef FRAME_H
-#define FRAME_H
+#ifndef LIBOS_TRAPFRAME_H
+#define LIBOS_TRAPFRAME_H
 
-#include "os.h"
+#include <libos/libos.h>
 #include <stdint.h>
 
 typedef struct {
@@ -12,6 +12,7 @@ typedef struct {
 	register_t srr0, srr1, dear, esr;
 	uint32_t eplc, epsc;
 	int exc;
+	uint32_t pad[4];
 } trapframe_t;
 
 /* PPC ABI requires 16-byte-aligned stack frames. */

@@ -25,14 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "spr.h" 
-#include "pcpu.h"
-#include "assym.s"
+#include <libos/spr.h> 
+#include <libos/percpu.h>
+#include <libos/trap_booke.h>
 
 /* TODO
  *    -watchdog should be critical
  *    -uncomment IVOR init in head.S
- *    -don't need any TLB stuff in HCPU
+ *    -don't need any TLB stuff in CPU
  *    -need separate exit for guest only exceptions, if it didn't come
  *     guest it's fatal
  *    -hypercall exception doesn't need to save registers
@@ -63,7 +63,7 @@
 #endif
 
 	.macro	exception, handler, exc, name, scratch, \
-	        srr0, srr1, uvstack, savearea, ret
+	        srr0, srr1, stack, savearea, ret
 	.global \name
 	.align	4
 \name:
@@ -73,7 +73,7 @@
 	STORE	%r0, LONGBYTES*0 + \savearea(%r2)
 	STORE	%r1, LONGBYTES*1 + \savearea(%r2)
 	mfcr	%r0
-	\uvstack
+	\stack
 	stw	%r0, FRAME_CR(%r1)
 
 	/* fixme for 64-bit */
@@ -103,15 +103,66 @@
 	STORE	%r12, FRAME_ESR(%r1)
 	stw	%r13, FRAME_EXC(%r1)
 	
+#ifdef HYPERVISOR
+	andis.	%r0, %r10, MSR_GS@h
+	beq	1f
+	
+	mfspr	%r3, SPR_EPLC
+	mfspr	%r4, SPR_EPSC
+	mfspr	%r5, SPR_PID
+	mfspr	%r6, SPR_LPID
+	
+	stw	%r3, FRAME_EPLC(%r1)
+	stw	%r4, FRAME_EPSC(%r1)
+	
+	/* Set the PID, LPID, guest/hypervisor, and user/kernel state for
+	 * external PID access.  We don't set AS0/AS1 in EPLC, as it
+	 * depends on whether it's a data or instruction access which MSR
+	 * bit we copy from.  However, we shouldn't be storing to
+	 * instruction addresses, so EPSC assumes data.
+	 */
+	
+	rlwimi	%r3, %r5, EPC_EPID_SHIFT, EPC_EPID
+	rlwimi	%r4, %r5, EPC_EPID_SHIFT, EPC_EPID
+	rlwimi	%r3, %r6, EPC_ELPID_SHIFT, EPC_ELPID
+	rlwimi	%r4, %r6, EPC_ELPID_SHIFT, EPC_ELPID
+
+	rlwimi	%r3, %r10, MSRBIT_PR - EPCBIT_EPR, EPC_EPR
+	rlwimi	%r4, %r10, MSRBIT_PR - EPCBIT_EPR, EPC_EPR
+
+	rlwimi	%r4, %r10, MSRBIT_DS - EPCBIT_EAS, EPC_EAS
+	
+	/* Always guest access */
+	oris	%r3, %r3, EPC_EGS@h
+	oris	%r4, %r4, EPC_EGS@h
+	
+	mtspr	SPR_EPLC, %r3
+	mtspr	SPR_EPSC, %r4
+
+1:
+#endif
 	mr	%r3, %r1
 	bl	\handler
+
+	LOAD	%r10, FRAME_SRR1(%r1)
+#ifdef HYPERVISOR
+	andis.	%r0, %r10, MSR_GS@h
+	beq	2f
+
+	lwz	%r3, FRAME_EPLC(%r1)
+	lwz	%r4, FRAME_EPSC(%r1)
+	mtspr	SPR_EPLC, %r3
+	mtspr	SPR_EPSC, %r4
+
+2:
+#endif
+	stwcx.	%r0, 0, %r1
 
 	LOAD	%r5, FRAME_LR(%r1)
 	LOAD	%r6, FRAME_CTR(%r1)
 	lwz	%r7, FRAME_CR(%r1)
 	lwz	%r8, FRAME_XER(%r1)
 	LOAD	%r9, FRAME_SRR0(%r1)
-	LOAD	%r10, FRAME_SRR1(%r1)
 
 	mtlr	%r5
 	mtctr	%r6
@@ -129,75 +180,80 @@
 	\ret
 	.endm
 
-	.macro	baseuvstack
+	.macro	basestack
 	mfspr	%r1, SPR_SRR1
+#ifdef HYPERVISOR
+	andis.	%r1, %r1, (MSR_GS | MSR_PR)@h
+#else
 	andis.	%r1, %r1, MSR_PR@h
-	bne-	1f
+#endif
+	beq-	1f
 	
 	.subsection 1
-1:	LOAD	%r1, LONGBYTES*1 + HCPU_NORMSAVE(%r2)
+1:	LOAD	%r1, LONGBYTES*1 + CPU_NORMSAVE(%r2)
 	stwu	%r1, -FRAMELEN(%r1)
 	b	2f
 	.subsection 0
 
-	addi	%r1, %r2, HCPU_UVSTACK + UVSTACK_SIZE - FRAMELEN
+	lwz	%r1, CPU_KSTACK(%r2)
 2:
 	.endm
 
 	.macro	baseexception, exc, name, handler
 	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          baseuvstack HCPU_NORMSAVE rfi
+	          basestack CPU_NORMSAVE rfi
 	.endm
 
-	.macro	crituvstack
-	addi	%r1, %r2, HCPU_CRITSTACK + UVSTACK_SIZE - FRAMELEN
+	.macro	critstack
+	addi	%r1, %r2, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
 	.macro	critexception, exc, name, handler
 	exception \handler \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
-	          crituvstack HCPU_CRITSAVE rfci
+	          critstack CPU_CRITSAVE rfci
 	.endm
 
-	.macro	mcheckuvstack
-	addi	%r1, %r2, HCPU_MCHECKSTACK + UVSTACK_SIZE - FRAMELEN
+	.macro	mcheckstack
+	addi	%r1, %r2, CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
 	.macro	machinecheck, exc, name, handler
 	exception \handler \exc \name SPR_SPRG8 SPR_MCSRR0 SPR_MCSRR1 \
-	          mcheckuvstack HCPU_MACHKSAVE rfmci
+	          mcheckstack CPU_MACHKSAVE rfmci
 	.endm
 
-	.macro	debuguvstack
-	addi	%r1, %r2, HCPU_DEBUGSTACK + UVSTACK_SIZE - FRAMELEN
+	.macro	debugstack
+	addi	%r1, %r2, CPU_DEBUGSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
 	.macro	debugexception, exc, name, handler
 	exception \handler \exc \name SPR_SPRG9 SPR_DSRR0 SPR_DSRR1 \
-	          debuguvstack HCPU_DBGSAVE rfdi
+	          debugstack CPU_DBGSAVE rfdi
 	.endm
 
 	.global interrupt_vector_base
 	.align 5
 interrupt_vector_base:
-	critexception 0 int_critical_input trap
-	machinecheck 1 int_machine_check trap
-	baseexception 2 int_data_storage trap
-	baseexception 3 int_instr_storage trap
-	baseexception 4 int_external_input trap
-	baseexception 5 int_alignment trap
-	baseexception 6 int_program trap
-	baseexception 7 int_fpunavail trap
-	baseexception 8 int_syscall trap
-	baseexception 10 int_decrementer trap
-	baseexception 11 int_fixed_interval_timer trap
-	critexception 12 int_watchdog trap
-	baseexception 13 int_data_tlb_error trap
-	baseexception 14 int_inst_tlb_error trap
-	debugexception 15 int_debug trap
-	baseexception 35 int_perf_mon trap
-	baseexception 36 int_doorbell trap
-	critexception 37 int_doorbell_critical trap
-	baseexception 38 int_guest_doorbell trap
-	critexception 39 int_guest_doorbell_critical trap
-	baseexception 40 int_hypercall trap
-	baseexception 41 int_ehpriv trap
+	critexception EXC_CRIT_INT int_critical_input EXC_CRIT_INT_HANDLER
+	machinecheck EXC_MCHECK int_machine_check EXC_MCHECK_HANDLER
+	baseexception EXC_DSI int_data_storage EXC_DSI_HANDLER
+	baseexception EXC_ISI int_instr_storage EXC_ISI_HANDLER
+	baseexception EXC_EXT_INT int_external_input EXC_EXT_INT_HANDLER
+	baseexception EXC_ALIGN int_alignment EXC_ALIGN_HANDLER
+	baseexception EXC_PROGRAM int_program EXC_PROGRAM_HANDLER
+	baseexception EXC_FPUNAVAIL int_fpunavail EXC_FPUNAVAIL_HANDLER
+	baseexception EXC_SYSCALL int_syscall EXC_SYSCALL_HANDLER
+	baseexception EXC_AUXUNAVAIL int_auxunavail EXC_AUXUNAVAIL_HANDLER
+	baseexception EXC_DECR int_decrementer EXC_DECR_HANDLER
+	baseexception EXC_FIT int_fixed_interval_timer EXC_FIT_HANDLER
+	critexception EXC_WDOG int_watchdog EXC_WDOG_HANDLER
+	baseexception EXC_DTLB int_data_tlb_error EXC_DTLB_HANDLER
+	baseexception EXC_ITLB int_inst_tlb_error EXC_ITLB_HANDLER
+	debugexception EXC_DEBUG int_debug EXC_DEBUG_HANDLER
+	baseexception EXC_PERFMON int_perf_mon EXC_PERFMON_HANDLER
+	baseexception EXC_DOORBELL int_doorbell EXC_DOORBELL_HANDLER
+	critexception EXC_DOORBELLC int_doorbell_critical EXC_DOORBELLC_HANDLER
+	baseexception EXC_GDOORBELL int_guest_doorbell EXC_GDOORBELL_HANDLER
+	baseexception EXC_GDOORBELLC int_guest_doorbell_critical EXC_GDOORBELLC_HANDLER
+	baseexception EXC_HCALL int_hypercall EXC_HCALL_HANDLER
+	baseexception EXC_EHPRIV int_ehpriv EXC_EHPRIV_HANDLER

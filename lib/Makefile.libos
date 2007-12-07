@@ -1,10 +1,32 @@
+# LibOS Makefile
+#
+# Copyright © 2007 Freescale Semiconductor, Inc
+# Copyright © 1999 Paul D. Smith
 
-LIBOS_ALL_OBJS = $(LIBOS_STARTUP_OBJS) $(LIBOS_TLB_OBJS) $(LIBOS_EXCEPTION_OBJS) \
-	$(LIBOS_LIB_OBJS) $(LIBOS_CONSOLE_OBJS) $(LIBOS_HCALL_OBJS)
 
-LIBOS_STARTUP_OBJS := bin/head.o
-LIBOS_TLB_OBJS := bin/tlb.o
-LIBOS_EXCEPTION_OBJS := bin/exceptions.o bin/trap.o
-LIBOS_LIB_OBJS := bin/sprintf.o bin/string.o
-LIBOS_CONSOLE_OBJS := bin/uart.o bin/console.o
-LIBOS_HCALL_OBJS := bin/hcall.o bin/hcall_wrapper.o
+LIBOS_STARTUP := head.S
+LIBOS_FSL_BOOKE_TLB := fsl-booke-tlb.c
+LIBOS_EXCEPTION := exceptions.S trap.c
+LIBOS_LIB := sprintf.c string.c
+LIBOS_NS16550 := ns16550.c
+LIBOS_CONSOLE := console.c
+LIBOS_HCALL := hcall.S hcall_wrapper.c
+
+GENASSYM=$(LIBOS_DIR)/genassym.sh
+
+$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.c
+	@$(MKDIR) `dirname $@`
+	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C)  -c -o $@ $<
+
+$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.S $(LIBOS_BIN)/assym.s
+	@$(MKDIR) `dirname $@`
+	$(CC) -MD $(CC_OPTS) $(CC_OPTS_ASM) -include $(LIBOS_BIN)/assym.s \
+	-include $(LIBOS_CLIENT_H) -c -o $@ $<
+
+$(LIBOS_BIN)/libos_assym.o: $(LIBOS_DIR)/libos_assym.c
+	@$(MKDIR) `dirname $@`
+	$(CC) -MD $(CC_OPTS) -c -o $@ $<
+
+$(LIBOS_BIN)/assym.s: $(LIBOS_BIN)/libos_assym.o
+	@$(MKDIR) `dirname $@`
+	$(GENASSYM) -o $@ $<

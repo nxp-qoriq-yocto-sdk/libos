@@ -1,6 +1,6 @@
 
-#include "os.h"
-#include "hcalls.h"
+#include <libos/libos.h>
+#include <libos/hcalls.h>
 
 long hcall_ret1(uint32_t arg0,uint32_t arg1,uint32_t arg2,
    uint32_t arg3,uint32_t arg4,uint32_t arg5,

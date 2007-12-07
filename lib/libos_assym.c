@@ -34,20 +34,20 @@
  */
 
 #include <stddef.h>
-#include "assym.h"
-#include "pcpu.h"
-#include "frame.h"
+#include <libos/assym.h>
+#include <libos/percpu.h>
+#include <libos/trapframe.h>
 
-ASSYM(HCPU_SIZE, sizeof(hcpu_t));
-ASSYM(HCPU_NORMSAVE, offsetof(hcpu_t, normsave));
-ASSYM(HCPU_CRITSAVE, offsetof(hcpu_t, critsave));
-ASSYM(HCPU_MACHKSAVE, offsetof(hcpu_t, machksave));
-ASSYM(HCPU_DBGSAVE, offsetof(hcpu_t, dbgsave));
-ASSYM(HCPU_DEBUGSTACK, offsetof(hcpu_t, debugstack));
-ASSYM(HCPU_CRITSTACK, offsetof(hcpu_t, critstack));
-ASSYM(HCPU_MCHECKSTACK, offsetof(hcpu_t, mcheckstack));
+ASSYM(CPU_SIZE, sizeof(cpu_t));
+ASSYM(CPU_NORMSAVE, offsetof(cpu_t, normsave));
+ASSYM(CPU_CRITSAVE, offsetof(cpu_t, critsave));
+ASSYM(CPU_MACHKSAVE, offsetof(cpu_t, machksave));
+ASSYM(CPU_DBGSAVE, offsetof(cpu_t, dbgsave));
+ASSYM(CPU_DEBUGSTACK, offsetof(cpu_t, debugstack));
+ASSYM(CPU_CRITSTACK, offsetof(cpu_t, critstack));
+ASSYM(CPU_MCHECKSTACK, offsetof(cpu_t, mcheckstack));
 
-ASSYM(HCPU_UVSTACK, offsetof(hcpu_t, uvstack));
+ASSYM(CPU_KSTACK, offsetof(cpu_t, kstack));
 
 ASSYM(FRAMELEN, FRAMELEN);
 ASSYM(FRAME_GPREGS, offsetof(trapframe_t, gpregs[0]));

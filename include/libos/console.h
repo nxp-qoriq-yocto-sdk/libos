@@ -1,5 +1,5 @@
-#ifndef _CONSOLE_H
-#define	_CONSOLE_H
+#ifndef LIBOS_CONSOLE_H
+#define LIBOS_CONSOLE_H
 
 #include <stdint.h>
 
@@ -9,4 +9,4 @@ int puts(const char *s);
 void puts_len(const char *s, int len);
 size_t printf(const char *str, ...);
 
-#endif  /* _CONSOLE_H */
+#endif
