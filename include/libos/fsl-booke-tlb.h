@@ -145,8 +145,6 @@
 #define TLB_MAS8_HV    0
 #define TLB_MAS8_GUEST MAS8_GTS
 
-#define BASE_TLB_ENTRY 63
-
 #define TLBIVAX_RESERVED 0xfe3
 
 #if !defined(_ASM)
