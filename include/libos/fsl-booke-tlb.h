@@ -165,7 +165,6 @@ typedef struct tlb_entry {
 void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
                     uint32_t size, uint32_t mas2flags, uint32_t mas3flags,
                     unsigned int _tid, unsigned int _ts, uint32_t mas8);
-void tlb1_init(void);
 void tlb1_write_entry(unsigned int idx);
 
 static inline unsigned int pages_to_tsize(unsigned long epn)

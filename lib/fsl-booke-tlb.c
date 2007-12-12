@@ -34,27 +34,7 @@
 #include <libos/percpu.h>
 #include <libos/bitops.h>
 
-/*
- *    after tlb1_init:
- *        TLB1[0] = CCSR
- *        TLB1[1] = hv image 16M
- *
- *
- */
-
-/* hardcoded hack for now */
-#define CCSRBAR_PA              0xfe000000
-#define CCSRBAR_VA              0x01000000
-#define CCSRBAR_SIZE            TLB_TSIZE_16M
-
 static int print_ok;
-
-void tlb1_init(void)
-{
-	tlb1_set_entry(62, CCSRBAR_VA, CCSRBAR_PA, CCSRBAR_SIZE, TLB_MAS2_IO,
-	               TLB_MAS3_KERN, 0, 0, TLB_MAS8_HV);
-	print_ok = 1;
-}
 
 /*
  * Setup entry in a sw tlb1 table, write entry to TLB1 hardware.
@@ -125,7 +105,9 @@ void tlb1_write_entry(unsigned int idx)
 	mtspr(SPR_MAS2, cpu->tlb1[idx].mas2);
 	mtspr(SPR_MAS3, cpu->tlb1[idx].mas3);
 	mtspr(SPR_MAS7, cpu->tlb1[idx].mas7);
+#ifdef HYPERVISOR
 	mtspr(SPR_MAS8, cpu->tlb1[idx].mas8);
+#endif
 	asm volatile("isync; tlbwe; isync; msync" : : : "memory");
 
 	//debugf("tlb1_write_entry: e\n");;
