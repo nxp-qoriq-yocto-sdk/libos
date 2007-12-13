@@ -5,9 +5,9 @@
 #include <libos/uart.h>
 #include <libos/console.h>
 
-void console_init(void)
+void console_init(unsigned long console_vaddr)
 {
-	uart_init();
+	uart_init(console_vaddr);
 }
 
 int putchar(int c)

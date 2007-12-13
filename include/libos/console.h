@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-void console_init(void);
+void console_init(unsigned long);
 int putchar(int c);
 int puts(const char *s);
 void puts_len(const char *s, int len);

@@ -34,7 +34,7 @@
 #include <libos/percpu.h>
 #include <libos/bitops.h>
 
-static int print_ok;
+int print_ok;
 
 /*
  * Setup entry in a sw tlb1 table, write entry to TLB1 hardware.

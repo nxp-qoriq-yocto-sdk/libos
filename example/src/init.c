@@ -15,10 +15,18 @@ cpu_t cpu0 = {
 static void tlb1_init(void);
 static void  core_init(void);
 
+/* hardcoded hack for now */
+#define CCSRBAR_PA              0xfe000000
+#define CCSRBAR_VA              0x01000000
+#define CCSRBAR_SIZE            TLB_TSIZE_16M
+#define UART_OFFSET 0x11c500
+
 void init(unsigned long devtree_ptr)
 {
 
-    core_init();
+	core_init();
+
+	console_init(CCSRBAR_VA + UART_OFFSET);
 
 }
 
@@ -37,15 +45,14 @@ static void core_init(void)
  *        TLB1[15] = OS image 16M
  */
 
-/* hardcoded hack for now */
-#define CCSRBAR_PA              0xfe000000
-#define CCSRBAR_VA              0x01000000
-#define CCSRBAR_SIZE            TLB_TSIZE_16M
+extern int print_ok;  /* set to indicate printf can work now */
 
 static void tlb1_init(void)
 {
         tlb1_set_entry(0, CCSRBAR_VA, CCSRBAR_PA, CCSRBAR_SIZE, TLB_MAS2_IO,
                        TLB_MAS3_KERN, 0, 0, 0);
+
+	print_ok = 1;
 }
 
 void start(unsigned long devtree_ptr)
