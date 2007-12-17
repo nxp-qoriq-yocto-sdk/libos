@@ -2,20 +2,21 @@
 #include <string.h>
 #include <limits.h>
 #include <libos/bitops.h>
-#include <libos/uart.h>
 #include <libos/console.h>
 
-void console_init(unsigned long console_vaddr)
+extern struct console_calls console;
+
+void console_init(void)
 {
-	uart_init(console_vaddr);
+
 }
 
 int putchar(int c)
 {
 	if (c == '\n')
-		uart_putc('\r');
+		console.putc('\r');
 
-	uart_putc(c);
+	console.putc(c);
 	return c;
 }
 
@@ -28,8 +29,8 @@ void puts_len(const char *s, int len)
 int puts(const char *s)
 {
 	puts_len(s, INT_MAX);
-	uart_putc('\r');
-	uart_putc('\n');
+	console.putc('\r');
+	console.putc('\n');
 	return 0;
 }
 
