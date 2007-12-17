@@ -257,10 +257,10 @@ ivor_setup:
 	blr
 
 clear_bss:
-	lis	%r23, (bss_start - 4)@h
-	lis	%r24, (bss_end - 4)@h
-	ori	%r23, %r23, (bss_start - 4)@l
-	ori	%r24, %r24, (bss_end - 4)@l
+	lis	%r23, (bss_start - 1)@h
+	lis	%r24, (bss_end - 1)@h
+	ori	%r23, %r23, (bss_start - 1)@l
+	ori	%r24, %r24, (bss_end - 1)@l
 
 	sub	%r25, %r24, %r23
 	mtctr	%r25
