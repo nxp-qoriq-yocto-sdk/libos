@@ -50,9 +50,7 @@ int memcmp(const void *b1, const void *b2, size_t len)
 	
 	for (pos = 0; pos < len; pos++) {
 		if (c1[pos] != c2[pos])
-			return c1[pos] - c2[pos];
-			
-		pos++;
+			return (int)c1[pos] - (int)c2[pos];
 	}
 	
 	return 0;
