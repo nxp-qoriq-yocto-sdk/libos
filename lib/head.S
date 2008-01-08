@@ -50,7 +50,7 @@ _start:
 	li	%r16, 0			/* Start from Entry 0 */
 
 2:	lis	%r15, MAS0_TLBSEL1@h	/* Select TLB1 */
-	rlwimi	%r15, %r16, 16, 12, 15
+	rlwimi	%r15, %r16, 16, 4, 15
 	mtspr	SPR_MAS0, %r15
 	isync
 	tlbre
