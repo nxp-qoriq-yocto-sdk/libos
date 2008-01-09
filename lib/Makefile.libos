@@ -7,7 +7,7 @@
 LIBOS_STARTUP := head.S
 LIBOS_FSL_BOOKE_TLB := fsl-booke-tlb.c
 LIBOS_EXCEPTION := exceptions.S trap.c
-LIBOS_LIB := sprintf.c string.c
+LIBOS_LIB := sprintf.c string.c alloc.c
 LIBOS_NS16550 := ns16550.c
 LIBOS_CONSOLE := console.c
 LIBOS_HCALL := hcall.S hcall_wrapper.c
