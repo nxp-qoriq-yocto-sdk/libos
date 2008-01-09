@@ -41,5 +41,6 @@ typedef uint64_t physaddr_t;
 typedef unsigned long register_t;
 
 void *alloc(unsigned long size, unsigned long align);
+void alloc_init(unsigned long heap_start, unsigned long heap_end);
 
 #endif

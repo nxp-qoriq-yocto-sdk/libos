@@ -31,20 +31,32 @@
 #include <libos/bitops.h>
 
 extern int _end;
-static unsigned long heap = (unsigned long)&_end;
+static unsigned long heap_start, heap_end;
 static uint32_t alloc_lock;
 
-// FIXME: locking, out-of-memory
 void *alloc(unsigned long size, unsigned long align)
 {
 	spin_lock(&alloc_lock);
 
-	heap = (heap + align - 1) & ~(align - 1);
-	void *ret = (void *)heap;
-	heap += size;
+	unsigned long new_heap = (heap_start + align - 1) & ~(align - 1);
+	void *ret = (void *)new_heap;
+	new_heap += size;
+
+	if (new_heap > heap_end || new_heap < heap_start)
+		ret = NULL;
+	else
+		heap_start = new_heap;
 
 	spin_unlock(&alloc_lock);
 
-	memset(ret, 0, size);
+	if (ret)
+		memset(ret, 0, size);
+
 	return ret;
+}
+
+void alloc_init(unsigned long _heap_start, unsigned long _heap_end)
+{
+	heap_start = _heap_start;
+	heap_end = _heap_end;
 }
