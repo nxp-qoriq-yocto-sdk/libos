@@ -9,6 +9,23 @@
 
 .text
 
+.globl hcall_ret0
+hcall_ret0:
+
+	mfcr	%r0
+	stw	%r0,-4(%r1)
+
+	lwz	%r11,STACK_R11(%r1)  /* the token is on the caller's stack */
+
+	sc	1
+
+	/* r3 has status */
+
+	lwz	%r0,-4(%r1)
+	mfcr	%r0
+
+	blr
+
 .globl hcall_ret1
 hcall_ret1:
 
