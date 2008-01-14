@@ -122,36 +122,29 @@ _start:
 	mtspr	SPR_MAS0, %r16
 	isync
 
-	li	%r16, (TLB_TSIZE_16M << MAS1_TSIZE_SHIFT)@l
+	li	%r16, (TLB_TSIZE_256M << MAS1_TSIZE_SHIFT)@l
 	oris	%r16, %r16, (MAS1_VALID | MAS1_IPROT)@h
 	mtspr	SPR_MAS1, %r16
 	isync
 
-	lis	%r19, PHYSBASE@h
-	ori	%r19, %r19, PHYSBASE@l
+	bl	5f
+5:	mflr	%r16			/* Use current address */
+	andis.	%r18, %r16, 0xf000	/* 256MB alignment mask */
+
+	addis	%r19, %r18, PHYSBASE@h
 	mtspr	SPR_MAS2, %r19		/* Set final EPN, clear WIMG */
 	isync
 
-	bl	5f
-5:	mflr	%r16			/* Use current address */
-	lis	%r18, 0xff00		/* 16MB alignment mask */
-	and	%r16, %r16, %r18
-	mr	%r25, %r16		/* Copy kernel load address */
-	ori	%r16, %r16, (MAS3_SX | MAS3_SW | MAS3_SR)@l
-	mtspr	SPR_MAS3, %r16		/* Set RPN and protection */
+	ori	%r18, %r18, (MAS3_SX | MAS3_SW | MAS3_SR)@l
+	mtspr	SPR_MAS3, %r18		/* Set RPN and protection */
 	isync
 	tlbwe
 	isync
 	msync
 
-	/* Switch to the above TLB1[1] mapping */
-	lis	%r18, 0x00ff		/* 16MB offset mask */
-	ori	%r18, %r18, 0xffff
-	bl	6f
-6:	mflr	%r20			/* Use current address */
-	and	%r20, %r20, %r18	/* Offset from kernel load address */
-	add	%r20, %r20, %r19	/* Move to kernel virtual address */
-	addi	%r20, %r20, 32		/* Increment to instr. after rfi  */
+	/* Switch to the above TLB1[BASE_TLB_ENTRY] mapping */
+	addis	%r20, %r16, PHYSBASE@h	/* Move to kernel virtual address */
+	addi	%r20, %r20, 6f - 5b	/* Increment to instr. after rfi  */
 	li	%r21, 0x200
 	mtspr   SPR_SRR0, %r20
 	mtspr   SPR_SRR1, %r21
@@ -160,7 +153,7 @@ _start:
 /*
  * Invalidate temp mapping
  */
-	mr	%r22, %r11
+6:	mr	%r22, %r11
 	bl	tlb1_inval_entry
 
 /*
