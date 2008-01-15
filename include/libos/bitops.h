@@ -60,7 +60,7 @@ static inline unsigned long atomic_or(unsigned long *ptr, unsigned long val)
 
 	// FIXME 64-bit
 	asm volatile("1: lwarx %0, 0, %1;"
-	             "ori %0, %0, %2;"
+	             "or %0, %0, %2;"
 	             "stwcx. %0, 0, %1;"
 	             "bne 1b;" :
 	             "=&r" (ret) :
@@ -76,7 +76,23 @@ static inline unsigned long atomic_and(unsigned long *ptr, unsigned long val)
 
 	// FIXME 64-bit
 	asm volatile("1: lwarx %0, 0, %1;"
-	             "andi %0, %0, %2;"
+	             "and %0, %0, %2;"
+	             "stwcx. %0, 0, %1;"
+	             "bne 1b;" :
+	             "=&r" (ret) :
+	             "r" (ptr), "r" (val) :
+	             "memory");
+
+	return ret;
+}
+
+static inline unsigned long atomic_add(unsigned long *ptr, long val)
+{
+	unsigned long ret;
+
+	// FIXME 64-bit
+	asm volatile("1: lwarx %0, 0, %1;"
+	             "add %0, %0, %2;"
 	             "stwcx. %0, 0, %1;"
 	             "bne 1b;" :
 	             "=&r" (ret) :
