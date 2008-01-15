@@ -7,6 +7,18 @@
 #include <libos/spr.h>
 #include <libos/fsl-booke-tlb.h>
 
+#if 1
+/* 32-bit */
+#define LONGBYTES 4
+#define LOAD lwz
+#define STORE stw
+#else
+/* 64-bit */
+#define LONGBYTES 8
+#define LOAD ld
+#define STORE std
+#endif
+
 .text
 
 /*
@@ -29,15 +41,59 @@ _start:
 /*
  * Use tlbsx to locate the TLB1 entry that maps kernel code
  */
-	bl	1f			/* Current address */
-1:	mflr	%r15
+	bl	fixup_mmu
 
+	lis	%r2, cpu0@ha
+	addi	%r2, %r2, cpu0@l
+	mtsprg0	%r2
+
+	bl	clear_bss
+
+	lis	%r1, (init_stack_top - 16)@ha
+	addi	%r1, %r1, (init_stack_top - 16)@l
+
+	bl	ivor_setup
+	bl	start
+
+        mr      21,21   /* this is a magic inst that cause the Simics sim to stop */
+1:	lis	%r3, 0xffff
+	mtctr	%r3
+2:	bdnz	2b
+	b	1b
+
+	.global secondary_start
+secondary_start:
+
+	bl	fixup_mmu
+
+	mr	%r2, %r3
+	mtsprg0	%r3
+	LOAD	%r1, CPU_KSTACK(%r3)
+
+	bl	ivor_setup
+
+	mtlr	%r7
+	mr	%r3, %r4
+
+	blrl
+
+        mr      21,21   /* this is a magic inst that cause the Simics sim to stop */
+1:	lis	%r3, 0xffff
+	mtctr	%r3
+2:	bdnz	2b
+	b	1b
+
+fixup_mmu:
+	mflr	%r23
+
+	bl	1f
 	/* Find entry that maps current address */
+1:	mflr	%r19
 	mfspr	%r17, SPR_PID
 	slwi	%r17, %r17, MAS6_SPID_SHIFT
 	mtspr	SPR_MAS6, %r17
 	isync
-	tlbsx	0, %r15
+	tlbsx	0, %r19
 
 	/* Copy entry number to r10 */
 	mfspr	%r17, SPR_MAS0
@@ -99,9 +155,8 @@ _start:
 	mfmsr	%r16
 	ori	%r16, %r16, 0x30	/* Switch to AS 1. */
 
-	bl	4f			/* Find current execution address */
-4:	mflr	%r15
-	addi	%r15, %r15, 20		/* Increment to instruction after rfi */
+	mflr	%r15
+	addi	%r15, %r15, 4f - 1b	/* Increment to instruction after rfi */
 	mtspr	SPR_SRR0, %r15
 	mtspr	SPR_SRR1, %r16
 	rfi				/* Switch context */
@@ -109,13 +164,14 @@ _start:
 /*
  * Invalidate initial entry
  */
-	mr	%r22, %r10
+4:	mr	%r22, %r10
 	bl	tlb1_inval_entry
+
 
 /*
  * Setup final mapping in TLB1[BASE_TLB_ENTRY] and switch to it
  */
-	/* Final kernel mapping, map in 16 MB of RAM */
+	/* Final kernel mapping, map in 256 MB of RAM */
 	lis	%r16, MAS0_TLBSEL1@h	/* Select TLB1 */
 	li	%r17, BASE_TLB_ENTRY	/* Entry index  */
 	rlwimi	%r16, %r17, 16, 10, 15
@@ -127,12 +183,10 @@ _start:
 	mtspr	SPR_MAS1, %r16
 	isync
 
-	bl	5f
-5:	mflr	%r16			/* Use current address */
-	andis.	%r18, %r16, 0xf000	/* 256MB alignment mask */
+	andis.	%r18, %r19, 0xf000	/* 256MB alignment mask */
 
-	addis	%r19, %r18, PHYSBASE@h
-	mtspr	SPR_MAS2, %r19		/* Set final EPN, clear WIMG */
+	addis	%r15, %r18, PHYSBASE@h
+	mtspr	SPR_MAS2, %r15		/* Set final EPN, clear WIMG */
 	isync
 
 	ori	%r18, %r18, (MAS3_SX | MAS3_SW | MAS3_SR)@l
@@ -143,8 +197,8 @@ _start:
 	msync
 
 	/* Switch to the above TLB1[BASE_TLB_ENTRY] mapping */
-	addis	%r20, %r16, PHYSBASE@h	/* Move to kernel virtual address */
-	addi	%r20, %r20, 6f - 5b	/* Increment to instr. after rfi  */
+	addis	%r20, %r19, PHYSBASE@h
+	addi	%r20, %r20, 6f - 1b	/* Increment to instr. after rfi  */
 	li	%r21, 0x200
 	mtspr   SPR_SRR0, %r20
 	mtspr   SPR_SRR1, %r21
@@ -156,30 +210,9 @@ _start:
 6:	mr	%r22, %r11
 	bl	tlb1_inval_entry
 
-/*
- * set up a stack
- * -TODO: eventually this needs to be allocated per core--
- *        need to programmatically compute this
- *        from some base
- */
-	lis	%r1, (init_stack_top - 16)@ha
-	addi	%r1, %r1, (init_stack_top - 16)@l
-
-/* 
- * set SPRG0 to point to the vcpu struct
- * (for the exception handlers)
- * -TODO: this will need to be per-core eventually
- */
-	lis	%r2, cpu0@ha
-	addi	%r2, %r2, cpu0@l
-	mtsprg0	%r2
-
-	bl	clear_bss
-	bl	ivor_setup
-	bl	start
-
-        mr      21,21   /* this is a magic inst that cause the Simics sim to stop */
-1:	b	1b
+	addis	%r23, %r23, PHYSBASE@h
+	mtlr	%r23
+	blr
 
 tlb1_inval_entry:
 	lis	%r17, MAS0_TLBSEL1@h	/* Select TLB1 */
