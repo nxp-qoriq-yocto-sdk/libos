@@ -4,6 +4,9 @@
 
 # simple guest
 $kernel_image  = "%script%/bin/example.bin"
+$kernel_addr = 0x10000000
+$dtb_image = ""
+$binary_image = "true"
 
 # indicate that simics magic instructions are wanted
 $want_magic_inst = 1
