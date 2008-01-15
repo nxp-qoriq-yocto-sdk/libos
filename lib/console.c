@@ -43,7 +43,7 @@ size_t printf(const char *str, ...)
 	static char buffer[buffer_size];
 	static uint32_t lock;
 
-//	spin_lock(&lock);
+	spin_lock(&lock);
 
 	va_list args;
 	va_start(args, str);
@@ -54,6 +54,6 @@ size_t printf(const char *str, ...)
 		ret = buffer_size;
 	
 	puts_len(buffer, ret);
-//	spin_unlock(&lock);
+	spin_unlock(&lock);
 	return ret;
 }
