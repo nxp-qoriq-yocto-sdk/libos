@@ -12,6 +12,7 @@ LIBOS_NS16550 := ns16550.c
 LIBOS_CONSOLE := console.c
 LIBOS_HCALL := hcall.S hcall_wrapper.c
 LIBOS_MP := mp.c
+LIBOS_MPIC := mpic.c
 
 GENASSYM=$(LIBOS_DIR)/genassym.sh
 
