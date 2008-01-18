@@ -35,6 +35,7 @@ static inline void spin_lock(uint32_t *ptr)
 	             "bne 2f;"
 	             "stwcx. %2, 0, %1;"
 	             "bne 1b;"
+	             "mbar 1;"
 	             ".subsection 1;"
 	             "2: lwz %0, 0(%1);"
 	             "cmpwi %0, 0;"
@@ -51,7 +52,7 @@ static inline void spin_unlock(uint32_t *ptr)
 	uint32_t pir = mfspr(SPR_PIR) + 1;
 
 	assert(*ptr == pir);
-	asm volatile("stw %0, 0(%1)" : : "r" (0), "r" (ptr) : "memory");
+	asm volatile("mbar 1; stw %0, 0(%1)" : : "r" (0), "r" (ptr) : "memory");
 }
 
 static inline unsigned long atomic_or(unsigned long *ptr, unsigned long val)
