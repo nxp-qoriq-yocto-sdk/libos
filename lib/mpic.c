@@ -7,12 +7,12 @@
 
 static inline void mpic_write(uint32_t reg, uint32_t val)
 {
-	out32(((uint32_t *)(CCSR_BASE+MPIC+reg)),val);
+	out32(((uint32_t *)(CCSRBAR_VA+MPIC+reg)),val);
 }
 
 static inline register_t mpic_read(uint32_t reg)
 {
-	return in32((uint32_t *)(CCSR_BASE+MPIC+reg));
+	return in32((uint32_t *)(CCSRBAR_VA+MPIC+reg));
 }
 
 void mpic_init(unsigned long devtree_ptr)
@@ -64,6 +64,16 @@ uint32_t mpic_irq_get_vector(int irq)
 	iivpr_t iivpr;
 	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
 	return iivpr.vector;
+}
+
+void mpic_irq_set_ctpr(uint8_t priority)
+{
+	 mpic_write(CTPR,priority&0xF);
+}
+
+uint32_t mpic_irq_get_ctpr(void)
+{
+	 return mpic_read(CTPR);
 }
 
 void mpic_irq_set_priority(int irq, uint8_t priority)
