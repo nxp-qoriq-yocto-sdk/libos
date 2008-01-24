@@ -18,8 +18,8 @@
 #define TYPE_MCHK	0x2
 
 /* IRQ definitions */
-#define DUART1_IRQ 0x1c
-#define DUART2_IRQ 0x1d
+#define DUART1_IRQ 0x24
+#define DUART2_IRQ 0x25
 
 typedef union {
 	uint32_t data;
