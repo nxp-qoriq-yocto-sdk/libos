@@ -1,3 +1,11 @@
+/*!
+ *
+ *  @file mpic.c
+ *
+ *  (c) Copyright Freescale 2007, All Rights Reserved
+ *
+ */
+
 
 #include <libos/console.h>
 #include <libos/mpic.h>
