@@ -118,9 +118,10 @@ static inline register_t mfmsr(void)
 #define SPR_PIR          286  // Processor ID Register
 
 #define SPR_TSR          336  //  Timer Status Register
-#define   TCR_DIS          0x08000000 // Decrementer Int Pending
+#define   TSR_DIS          0x08000000 // Decrementer Int Pending
 #define SPR_TCR          340  //  Timer Control Register
 #define   TCR_DIE          0x04000000 // Decrementer Int Enable
+#define   TCR_ARE          0x00400000 // Auto-reload enable
 #define   TCR_DIE_SHIFT    26
 
 #define IVOR_MASK        0x0000fff0
