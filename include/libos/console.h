@@ -2,15 +2,13 @@
 #define LIBOS_CONSOLE_H
 
 #include <stdint.h>
+#include <libos/chardev.h>
 
-void console_init(void);
+void console_init(chardev_t *cd);
 int putchar(int c);
 int puts(const char *s);
-void puts_len(const char *s, int len);
+void puts_len(const char *s, size_t len);
 size_t printf(const char *str, ...);
-
-struct console_calls {
-	void (*putc)(uint8_t c);
-};
+extern int crashing;
 
 #endif

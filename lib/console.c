@@ -3,20 +3,28 @@
 #include <limits.h>
 #include <libos/bitops.h>
 #include <libos/console.h>
+#include <libos/chardev.h>
 
-extern struct console_calls console;
+static chardev_t *console;
 static uint32_t console_lock;
+int crashing;
 
-void console_init(void)
+void console_init(chardev_t *cd)
 {
+	console = cd;
 }
 
 static int __putchar(int c)
 {
-	if (c == '\n')
-		console.putc('\r');
+	uint8_t ch = c;
 
-	console.putc(c);
+	if (console) {
+		if (c == '\n')
+			console->ops->tx(console, (uint8_t *)"\r", 1, CHARDEV_BLOCKING);
+
+		console->ops->tx(console, &ch, 1, CHARDEV_BLOCKING);
+	}
+
 	return c;
 }
 
@@ -28,13 +36,13 @@ int putchar(int c)
 	return ret;
 }
 
-static void __puts_len(const char *s, int len)
+static void __puts_len(const char *s, size_t len)
 {
 	while (*s && len--)
 		__putchar(*s++);
 }
 
-void puts_len(const char *s, int len)
+void puts_len(const char *s, size_t len)
 {
 	spin_lock(&console_lock);
 	__puts_len(s, len);
@@ -45,9 +53,10 @@ int puts(const char *s)
 {
 	spin_lock(&console_lock);
 
-	__puts_len(s, INT_MAX);
-	console.putc('\r');
-	console.putc('\n');
+	if (console) {
+		__puts_len(s, INT_MAX);
+		console->ops->tx(console, (uint8_t *)"\r\n", 2, CHARDEV_BLOCKING);
+	}
 
 	spin_unlock(&console_lock);
 	return 0;

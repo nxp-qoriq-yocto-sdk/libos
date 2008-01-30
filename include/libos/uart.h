@@ -3,7 +3,11 @@
 
 #include <stdint.h>
 
-void uart_init(unsigned long);
-void uart_putc(uint8_t c);
+typedef struct {
+	int data_bits;
+	int stop_bits;
+	int parity; 
+	int baudrate;
+} uart_param_t;
 
 #endif

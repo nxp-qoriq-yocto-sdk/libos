@@ -3,6 +3,7 @@
 
 #include <libos/libos.h>
 #include <libos/spr.h>
+#include <libos/io.h>
 
 // Returns non-zero if the operation succeeded.
 static inline int compare_and_swap(unsigned long *ptr,
@@ -30,6 +31,15 @@ static inline void spin_lock(uint32_t *ptr)
 	uint32_t pir = mfspr(SPR_PIR) + 1;
 	uint32_t tmp;
 
+	if (*ptr == pir) {
+		if (crashing)
+			return;
+		
+		crashing = 1;
+		printf("Recursive spin_lock detected on %p\n", ptr);
+		BUG();
+	}
+
 	asm volatile("1: lwarx %0, 0, %1;"
 	             "cmpwi %0, 0;"
 	             "bne 2f;"
@@ -53,6 +63,19 @@ static inline void spin_unlock(uint32_t *ptr)
 
 	assert(*ptr == pir);
 	asm volatile("mbar 1; stw %0, 0(%1)" : : "r" (0), "r" (ptr) : "memory");
+}
+
+static inline register_t spin_lock_critsave(uint32_t *ptr)
+{
+	register_t ret = disable_critint_save();
+	spin_lock(ptr);
+	return ret;
+}
+
+static inline void spin_unlock_critsave(uint32_t *ptr, register_t saved)
+{
+	spin_unlock(ptr);
+	restore_critint(saved);
 }
 
 static inline unsigned long atomic_or(unsigned long *ptr, unsigned long val)

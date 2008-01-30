@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <libos/console.h>
 
+#define to_container(memberinstance, containertype, membername) ({ \
+	typeof(memberinstance) _ptr = memberinstance; \
+	(containertype *)(uintptr_t)_ptr - offsetof(containertype, membername); \
+})
 
 #define stopsim() do { \
 	asm volatile("mr 22, 22" : : : "memory"); \

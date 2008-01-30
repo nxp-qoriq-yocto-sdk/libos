@@ -2,6 +2,7 @@
 #define LIBOS_IO_H
 
 #include <stdint.h>
+#include <libos/spr.h>
 
 static inline void barrier(void)
 {
@@ -26,6 +27,39 @@ static inline void lwsync(void)
 static inline void mbar(int mo)
 {
 	asm volatile("mbar %0" : : "i" (mo) : "memory");
+}
+
+static inline void smp_mbar(void)
+{
+	// FIXME: ifdef SMP
+	mbar(1);
+}
+
+static inline register_t disable_critint_save(void)
+{
+	register_t ret, tmp;
+	asm volatile("mfmsr %0; rlwinm %1, %0, 0, ~%2; mtmsr %1" :
+	             "=&r" (ret), "=&r" (tmp) : "i" (MSR_CE) : "memory");
+	return ret;
+}
+
+static inline void restore_critint(register_t saved)
+{
+	asm volatile("mtmsr %0" : : "r" (saved) : "memory");
+}
+
+static inline void disable_critint(void)
+{
+	register_t tmp;
+	asm volatile("mfmsr %0; rlwinm %0, %0, 0, (~%1)@h; mtmsr %1" :
+	             "=&r" (tmp) : "i" (MSR_CE) : "memory");
+}
+
+static inline void enable_critint(void)
+{
+	register_t tmp;
+	asm volatile("mfmsr %0; oris %0, %0, %1@h; mtmsr %0" :
+	             "=&r" (tmp) : "i" (MSR_CE) : "memory");
 }
 
 static inline uint8_t raw_in8(const uint8_t *ptr)
