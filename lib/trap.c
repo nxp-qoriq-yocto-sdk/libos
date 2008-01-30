@@ -67,6 +67,8 @@ void traceback(trapframe_t *regs)
 
 void dump_regs(trapframe_t *regs)
 {
+	printf("%s\n", trapname(regs->exc));
+
 	printf("NIP 0x%08lx MSR 0x%08lx LR 0x%08lx ESR 0x%08lx EXC %d\n"
 	       "CTR 0x%08lx CR 0x%08x XER 0x%08x DEAR 0x%08lx PIR %lu\n",
 	       regs->srr0, regs->srr1, regs->lr, mfspr(SPR_ESR), regs->exc,
