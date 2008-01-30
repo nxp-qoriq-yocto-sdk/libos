@@ -47,7 +47,7 @@ include $(LIBFDT_DIR)/Makefile.libfdt
 include $(LIBOS_DIR)/Makefile.libos
 
 LIBOS_SRCS := $(LIBOS_STARTUP) $(LIBOS_FSL_BOOKE_TLB) $(LIBOS_EXCEPTION) \
-              $(LIBOS_LIB) $(LIBOS_NS16550) $(LIBOS_CONSOLE)
+              $(LIBOS_LIB) $(LIBOS_NS16550) $(LIBOS_CONSOLE) $(LIBOS_QUEUE)
 SRCS := $(LIBOS_SRCS:%=libos/%) src/init.c \
 
 OBJS := $(basename $(SRCS))

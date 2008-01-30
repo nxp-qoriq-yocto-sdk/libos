@@ -4,17 +4,15 @@
 #include <libos/fsl-booke-tlb.h>
 #include <libos/trapframe.h>
 #include <libos/uart.h>
+#include <libos/ns16550.h>
+#include <libfdt.h>
+#include <libos/io.h>
 
 extern uint8_t init_stack_top;
 
 cpu_t cpu0 = {
         .kstack = &init_stack_top - FRAMELEN,
         .client = 0,
-};
-
-
-struct console_calls console = {
-	.putc = uart_putc
 };
 
 
@@ -30,11 +28,16 @@ static void  core_init(void);
 void init(unsigned long devtree_ptr)
 {
 
+chardev_t *cd;
+
 	core_init();
 
-	uart_init(CCSRBAR_VA + UART_OFFSET);
+        unsigned long heap = (unsigned long)0x11000000; // FIXME-- hardcoded location for heap
+        heap = (heap + 15) & ~15;
 
-	console_init();
+        alloc_init(heap, heap + (0x100000-1));  // FIXME: hardcoded 1MB heap
+
+	console_init(ns16550_init((uint8_t *)CCSRBAR_VA + UART_OFFSET, 0, 0, 16));
 
 }
 
