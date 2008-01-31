@@ -82,7 +82,7 @@ static inline size_t queue_wrap(const queue_t *q, size_t index)
 
 static inline size_t queue_get_avail(const queue_t *q)
 {
-	return queue_wrap(q, q->head - q->tail);
+	return queue_wrap(q, q->tail - q->head);
 }
 
 static inline size_t queue_get_space(const queue_t *q)
