@@ -39,4 +39,6 @@ int32_t fh_partition_get_status(int lpar_id, uint32_t *lpar_status,
 int32_t fh_byte_channel_send(uint32_t handle, int32_t count,
 	uint32_t str0, uint32_t str1, uint32_t str2, uint32_t str3);
 
+int32_t fh_byte_channel_poll(uint32_t handle,uint32_t *rxavail,uint32_t *txavail);
+
 #endif

@@ -10,6 +10,10 @@ long hcall_ret1(uint32_t arg0,uint32_t arg1,uint32_t arg2,
    uint32_t arg3,uint32_t arg4,uint32_t arg5,
    uint32_t arg6,uint32_t arg7,int32_t token,uint32_t *retbuf);
 
+long hcall_ret2(uint32_t arg0,uint32_t arg1,uint32_t arg2,
+   uint32_t arg3,uint32_t arg4,uint32_t arg5,
+   uint32_t arg6,uint32_t arg7,int32_t token,uint32_t *retbuf);
+
 long hcall_ret3(uint32_t arg0,uint32_t arg1,uint32_t arg2,
    uint32_t arg3,uint32_t arg4,uint32_t arg5,
    uint32_t arg6,uint32_t arg7,int32_t token,uint32_t *retbuf);
@@ -48,6 +52,19 @@ int32_t fh_byte_channel_send(uint32_t handle, int32_t count,
 	long status;
 
 	status = hcall_ret0(handle,count,str0,str1,str2,str3,0,0,FH_BYTE_CHANNEL_SEND);
+
+	return status;
+}
+
+int32_t fh_byte_channel_poll(uint32_t handle,uint32_t *rxavail,uint32_t *txavail)
+{
+	long status;
+	uint32_t retbuf[2];
+
+	status = hcall_ret2(handle,0,0,0,0,0,0,0,FH_BYTE_CHANNEL_POLL,&retbuf[0]);
+
+	*rxavail = retbuf[0];
+	*txavail = retbuf[1];
 
 	return status;
 }
