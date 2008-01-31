@@ -27,13 +27,13 @@ int32_t fh_cpu_whoami(uint32_t *cpu_index)
 	return status;
 }
 
-int32_t fh_lpar_get_status(int lpar_id, uint32_t *lpar_status,
+int32_t fh_partition_get_status(int lpar_id, uint32_t *lpar_status,
 	uint32_t *num_cpus, uint32_t *mem_size)
 {
 	uint32_t retbuf[3];
 	long status;
 
-	status = hcall_ret3(lpar_id,0,0,0,0,0,0,0,FH_LPAR_GET_STATUS,&retbuf[0]);
+	status = hcall_ret3(lpar_id,0,0,0,0,0,0,0,FH_PARTITION_GET_STATUS,&retbuf[0]);
 
 	*lpar_status = retbuf[0];
 	*num_cpus = retbuf[1];
