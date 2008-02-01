@@ -18,6 +18,10 @@ long hcall_ret3(uint32_t arg0,uint32_t arg1,uint32_t arg2,
    uint32_t arg3,uint32_t arg4,uint32_t arg5,
    uint32_t arg6,uint32_t arg7,int32_t token,uint32_t *retbuf);
 
+long hcall_ret5(uint32_t arg0,uint32_t arg1,uint32_t arg2,
+   uint32_t arg3,uint32_t arg4,uint32_t arg5,
+   uint32_t arg6,uint32_t arg7,int32_t token,uint32_t *retbuf);
+
 
 int32_t fh_cpu_whoami(uint32_t *cpu_index)
 {
@@ -52,6 +56,23 @@ int32_t fh_byte_channel_send(uint32_t handle, int32_t count,
 	long status;
 
 	status = hcall_ret0(handle,count,str0,str1,str2,str3,0,0,FH_BYTE_CHANNEL_SEND);
+
+	return status;
+}
+
+int32_t fh_byte_channel_receive(uint32_t handle,int32_t maxrecv, uint8_t *buf,int32_t *count)
+{
+	long status;
+	uint32_t retbuf[5];
+	uint32_t *wbuf = (uint32_t *)buf;
+
+	status = hcall_ret5(handle,maxrecv,0,0,0,0,0,0,FH_BYTE_CHANNEL_RECEIVE,&retbuf[0]);
+
+	*count = retbuf[0];
+	wbuf[0] = retbuf[1];
+	wbuf[1] = retbuf[2];
+	wbuf[2] = retbuf[3];
+	wbuf[3] = retbuf[4];
 
 	return status;
 }

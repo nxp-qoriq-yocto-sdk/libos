@@ -19,7 +19,7 @@
 #define FH_VMPIC_GET_ACTIVITY	16
 #define FH_VMPIC_EOI		17
 #define FH_BYTE_CHANNEL_SEND	18
-#define FH_BYTE_CHANNEL_RECV	19
+#define FH_BYTE_CHANNEL_RECEIVE	19
 #define FH_BYTE_CHANNEL_POLL	20
 #define FH_GPIO_GET_ASSIGNED	21
 #define FH_GPIO_GET_CONFIG	22
@@ -38,6 +38,8 @@ int32_t fh_partition_get_status(int lpar_id, uint32_t *lpar_status,
 
 int32_t fh_byte_channel_send(uint32_t handle, int32_t count,
 	uint32_t str0, uint32_t str1, uint32_t str2, uint32_t str3);
+
+int32_t fh_byte_channel_receive(uint32_t handle,int32_t maxrecv,uint8_t *buf,int32_t *count);
 
 int32_t fh_byte_channel_poll(uint32_t handle,uint32_t *rxavail,uint32_t *txavail);
 
