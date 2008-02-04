@@ -73,7 +73,6 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
 
 	/* Set supervisor rwx permission bits */
 	cpu->tlb1[idx].mas3 = (pa & MAS3_RPN) | mas3flags;
-	 MAS3_SR | MAS3_SW | MAS3_SX;
 
 	cpu->tlb1[idx].mas7 = pa >> 32;
 	cpu->tlb1[idx].mas8 = mas8;
@@ -92,7 +91,7 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
 
 void tlb1_write_entry(unsigned int idx)
 {
-	uint32_t mas0, mas7;
+	uint32_t mas0;
 
 	//debugf("tlb1_write_entry: s\n");
 

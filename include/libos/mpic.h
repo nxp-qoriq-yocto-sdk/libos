@@ -13,8 +13,6 @@ void mpic_irq_set_priority(int irq, uint8_t priority);
 uint8_t mpic_irq_get_priority(int irq);
 void mpic_irq_set_polarity(int irq, uint8_t polarity);
 uint8_t mpic_irq_get_polarity(int irq);
-static inline void mpic_irq_set_destcpu(int irq, uint8_t destcpu);
-static inline uint8_t mpic_irq_get_destcpu(int irq);
 void mpic_irq_set_inttype(int irq, uint8_t inttype);
 uint8_t mpic_irq_get_inttype(int irq);
 void mpic_irq_set_ctpr(uint8_t priority);

@@ -279,9 +279,7 @@ static const chardev_ops ops = {
  */
 chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo)
 {
-	uint8_t tmp;
 	ns16550 *priv;
-	int divisor;
 //	byte_chan_reg_params_t byte_chan_reg_params;
 
 	priv = alloc(sizeof(ns16550), __alignof__(ns16550));
@@ -313,6 +311,9 @@ chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo)
 void ns16550_config(uart_param_t param)
 {
 #if 0
+	int divisor;
+	uint8_t tmp;
+
 	/* copy all the parameters for statistics */
 	uart->data_bits  = param->data_bits;
 	uart->stop_bits  = param->stop_bits;
