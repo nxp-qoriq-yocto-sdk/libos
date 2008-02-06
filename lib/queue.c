@@ -99,7 +99,7 @@ int queue_readchar(queue_t *q)
 
 	int ret = q->buf[q->head];
 	smp_mbar();
-	raw_out32(&q->head, q->head + 1);
+	raw_out32(&q->head, queue_wrap(q, q->head + 1));
 	return ret;
 }
 
@@ -150,6 +150,6 @@ int queue_writechar(queue_t *q, uint8_t c)
 
 	q->buf[q->tail] = c;
 	smp_mbar();
-	raw_out32(&q->tail, q->tail + 1);
+	raw_out32(&q->tail, queue_wrap(q, q->tail + 1));
 	return 0;
 }
