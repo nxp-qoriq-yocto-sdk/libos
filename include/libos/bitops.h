@@ -26,12 +26,17 @@ static inline int compare_and_swap(unsigned long *ptr,
 	return ret == old;
 }
 
+static inline int spin_lock_held(uint32_t *ptr)
+{
+	return *ptr == mfspr_nonvolatile(SPR_PIR) + 1;
+}
+
 static inline void spin_lock(uint32_t *ptr)
 {
-	uint32_t pir = mfspr(SPR_PIR) + 1;
+	uint32_t pir = mfspr_nonvolatile(SPR_PIR) + 1;
 	uint32_t tmp;
 
-	if (*ptr == pir) {
+	if (spin_lock_held(ptr)) {
 		if (crashing)
 			return;
 		

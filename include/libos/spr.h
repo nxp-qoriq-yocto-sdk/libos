@@ -17,16 +17,24 @@ static inline register_t mfspr(int reg)
 	return ret;
 }
 
+// Use this version when the compiler may combine multiple calls.
+static inline register_t mfspr_nonvolatile(int reg)
+{
+	register_t ret;
+	asm("mfspr %0, %1" : "=r" (ret) : "i" (reg));
+	return ret;
+}
+
 static inline void mtmsr(register_t val)
 {
-        asm volatile("mtmsr %0" : : "r" (val) : "memory");
+	asm volatile("mtmsr %0" : : "r" (val) : "memory");
 }
 
 static inline register_t mfmsr(void)
 {
-        register_t ret;
-        asm volatile("mfmsr %0" : "=r" (ret) :  : "memory");
-        return ret;
+	register_t ret;
+	asm volatile("mfmsr %0" : "=r" (ret) :  : "memory");
+	return ret;
 }
 
 #endif
