@@ -35,7 +35,7 @@ static uint32_t alloc_lock;
 
 void *alloc(unsigned long size, unsigned long align)
 {
-	spin_lock(&alloc_lock);
+	register_t saved = spin_lock_critsave(&alloc_lock);
 
 	unsigned long new_heap = (heap_start + align - 1) & ~(align - 1);
 	void *ret = (void *)new_heap;
@@ -46,7 +46,7 @@ void *alloc(unsigned long size, unsigned long align)
 	else
 		heap_start = new_heap;
 
-	spin_unlock(&alloc_lock);
+	spin_unlock_critsave(&alloc_lock, saved);
 
 	if (ret)
 		memset(ret, 0, size);
