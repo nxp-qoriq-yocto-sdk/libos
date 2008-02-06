@@ -19,11 +19,10 @@ typedef struct queue_t {
 	 *
 	 * @param[in] q the queue with space available.
 	 *
-	 * This pointer should be NULL when a callback is
-	 * not requested.  This function must not be called
-	 * from within a space_avail() callback, only from
-	 * asynchronous contexts.  This function may be called
-	 * from interrupt context, but not with locks held.
+	 * This pointer should be NULL when a callback is not requested. 
+	 * This function must not be called from within a space_avail()
+	 * callback for the same queue, only from asynchronous contexts. 
+	 * This function may be called from interrupt context.
 	 */
 	void (*volatile data_avail)(struct queue_t *q);
 
@@ -34,11 +33,10 @@ typedef struct queue_t {
 	 *
 	 * @param[in] q the queue with data available.
 	 *
-	 * This pointer should be NULL when a callback is
-	 * not requested.  This function must not be called
-	 * from within a data_avail() callback, only from
-	 * asynchronous contexts.  This function may be called
-	 * from interrupt context, but not with locks held.
+	 * This pointer should be NULL when a callback is not requested. 
+	 * This function must not be called from within a data_avail()
+	 * callback for the same queue, only from asynchronous contexts. 
+	 * This function may be called from interrupt context.
 	 */
 	void (*volatile space_avail)(struct queue_t *q);
 
