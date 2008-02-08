@@ -196,6 +196,7 @@ static inline register_t mfmsr(void)
 #define   TLBCFG_ASSOC_SHIFT 24
 #define   TLBCFG_NENTRY_MASK 0x00000fff // Number of entries in TLB
 
+#define SPR_GEPR         698  // Guest EPR
 #define SPR_GSRR0        699  // Guest SRR0
 #define SPR_GSRR1        700  // Guest SRR1
 
