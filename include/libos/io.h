@@ -62,6 +62,16 @@ static inline void enable_critint(void)
 	             "=&r" (tmp) : "i" (MSR_CE) : "memory");
 }
 
+static inline void disable_extint(void)
+{
+	asm volatile("wrteei 0");
+}
+
+static inline void enable_extint(void)
+{
+	asm volatile("wrteei 1");
+}
+
 static inline uint8_t raw_in8(const uint8_t *ptr)
 {
 	uint8_t ret;
