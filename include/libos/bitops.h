@@ -21,7 +21,7 @@ static inline int compare_and_swap(unsigned long *ptr,
 	             "2:" :
 	             "=&r" (ret) :
 	             "r" (ptr), "r" (old), "r" (new) :
-	             "memory");
+	             "memory", "cc");
 
 	return ret == old;
 }
@@ -59,7 +59,7 @@ static inline void spin_lock(uint32_t *ptr)
 	             ".previous" :
 	             "=&r" (tmp) :
 	             "r" (ptr), "r" (pir) :
-	             "memory");
+	             "memory", "cc");
 }
 
 static inline void spin_unlock(uint32_t *ptr)
@@ -94,7 +94,7 @@ static inline unsigned long atomic_or(unsigned long *ptr, unsigned long val)
 	             "bne 1b;" :
 	             "=&r" (ret) :
 	             "r" (ptr), "r" (val) :
-	             "memory");
+	             "memory", "cc");
 
 	return ret;
 }
@@ -110,7 +110,7 @@ static inline unsigned long atomic_and(unsigned long *ptr, unsigned long val)
 	             "bne 1b;" :
 	             "=&r" (ret) :
 	             "r" (ptr), "r" (val) :
-	             "memory");
+	             "memory", "cc");
 
 	return ret;
 }
@@ -126,7 +126,7 @@ static inline unsigned long atomic_add(unsigned long *ptr, long val)
 	             "bne 1b;" :
 	             "=&r" (ret) :
 	             "r" (ptr), "r" (val) :
-	             "memory");
+	             "memory", "cc");
 
 	return ret;
 }
