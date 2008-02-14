@@ -254,6 +254,6 @@ interrupt_vector_base:
 	baseexception EXC_DOORBELL int_doorbell EXC_DOORBELL_HANDLER
 	critexception EXC_DOORBELLC int_doorbell_critical EXC_DOORBELLC_HANDLER
 	baseexception EXC_GDOORBELL int_guest_doorbell EXC_GDOORBELL_HANDLER
-	baseexception EXC_GDOORBELLC int_guest_doorbell_critical EXC_GDOORBELLC_HANDLER
+	critexception EXC_GDOORBELLC int_guest_doorbell_critical EXC_GDOORBELLC_HANDLER
 	baseexception EXC_HCALL int_hypercall EXC_HCALL_HANDLER
 	baseexception EXC_EHPRIV int_ehpriv EXC_EHPRIV_HANDLER
