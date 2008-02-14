@@ -232,6 +232,7 @@ static inline register_t mfmsr(void)
 #define   EPC_EPID_SHIFT   0
 
 #define SPR_HID0         1008 // Hardware Implementation Dependent 0
+#define   HID0_EMCP        0x80000000 // Enable Machine Check Pin
 #define   HID0_DPM         0x00100000 // Dynamic Power Management
 #define   HID0_TBEN        0x00004000 // Timebase Enable
 
