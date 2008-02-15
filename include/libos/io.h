@@ -38,8 +38,9 @@ static inline void smp_mbar(void)
 static inline register_t disable_critint_save(void)
 {
 	register_t ret, tmp;
-	asm volatile("mfmsr %0; rlwinm %1, %0, 0, ~%2; mtmsr %1" :
-	             "=&r" (ret), "=&r" (tmp) : "i" (MSR_CE) : "memory");
+	asm volatile("mfmsr %0; and %1, %0, %2; mtmsr %1" :
+	             "=&r" (ret), "=&r" (tmp) : "r" (~(MSR_CE | MSR_EE)) :
+	             "memory");
 	return ret;
 }
 
@@ -48,6 +49,7 @@ static inline void restore_critint(register_t saved)
 	asm volatile("mtmsr %0" : : "r" (saved) : "memory");
 }
 
+/* Note: unlike disable_critint_save, does *not* disable MSR[EE]. */
 static inline void disable_critint(void)
 {
 	register_t tmp;
