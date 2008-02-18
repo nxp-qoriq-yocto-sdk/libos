@@ -113,6 +113,9 @@ static inline register_t mfmsr(void)
 #define SPR_IVPR         63   // Interrupt Vector Prefix Register
 #define IVPR_MASK        0xffff0000
 
+#define SPR_TBL          268  // Timebase Lower
+#define SPR_TBU          269  // Timebase Upper
+
 // SPR General Registers
 #define SPR_SPRG0        272
 #define SPR_SPRG1        273
@@ -122,6 +125,9 @@ static inline register_t mfmsr(void)
 #define SPR_SPRG5        277
 #define SPR_SPRG6        278
 #define SPR_SPRG7        279
+
+#define SPR_TBWL         284  // Timebase Lower for Writing
+#define SPR_TBWU         285  // Timebase Upper for Writing
 
 #define SPR_PIR          286  // Processor ID Register
 
@@ -233,8 +239,16 @@ static inline register_t mfmsr(void)
 
 #define SPR_HID0         1008 // Hardware Implementation Dependent 0
 #define   HID0_EMCP        0x80000000 // Enable Machine Check Pin
+#define   HID0_DOZE        0x00800000
+#define   HID0_NAP         0x00400000
+#define   HID0_SLEEP       0x00200000
 #define   HID0_DPM         0x00100000 // Dynamic Power Management
+#define   HID0_EDPM        0x00080000 // Enhanced Dynamic Power Management
+#define   HID0_ICR         0x00020000 // Interrupts Clear Reservation
+#define   HID0_EIEC        0x00008000 // Enable Internal Error Checking
 #define   HID0_TBEN        0x00004000 // Timebase Enable
+#define   HID0_SEL_TBCLK   0x00002000 // Select Timebase Clock
+#define   HID0_ENMAS7      0x00000080 // Enable MAS7 update
 
 #define SPR_L1CSR0       1010 // L1 Cache Control and Status Register 0
 #define   L1CSR0_DCPE      0x00010000 // Data Cache Parity Enable
