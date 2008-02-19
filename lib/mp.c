@@ -35,12 +35,10 @@ int start_secondary_spin_table(struct boot_spin_table *table, int num,
 {
 	printf("table %p addr %lx pir %lx\n", table, table->addr, table->pir);
 
-	if (table->pir != num)
-		return -1;
-
 	table->r4 = (unsigned long)arg;
 	table->r3 = (unsigned long)cpu;
 	table->r7 = (unsigned long)entry;
+	table->pir = num;
 
 	// FIXME 64-bit
 	out32((uint32_t *)&table->addr, (uint32_t)&secondary_start - PHYSBASE);
