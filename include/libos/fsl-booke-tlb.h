@@ -138,7 +138,7 @@
 #define TLB_TSIZE_4G   11
 
 #define TLB_MAS2_IO    (MAS2_I | MAS2_G)
-#define TLB_MAS2_MEM   (0)
+#define TLB_MAS2_MEM   (MAS2_M)
 
 #define TLB_MAS3_KERN  (MAS3_SR | MAS3_SW | MAS3_SX)
 

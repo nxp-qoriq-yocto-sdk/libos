@@ -186,7 +186,8 @@ fixup_mmu:
 	andis.	%r18, %r19, 0xf000	/* 256MB alignment mask */
 
 	addis	%r15, %r18, PHYSBASE@h
-	mtspr	SPR_MAS2, %r15		/* Set final EPN, clear WIMG */
+	ori	%r15, %r15, 4
+	mtspr	SPR_MAS2, %r15		/* Set final EPN, **M** */
 	isync
 
 	ori	%r18, %r18, (MAS3_SX | MAS3_SW | MAS3_SR)@l
