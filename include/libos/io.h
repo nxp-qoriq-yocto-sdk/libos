@@ -66,12 +66,12 @@ static inline void enable_critint(void)
 
 static inline void disable_extint(void)
 {
-	asm volatile("wrteei 0");
+	asm volatile("wrteei 0" : : : "memory");
 }
 
 static inline void enable_extint(void)
 {
-	asm volatile("wrteei 1");
+	asm volatile("wrteei 1" : : : "memory");
 }
 
 static inline uint8_t raw_in8(const uint8_t *ptr)
