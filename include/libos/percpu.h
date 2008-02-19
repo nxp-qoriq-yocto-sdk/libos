@@ -36,7 +36,7 @@ register cpu_t *cpu asm("r2");
 // Returns 0 on success, -1 on error (e.g. PIR mismatch in table)
 
 struct boot_spin_table {
-	unsigned long addr, pir, r3, r4, r7;
+	unsigned long addr, pir, r3, r4, r6, r7;
 };
 
 typedef void (*entry_t)(void);
