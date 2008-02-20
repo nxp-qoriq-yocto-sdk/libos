@@ -28,6 +28,7 @@
 #include <libos/libos.h>
 #include <libos/queue.h>
 #include <libos/io.h>
+#include <libos/errors.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -37,7 +38,7 @@ int queue_init(queue_t *q, size_t size)
 {
 	q->buf = alloc(size, 1);
 	if (!q->buf)
-		return -1;
+		return ERR_NOMEM;
 
 	q->head = 0;
 	q->tail = 0;
