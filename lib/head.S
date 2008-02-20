@@ -55,7 +55,6 @@ _start:
 	bl	ivor_setup
 	bl	start
 
-        mr      21,21   /* this is a magic inst that cause the Simics sim to stop */
 1:	lis	%r3, 0xffff
 	mtctr	%r3
 2:	bdnz	2b
@@ -77,7 +76,6 @@ secondary_start:
 
 	blrl
 
-        mr      21,21   /* this is a magic inst that cause the Simics sim to stop */
 1:	lis	%r3, 0xffff
 	mtctr	%r3
 2:	bdnz	2b
