@@ -30,23 +30,34 @@
 #include <libos/bitops.h>
 
 extern int _end;
-static unsigned long heap_start, heap_end;
+
+typedef struct {	
+	unsigned long start, end;
+} allocator;
+
+static allocator heap, virtual;
 static uint32_t alloc_lock;
 
-void *alloc(unsigned long size, unsigned long align)
+static void *__alloc(allocator *a, unsigned long size, unsigned long align)
 {
 	register_t saved = spin_lock_critsave(&alloc_lock);
 
-	unsigned long new_heap = (heap_start + align - 1) & ~(align - 1);
-	void *ret = (void *)new_heap;
-	new_heap += size;
+	unsigned long new_start = (a->start + align - 1) & ~(align - 1);
+	void *ret = (void *)new_start;
+	new_start += size;
 
-	if (new_heap > heap_end || new_heap < heap_start)
+	if (new_start >= a->end || new_start < a->start)
 		ret = NULL;
 	else
-		heap_start = new_heap;
+		a->start = new_start;
 
 	spin_unlock_critsave(&alloc_lock, saved);
+	return ret;
+}
+
+void *alloc(unsigned long size, unsigned long align)
+{
+	void *ret = __alloc(&heap, size, align);
 
 	if (ret)
 		memset(ret, 0, size);
@@ -54,8 +65,19 @@ void *alloc(unsigned long size, unsigned long align)
 	return ret;
 }
 
-void alloc_init(unsigned long _heap_start, unsigned long _heap_end)
+void *valloc(unsigned long size, unsigned long align)
 {
-	heap_start = _heap_start;
-	heap_end = _heap_end;
+	return __alloc(&virtual, size, align);
+}
+
+void alloc_init(unsigned long start, unsigned long end)
+{
+	heap.start = start;
+	heap.end = end;
+}
+
+void valloc_init(unsigned long start, unsigned long end)
+{
+	virtual.start = start;
+	virtual.end = end;
 }
