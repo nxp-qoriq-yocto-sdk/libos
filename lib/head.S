@@ -270,6 +270,7 @@ ivor_setup:
 	mtspr	SPR_IVOR36, %r21
 	li	%r21, int_doorbell_critical@l
 	mtspr	SPR_IVOR37, %r21
+#ifdef HYPERVISOR
 	li	%r21, int_guest_doorbell@l
 	mtspr	SPR_IVOR38, %r21
 	li	%r21, int_guest_doorbell_critical@l
@@ -278,6 +279,7 @@ ivor_setup:
 	mtspr	SPR_IVOR40, %r21
 	li	%r21, int_ehpriv@l
 	mtspr	SPR_IVOR41, %r21
+#endif
 
 	blr
 

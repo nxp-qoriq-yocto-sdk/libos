@@ -28,10 +28,12 @@ static const struct powerpc_exception powerpc_exceptions[] = {
 	{ EXC_PERFMON, "performance monitoring" },
 	{ EXC_DOORBELL, "doorbell"},
 	{ EXC_DOORBELLC, "doorbell critical"},
+#ifdef HYPERVISOR
 	{ EXC_GDOORBELL, "guest doorbell"},
 	{ EXC_GDOORBELLC, "guest doorbell critical"},
 	{ EXC_HCALL, "hcall"},
 	{ EXC_EHPRIV, "ehpriv"},
+#endif
 	{ EXC_LAST, NULL }
 };
 
