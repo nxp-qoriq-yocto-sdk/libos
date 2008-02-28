@@ -89,7 +89,6 @@ static void __ns16550_tx_callback(ns16550 *priv)
 
 			return;
 		}
-
 	}
 }
 
