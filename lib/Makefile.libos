@@ -18,18 +18,18 @@ LIBOS_MPIC := mpic.c
 GENASSYM=$(LIBOS_DIR)/genassym.sh
 
 $(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.c
-	@$(MKDIR) `dirname $@`
+	@$(MKDIR) $(@D)
 	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C)  -c -o $@ $<
 
 $(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.S $(LIBOS_BIN)/assym.s
-	@$(MKDIR) `dirname $@`
+	@$(MKDIR) $(@D)
 	$(CC) -MD $(CC_OPTS) $(CC_OPTS_ASM) -include $(LIBOS_BIN)/assym.s \
 	-include $(LIBOS_CLIENT_H) -c -o $@ $<
 
 $(LIBOS_BIN)/libos_assym.o: $(LIBOS_DIR)/libos_assym.c
-	@$(MKDIR) `dirname $@`
+	@$(MKDIR) $(@D)
 	$(CC) -MD $(CC_OPTS) -c -o $@ $<
 
 $(LIBOS_BIN)/assym.s: $(LIBOS_BIN)/libos_assym.o
-	@$(MKDIR) `dirname $@`
+	@$(MKDIR) $(@D)
 	$(GENASSYM) -o $@ $<
