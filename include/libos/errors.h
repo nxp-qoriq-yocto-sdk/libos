@@ -12,5 +12,6 @@
 #define ERR_NOTRANS          (-258) /**< No translation possible. */
 #define ERR_BUSY             (-259) /**< Resource busy. */
 #define ERR_INVALID          (-260) /**< Invalid request or argument. */
+#define ERR_BADIMAGE         (-261) /**< Data image is invalid or broken */
 
 #endif
