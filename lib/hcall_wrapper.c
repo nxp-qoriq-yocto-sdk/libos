@@ -89,3 +89,51 @@ int32_t fh_byte_channel_poll(uint32_t handle,uint32_t *rxavail,uint32_t *txavail
 
 	return status;
 }
+
+int32_t fh_vmpic_set_mask(uint32_t intno, uint8_t mask)
+{
+	long status;
+
+	status = hcall_ret0(intno,mask,0,0,0,0,0,0,FH_VMPIC_SET_MASK);
+
+	return status;
+}
+
+int32_t fh_vmpic_set_priority(uint32_t intno, uint8_t prio)
+{
+	long status;
+
+	status = hcall_ret0(intno,prio,0,0,0,0,0,0,FH_VMPIC_SET_PRIORITY);
+
+	return status;
+}
+
+int32_t fh_vmpic_get_priority(uint32_t intno, uint8_t *prio)
+{
+	long status;
+	uint32_t retbuf[1];
+
+	status = hcall_ret1(intno,0,0,0,0,0,0,0,FH_VMPIC_SET_PRIORITY,&retbuf[0]);
+	*prio = retbuf[0];
+	return status;
+}
+
+int32_t fh_vmpic_set_int_config(uint32_t intno, uint8_t config,
+		uint8_t prio, uint8_t destcpu)
+{
+	long status;
+
+	status = hcall_ret0(intno,config,prio,destcpu,0,0,0,0,
+		FH_VMPIC_SET_INT_CONFIG);
+
+	return status;
+}
+
+int32_t fh_vmpic_eoi(uint32_t intno)
+{
+	long status;
+
+	status = hcall_ret0(intno,0,0,0,0,0,0,0,FH_VMPIC_EOI);
+
+	return status;
+}

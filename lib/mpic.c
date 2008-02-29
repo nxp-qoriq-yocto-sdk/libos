@@ -12,6 +12,7 @@
 #include <libos/io.h>
 #include <libos/spr.h>
 #include <libos/8578.h>
+#include <libos/mpic.h>
 
 static inline void mpic_write(uint32_t reg, uint32_t val)
 {
@@ -23,55 +24,116 @@ static inline register_t mpic_read(uint32_t reg)
 	return in32((uint32_t *)(CCSRBAR_VA+MPIC+reg));
 }
 
+/*
+ * Global MPIC initialization routine
+ */
+
 void mpic_init(unsigned long devtree_ptr)
 {
+	int i;
+	unsigned int gcr;
+	vpr_t vpr;
 
-/*
-In addition, the following initialization sequence is recommended:
-1. Write the vector, priority, and polarity values in each interrupt vector/priority register, leaving
-their MSK (mask) bit set.
-	-set all vectors to be the mpic offset
-2. Clear CTPR (CTPR = 0x0000_0000).
-3. Program the MPIC to mixed mode by setting GCR[M].
-4. Clear the MSK bit in the vector/priority registers to be used.
-5. Perform a software loop to clear all pending interrupts:
-  -Load counter with FRR[NIRQ].
-  -While counter > 0, read IACK and write EOI to guarantee all the IPR and ISR bits are cleared.
-6. Set the processor core CTPR values to the desired values.
-*/
+	for (i = 0; i < MPIC_NUM_EXT_SRCS; i++) {
+		mpic_irq_mask(i);
+	}
 
+	for (i = 0; i < MPIC_NUM_INT_SRCS; i++) {
+		mpic_irq_mask(i+MPIC_INT_SRCS_START_OFFSET);
+	}
 
+	/* Set current processor priority to max */
+	mpic_irq_set_ctpr(0xf);
+
+	gcr = mpic_read(GCR);
+	gcr |= GCR_COREINT_DELIVERY_MODE | GCR_MIXED_OPERATING_MODE;
+	mpic_write(GCR, gcr);
+
+	/*
+	 * Initially set all interrupt sources to be directed to
+	 * core 0, also setup interrupt vector and keep interrupts masked
+	 */
+	for (i = 0; i < MPIC_NUM_EXT_SRCS; i++) {
+		mpic_irq_set_destcpu(i, 1);
+		vpr.data = 0;
+		vpr.eivpr.vector = i;
+		vpr.eivpr.msk = 1;
+		vpr.eivpr.polarity = 1;	/* Active High */
+		vpr.eivpr.sense = 1;	/* Level Sensitive */
+		vpr.eivpr.priority = 0;
+		mpic_write(MPIC_IRQ_BASE+(i*IRQ_STRIDE)+IIVPR,vpr.data);
+	}
+
+	for (i = 0; i < MPIC_NUM_INT_SRCS; i++) {
+		mpic_irq_set_destcpu((i+MPIC_INT_SRCS_START_OFFSET), 1);
+		vpr.data = 0;
+		vpr.iivpr.vector = (i+MPIC_INT_SRCS_START_OFFSET);
+		vpr.iivpr.msk = 1;
+		vpr.iivpr.polarity = 1;	/* Active High */
+		vpr.iivpr.priority = 0;
+		mpic_write(MPIC_IRQ_BASE+
+			((i+MPIC_INT_SRCS_START_OFFSET)*IRQ_STRIDE)+IIVPR,
+			vpr.data);
+	}
+
+	/* Set current processor priority to 0 */
+	mpic_irq_set_ctpr(0);
+
+	/*
+	 * Clear "all" pending interrupts on core0
+	 */
+	for (i = 0; i < MPIC_NUM_EXT_SRCS; i++) {
+		mpic_eoi(0);
+		mpic_iack(0);
+	}
+	for (i = 0; i < MPIC_NUM_INT_SRCS; i++) {
+		mpic_eoi(0);
+		mpic_iack(0);
+	}
+}
+
+void mpic_eoi(int core)
+{
+	mpic_write(MPIC_IRQ_BASE+EOI+core*CPU_STRIDE, 0);
+}
+
+uint16_t mpic_iack(int core)
+{
+	uint16_t vector;
+
+	vector = mpic_read(MPIC_IRQ_BASE+IACK+core*CPU_STRIDE);
+	return vector;
 }
 
 void mpic_irq_mask(int irq)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	iivpr.msk = 1; /* mask */
-	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,iivpr.data);
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	vpr.iivpr.msk = 1; /* mask */
+	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,vpr.data);
 }
 
 void mpic_irq_unmask(int irq)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	iivpr.msk = 0; /* unmask */
-	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,iivpr.data);
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	vpr.iivpr.msk = 0; /* unmask */
+	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,vpr.data);
 }
 
 void mpic_irq_set_vector(int irq, uint32_t vector)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	iivpr.vector = vector;
-	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,iivpr.data);
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	vpr.iivpr.vector = vector;
+	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,vpr.data);
 }
 
 uint32_t mpic_irq_get_vector(int irq)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	return iivpr.vector;
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	return vpr.iivpr.vector;
 }
 
 void mpic_irq_set_ctpr(uint8_t priority)
@@ -79,49 +141,48 @@ void mpic_irq_set_ctpr(uint8_t priority)
 	 mpic_write(CTPR,priority&0xF);
 }
 
-uint32_t mpic_irq_get_ctpr(void)
+int32_t mpic_irq_get_ctpr(void)
 {
 	 return mpic_read(CTPR);
 }
 
 void mpic_irq_set_priority(int irq, uint8_t priority)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	iivpr.priority = priority;
-	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,iivpr.data);
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	vpr.iivpr.priority = priority;
+	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,vpr.data);
 }
 
 uint8_t mpic_irq_get_priority(int irq)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	return iivpr.priority;
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	return vpr.iivpr.priority;
 }
 
 void mpic_irq_set_polarity(int irq, uint8_t polarity)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	iivpr.P = polarity;
-	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,iivpr.data);
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	vpr.iivpr.polarity = polarity;
+	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,vpr.data);
 }
 
 uint8_t mpic_irq_get_polarity(int irq)
 {
-	iivpr_t iivpr;
-	iivpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
-	return iivpr.P;
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	return vpr.iivpr.polarity;
 }
 
-static inline void mpic_irq_set_destcpu(int irq, uint8_t destcpu)
+void mpic_irq_set_destcpu(int irq, uint8_t destcpu)
 {
 	uint32_t iidr = 1 << destcpu;
-	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR,iidr);
-	iidr = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIDR);
+	mpic_write(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIDR,iidr);
 }
 
-static inline uint8_t mpic_irq_get_destcpu(int irq)
+uint8_t mpic_irq_get_destcpu(int irq)
 {
 	uint32_t iidr;
 	iidr = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIDR);

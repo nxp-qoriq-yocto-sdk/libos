@@ -11,6 +11,9 @@
 #define IIVPR 0x0
 #define IIDR 0x10
 #define IILR 0x18
+#define EOI 0x200B0
+#define IACK 0x200A0
+#define CPU_STRIDE 0x1000
 
 /* interrupt type-- IILR */
 #define TYPE_NORM	0x0
@@ -23,16 +26,29 @@
 
 typedef union {
 	uint32_t data;
-	struct {
-		uint32_t msk:1;
-		uint32_t A:1;
-		uint32_t reserved1:6;
-		uint32_t P:1;
-		uint32_t reserved2:3;
-		uint32_t priority:4;
-		uint32_t vector:16;
+	union {
+		struct {
+			uint32_t msk:1;
+			uint32_t active:1;
+			uint32_t reserved1:6;
+			uint32_t polarity:1;
+			uint32_t reserved2:3;
+			uint32_t priority:4;
+			uint32_t vector:16;
+		} iivpr;
+
+		struct {
+			uint32_t msk:1;
+			uint32_t active:1;
+			uint32_t reserved1:6;
+			uint32_t polarity:1;
+			uint32_t sense:1;
+			uint32_t reserved2:2;
+			uint32_t priority:4;
+			uint32_t vector:16;
+		} eivpr;
 	};
-} iivpr_t;
+} vpr_t;
 
 typedef union {
 	uint32_t data;

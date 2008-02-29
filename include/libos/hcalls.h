@@ -43,4 +43,15 @@ int32_t fh_byte_channel_receive(uint32_t handle,int32_t maxrecv,uint8_t *buf,int
 
 int32_t fh_byte_channel_poll(uint32_t handle,uint32_t *rxavail,uint32_t *txavail);
 
+int32_t fh_vmpic_set_mask(uint32_t intno, uint8_t mask);
+
+int32_t fh_vmpic_set_priority(uint32_t intno, uint8_t prio);
+
+int32_t fh_vmpic_get_priority(uint32_t intno, uint8_t *prio);
+
+int32_t fh_vmpic_set_int_config(uint32_t intno, uint8_t config,
+		uint8_t prio, uint8_t destcpu);
+
+int32_t fh_vmpic_eoi(uint32_t intno);
+
 #endif
