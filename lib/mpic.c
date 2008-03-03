@@ -54,7 +54,7 @@ void mpic_init(unsigned long devtree_ptr)
 	 * core 0, also setup interrupt vector and keep interrupts masked
 	 */
 	for (i = 0; i < MPIC_NUM_EXT_SRCS; i++) {
-		mpic_irq_set_destcpu(i, 1);
+		mpic_irq_set_destcpu(i, 0);
 		vpr.data = 0;
 		vpr.eivpr.vector = i;
 		vpr.eivpr.msk = 1;
@@ -65,7 +65,7 @@ void mpic_init(unsigned long devtree_ptr)
 	}
 
 	for (i = 0; i < MPIC_NUM_INT_SRCS; i++) {
-		mpic_irq_set_destcpu((i+MPIC_INT_SRCS_START_OFFSET), 1);
+		mpic_irq_set_destcpu((i+MPIC_INT_SRCS_START_OFFSET), 0);
 		vpr.data = 0;
 		vpr.iivpr.vector = (i+MPIC_INT_SRCS_START_OFFSET);
 		vpr.iivpr.msk = 1;
