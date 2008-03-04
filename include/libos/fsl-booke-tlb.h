@@ -95,8 +95,6 @@
 #define SPR_MAS4         628  // MMU Assist Register 4
 #define   MAS4_TLBSELD1      0x10000000
 #define   MAS4_TLBSELD0      0x00000000
-#define   MAS4_TIDSELD_MASK  0x00030000
-#define   MAS4_TIDSELD_SHIFT 16
 #define   MAS4_TSIZED_MASK   0x00000F00
 #define   MAS4_TSIZED_SHIFT  8
 #define   MAS4_X0D           0x00000040
@@ -107,7 +105,7 @@
 #define   MAS4_GD            0x00000002
 #define   MAS4_ED            0x00000001
 
-#define SPR_MAS5         629  // MMU Assist Register 5
+#define SPR_MAS5         339  // MMU Assist Register 5
 #define   MAS5_SGS           0x80000000 // Search GS
 #define   MAS5_SLPID         0x000000ff // Search LPID
 
@@ -120,7 +118,7 @@
 #define   MAS7_RPN           0x0000000f
 #define   MAS7_RESERVED      0xfffffff0
 
-#define SPR_MAS8         631  // MMU Assist Register 8
+#define SPR_MAS8         341  // MMU Assist Register 8
 #define   MAS8_GTS           0x80000000 /* Guest space */
 #define   MAS8_VF            0x40000000 /* Virtualization Fault */
 #define   MAS8_TLPID         0x000000ff

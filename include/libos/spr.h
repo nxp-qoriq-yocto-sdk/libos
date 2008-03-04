@@ -131,12 +131,45 @@ static inline register_t mfmsr(void)
 
 #define SPR_PIR          286  // Processor ID Register
 
+#define SPR_DBSRWR       306  // DBSR Write Register
+
+#define SPR_EHCSR        307  // Embedded Hypervisor Control/Status
+#define   EHCSR_EXTGS      0x80000000 // Guest gets external ints
+#define   EHCSR_DTLBGS     0x40000000 // Guest gets DTLB errors
+#define   EHCSR_ITLBGS     0x20000000 // Guest gets ITLB errors
+#define   EHCSR_DSIGS      0x10000000 // Guest gets DSIs
+#define   EHCSR_ISIGS      0x08000000 // Guest gets ISIs
+#define   EHCSR_DUVD       0x04000000 // Disable Embedded HV Debug
+#define   EHCSR_DGTMI      0x00800000 // Disable guest TLB management insns
+#define   EHCSR_DMIUH      0x00400000 // Disable MAS int updates for hypervisor
+
+#define SPR_MSRP         311  // MSR Protect
+#define   MSRP_UCLEP     0x04000000 // Protect MSR[UCLE]
+#define   MSRP_DEP       0x00000200 // Protect MSR[DE]
+#define   MSRP_PMMP      0x00000040 // Protect MSR[PMM]
+
 #define SPR_TSR          336  //  Timer Status Register
 #define   TSR_DIS          0x08000000 // Decrementer Int Pending
+
+#define SPR_LPIDR        338  // Logical Partition ID
+
 #define SPR_TCR          340  //  Timer Control Register
 #define   TCR_DIE          0x04000000 // Decrementer Int Enable
 #define   TCR_ARE          0x00400000 // Auto-reload enable
 #define   TCR_DIE_SHIFT    26
+
+// Guest SPR General Registers
+#define SPR_GSPRG0       368
+#define SPR_GSPRG1       369
+#define SPR_GSPRG2       370
+#define SPR_GSPRG3       371
+
+#define SPR_GSRR0        378  // Guest SRR0
+#define SPR_GSRR1        379  // Guest SRR1
+#define SPR_GEPR         380  // Guest EPR
+#define SPR_GDEAR        381  // Guest DEAR
+#define SPR_GPIR         382  // Guest PIR
+#define SPR_GESR         383  // Guest ESR
 
 #define IVOR_MASK        0x0000fff0
 #define SPR_IVOR0        400  // Critical Input
@@ -155,16 +188,26 @@ static inline register_t mfmsr(void)
 #define SPR_IVOR13       413  // DTLB Error
 #define SPR_IVOR14       414  // ITLB Error
 #define SPR_IVOR15       415  // Debug
+
+#define SPR_IVOR38       432  // Guest Processor Doorbell
+#define SPR_IVOR39       433  // Guest Processor Doorbell Critical
+#define SPR_IVOR40       434  // Hypervisor System Call
+#define SPR_IVOR41       435  // Hypervisor Privelege
+
+#define SPR_GIVOR2       440  // Guest DSI
+#define SPR_GIVOR3       441  // guest ISI
+#define SPR_GIVOR4       442  // Guest External Input
+#define SPR_GIVOR8       443  // Guest System Call
+#define SPR_GIVOR13      444  // Guest DTLB Error
+#define SPR_GIVOR14      445  // Guest ITLB Error
+#define SPR_GIVPR        447  // Guest IVPR
+
 #define SPR_IVOR32       528  // Altivec/SPE/Embedded FP Unavailable
 #define SPR_IVOR33       529  // Altivec Assist/Embedded FP Data
 #define SPR_IVOR34       530  // Embedded FP Round
 #define SPR_IVOR35       531  // Performance Monitor
 #define SPR_IVOR36       532  // Processor Doorbell
 #define SPR_IVOR37       533  // Processor Doorbell Critical
-#define SPR_IVOR38       534  // Guest Processor Doorbell
-#define SPR_IVOR39       535  // Guest Processor Doorbell Critical
-#define SPR_IVOR40       536  // Hypervisor System Call
-#define SPR_IVOR41       537  // Hypervisor Privelege
 
 #define SPR_MCARU        569  // Machine Check Address Upper
 #define SPR_MCSRR0       570  // Machine Check SRR0
@@ -178,51 +221,20 @@ static inline register_t mfmsr(void)
 
 #define SPR_DSRR0        574  // Debug SRR0
 #define SPR_DSRR1        575  // Debug SRR1
-
-#define SPR_DBSRWR       564  // DBSR Write Register
-#define SPR_GESR         596  // Guest ESR
+#define SPR_DDAM         576  // Debug Data Acquisition Message
 
 // SPR General Registers
 #define SPR_SPRG8        604
 #define SPR_SPRG9        605
 
-#define SPR_LPID         638  // Logical Partition ID
-
 #define SPR_PID1         633 // Process ID Register 1 (e500v1, e500v2)
 #define SPR_PID2         634 // Process ID Register 2 (e500v1, e500v2)
-
-#define SPR_MSRP         639  // MSR Protect
-#define   MSRP_UCLEP     0x04000000 // Protect MSR[UCLE]
-#define   MSRP_DEP       0x00000200 // Protect MSR[DE]
-#define   MSRP_PMMP      0x00000040 // Protect MSR[PMM]
 
 #define SPR_TLB0CFG      688  // TLB 0 Config Register
 #define SPR_TLB1CFG      689  // TLB 1 Config Register
 #define   TLBCFG_ASSOC_MASK  0xff000000 // Associativity of TLB
 #define   TLBCFG_ASSOC_SHIFT 24
 #define   TLBCFG_NENTRY_MASK 0x00000fff // Number of entries in TLB
-
-#define SPR_GEPR         698  // Guest EPR
-#define SPR_GSRR0        699  // Guest SRR0
-#define SPR_GSRR1        700  // Guest SRR1
-
-#define SPR_GPIR         701  // Guest PIR
-
-#define SPR_EHCSR        703  // Embedded Hypervisor Control/Status
-#define   EHCSR_EXTGS      0x80000000 // Guest gets external ints
-#define   EHCSR_DTLBGS     0x40000000 // Guest gets DTLB errors
-#define   EHCSR_ITLBGS     0x20000000 // Guest gets ITLB errors
-#define   EHCSR_DSIGS      0x10000000 // Guest gets DSIs
-#define   EHCSR_ISIGS      0x08000000 // Guest gets ISIs
-#define   EHCSR_DUVD       0x04000000 // Disable Embedded HV Debug
-
-#define SPR_GIVPR        912  // Guest IVPR
-#define SPR_GIVOR2       913  // Guest DSI
-#define SPR_GIVOR3       914  // guest ISI
-#define SPR_GIVOR4       915  // Guest External Input
-#define SPR_GIVOR8       918  // Guest System Call
-#define SPR_GIVOR13      919  // Guest DTLB Error
-#define SPR_GIVOR14      920  // Guest ITLB Error
 
 #define SPR_EPLC         947  // External PID Load Context
 #define SPR_EPSC         948  // External PID Store Context

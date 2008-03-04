@@ -110,12 +110,12 @@
 	mfspr	%r3, SPR_EPLC
 	mfspr	%r4, SPR_EPSC
 	mfspr	%r5, SPR_PID
-	mfspr	%r6, SPR_LPID
+	mfspr	%r6, SPR_LPIDR
 	
 	stw	%r3, FRAME_EPLC(%r1)
 	stw	%r4, FRAME_EPSC(%r1)
 	
-	/* Set the PID, LPID, guest/hypervisor, and user/kernel state for
+	/* Set the PID, LPIDR, guest/hypervisor, and user/kernel state for
 	 * external PID access.  We don't set AS0/AS1 in EPLC, as it
 	 * depends on whether it's a data or instruction access which MSR
 	 * bit we copy from.  However, we shouldn't be storing to
