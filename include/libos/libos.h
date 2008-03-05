@@ -47,6 +47,8 @@ typedef unsigned long register_t;
 void *alloc(unsigned long size, unsigned long align);
 void alloc_init(unsigned long start, unsigned long end);
 
+#define alloc_type(T) alloc(sizeof(T), __alignof__(T))
+
 void *valloc(unsigned long size, unsigned long align);
 void valloc_init(unsigned long start, unsigned long end);
 
