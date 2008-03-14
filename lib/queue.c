@@ -49,7 +49,7 @@ int queue_init(queue_t *q, size_t size)
 
 void queue_destroy(queue_t *q)
 {
-	// free q->buf
+	/* free q->buf */
 	q->buf = NULL;
 }
 

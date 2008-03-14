@@ -1,16 +1,18 @@
-// string and memory functions.
-//
-// This software is copyright (c) 2007 Scott Wood <scott@buserror.net>.
-// 
-// This software is provided 'as-is', without any express or implied warranty.
-// In no event will the authors or contributors be held liable for any damages
-// arising from the use of this software.
-// 
-// Permission is hereby granted to everyone, free of charge, to use, copy,
-// modify, prepare derivative works of, publish, distribute, perform,
-// sublicense, and/or sell copies of the Software, provided that the above
-// copyright notice and disclaimer of warranty be included in all copies or
-// substantial portions of this software.
+/*
+ *  string and memory functions.
+ * 
+ *  This software is copyright (c) 2007 Scott Wood <scott@buserror.net>.
+ *  
+ *  This software is provided 'as-is', without any express or implied warranty.
+ *  In no event will the authors or contributors be held liable for any damages
+ *  arising from the use of this software.
+ *  
+ *  Permission is hereby granted to everyone, free of charge, to use, copy,
+ *  modify, prepare derivative works of, publish, distribute, perform,
+ *  sublicense, and/or sell copies of the Software, provided that the above
+ *  copyright notice and disclaimer of warranty be included in all copies or
+ *  substantial portions of this software.
+ */
 
 #include <stdint.h>
 #include <string.h>

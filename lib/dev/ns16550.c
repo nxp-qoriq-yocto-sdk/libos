@@ -279,7 +279,7 @@ static const chardev_ops ops = {
 chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo)
 {
 	ns16550 *priv;
-//	byte_chan_reg_params_t byte_chan_reg_params;
+//FIXME	byte_chan_reg_params_t byte_chan_reg_params;
 
 	priv = alloc(sizeof(ns16550), __alignof__(ns16550));
 	if (!priv)
@@ -338,19 +338,19 @@ void ns16550_config(uart_param_t param)
 
 	/* Building NS16550_LCR register */
 	switch (param->parity) {
-		case 'n': //Non
+		case 'n': /* Non */
 			tmp = 0;
 			break;
-		case 'o': //Odd
+		case 'o': /* Odd */
 			tmp = NS16550_LCR_PEN;
 			break;
-		case 'e': //Even
+		case 'e': /* Even */
 			tmp = NS16550_LCR_PEN | NS16550_LCR_EPS;
 			break;
-		case 's': //Space
+		case 's': /* Space */
 			tmp = NS16550_LCR_PEN | NS16550_LCR_EPS | NS16550_LCR_SP;
 			break;
-		case 'm': //Mark
+		case 'm': /* Mark */
 			tmp = NS16550_LCR_PEN | NS16550_LCR_SP;
 			break;
 		default:

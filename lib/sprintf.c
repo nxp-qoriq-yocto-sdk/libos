@@ -1,16 +1,18 @@
-// sprintf() and related functions.
-//
-// This software is copyright (c) 2007 Scott Wood <scott@buserror.net>.
-// 
-// This software is provided 'as-is', without any express or implied warranty.
-// In no event will the authors or contributors be held liable for any damages
-// arising from the use of this software.
-// 
-// Permission is hereby granted to everyone, free of charge, to use, copy,
-// modify, prepare derivative works of, publish, distribute, perform,
-// sublicense, and/or sell copies of the Software, provided that the above
-// copyright notice and disclaimer of warranty be included in all copies or
-// substantial portions of this software.
+/*
+ * sprintf() and related functions.
+ *
+ * This software is copyright (c) 2007 Scott Wood <scott@buserror.net>.
+ * 
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors or contributors be held liable for any damages
+ * arising from the use of this software.
+ * 
+ * Permission is hereby granted to everyone, free of charge, to use, copy,
+ * modify, prepare derivative works of, publish, distribute, perform,
+ * sublicense, and/or sell copies of the Software, provided that the above
+ * copyright notice and disclaimer of warranty be included in all copies or
+ * substantial portions of this software.
+ */
 
 #include <stdint.h>
 #include <string.h>
@@ -73,9 +75,10 @@ static void printf_num(char *obuf, size_t *opos, size_t limit,
 	else
 		uval = value;
 	
-	// An explicit precision of 0 suppresses all output if the value
-	// is zero.  Otherwise, the output size is not limited by precision
-	// or field width.
+	/* An explicit precision of 0 suppresses all output if the value
+	 * is zero.  Otherwise, the output size is not limited by precision
+	 * or field width.
+	 */
 	
 	if (uval != 0 || !(flags & has_precision) || precision != 0) do {
 		int ch = uval % radix;
@@ -91,7 +94,7 @@ static void printf_num(char *obuf, size_t *opos, size_t limit,
 	
 	len = 64 - pos;
 
-	// length which counts against fieldwidth but not precision
+	/* length which counts against fieldwidth but not precision */
 	extralen = 0; 
 	
 	if (flags & num_signed) {
@@ -148,7 +151,7 @@ static void printf_num(char *obuf, size_t *opos, size_t limit,
 size_t vsnprintf(char *buf, size_t size,
                  const char *str, va_list args)
 {
-	size_t opos = 0; // position in the output string
+	size_t opos = 0; /* position in the output string */
 	unsigned int flags = 0;
 	int radix = 10;
 	int state = 0;
@@ -172,7 +175,7 @@ size_t vsnprintf(char *buf, size_t size,
 			opos++;
 			break;
 		
-		case 1: // A percent has been seen; read in format characters
+		case 1: /* A percent has been seen; read in format characters */
 			switch (str[pos]) {
 				case '#':
 					flags |= alt_form;
@@ -184,7 +187,7 @@ size_t vsnprintf(char *buf, size_t size,
 						break;
 					}
 					
-					// else fall through
+					/* else fall through */
 				
 				case '1' ... '9':
 					if (flags & has_precision)
@@ -258,24 +261,26 @@ size_t vsnprintf(char *buf, size_t size,
 					flags |= ptrdiff_arg;
 					break;
 				
-				// Note that %z and other such "new" format characters are
-				// basically useless because some GCC coder actually went out
-				// of their way to make the compiler reject C99 format
-				// strings in C++ code, with no way of overriding it that I
-				// can find (the source code comments suggest the checking is
-				// only when using -pedantic, but I wasn't using -pedantic).
-				//
-				// Thus, we have the choice of either avoiding %z and friends
-				// (and possibly needing to insert hackish casts to silence
-				// the compiler's warnings if different architectures define
-				// types like size_t in different ways), or not using the
-				// format warnings at all.
-				//
-				// To mitigate this, 32-bit architectures should define
-				// pointer-sized special types as "long" rather than "int",
-				// so that %lx/%ld can always be used with them.  Fixed-size
-				// 32-bit types should be declared as "int" rather than
-				// "long" for the same reason.
+				/*
+				 * Note that %z and other such "new" format characters are
+				 * basically useless because some GCC coder actually went out
+				 * of their way to make the compiler reject C99 format
+				 * strings in C++ code, with no way of overriding it that I
+				 * can find (the source code comments suggest the checking is
+				 * only when using -pedantic, but I wasn't using -pedantic).
+				 *
+				 * Thus, we have the choice of either avoiding %z and friends
+				 * (and possibly needing to insert hackish casts to silence
+				 * the compiler's warnings if different architectures define
+				 * types like size_t in different ways), or not using the
+				 * format warnings at all.
+				 *
+				 * To mitigate this, 32-bit architectures should define
+				 * pointer-sized special types as "long" rather than "int",
+				 * so that %lx/%ld can always be used with them.  Fixed-size
+				 * 32-bit types should be declared as "int" rather than
+				 * "long" for the same reason.
+				 */
 				
 				case 'z':
 					flags |= size_t_arg;
@@ -309,15 +314,15 @@ size_t vsnprintf(char *buf, size_t size,
 
 				case 'X':
 					flags |= capital_hex;
-					// fall-through
+					/* fall-through */
 
 				case 'x':
 					radix = 18;
-					// fall-through
+					/* fall-through */
 					
 				case 'o':
 					radix -= 2;
-					// fall-through
+					/* fall-through */
 				
 				case 'u': {
 					uint64_t arg;
@@ -397,7 +402,7 @@ size_t vsnprintf(char *buf, size_t size,
 					break;
 				}
 
-				default_case: // label for goto
+				default_case: /* label for goto */
 				default:
 					if (opos < size - 1)
 						buf[opos] = str[pos];
