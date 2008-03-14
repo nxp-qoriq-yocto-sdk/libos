@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 /// Lockless single-producer, single-consumer queue.
-typedef struct queue_t {
+typedef struct queue {
 	uint8_t *buf;
 	size_t head, tail;
 	
@@ -24,7 +24,7 @@ typedef struct queue_t {
 	 * callback for the same queue, only from asynchronous contexts. 
 	 * This function may be called from interrupt context.
 	 */
-	void (*volatile data_avail)(struct queue_t *q);
+	void (*volatile data_avail)(struct queue *q);
 
 	/// Private data for the producer.
 	void *producer;
@@ -38,7 +38,7 @@ typedef struct queue_t {
 	 * callback for the same queue, only from asynchronous contexts. 
 	 * This function may be called from interrupt context.
 	 */
-	void (*volatile space_avail)(struct queue_t *q);
+	void (*volatile space_avail)(struct queue *q);
 
 	/// Private data for the consumer.
 	void *consumer;
@@ -59,7 +59,7 @@ int queue_writechar(queue_t *q, uint8_t c);
 
 static inline void queue_notify_consumer(queue_t *q)
 {
-	void (*callback)(struct queue_t *q) = q->data_avail;
+	void (*callback)(struct queue *q) = q->data_avail;
 	
 	if (callback)
 		callback(q);
@@ -67,7 +67,7 @@ static inline void queue_notify_consumer(queue_t *q)
 
 static inline void queue_notify_producer(queue_t *q)
 {
-	void (*callback)(struct queue_t *q) = q->space_avail;
+	void (*callback)(struct queue *q) = q->space_avail;
 	
 	if (callback)
 		callback(q);

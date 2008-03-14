@@ -60,6 +60,6 @@
 #define NS16550_FCR_RX8    0x80 // RX threshold 8 bytes
 #define NS16550_FCR_RX14   0xc0 // RX threshold 14 bytes
 
-struct chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo);
+struct chardev *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo);
 
 #endif

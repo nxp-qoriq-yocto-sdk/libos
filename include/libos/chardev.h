@@ -5,7 +5,7 @@
 
 #include <libos/queue.h>
 
-struct chardev_t;
+struct chardev;
 
 #define CHARDEV_BLOCKING  0x0001
 
@@ -28,7 +28,7 @@ typedef struct {
 	 * This pointer may be NULL if the device does not support
 	 * polled transmit.  The driver must set @ref chardevrx "dev->rx".
 	 */
-	ssize_t (*tx)(struct chardev_t *dev, const uint8_t *buf,
+	ssize_t (*tx)(struct chardev *dev, const uint8_t *buf,
 	              size_t count, int flags);
 
 	/** Receive data.
@@ -48,7 +48,7 @@ typedef struct {
 	 * This pointer may be NULL if the device does not support
 	 * polled receive.  The driver must set @ref chardevtx "dev->tx".
 	 */
-	ssize_t (*rx)(struct chardev_t *dev, uint8_t *buf, size_t count, int flags);
+	ssize_t (*rx)(struct chardev *dev, uint8_t *buf, size_t count, int flags);
 
 	/** Start or stop interrupt driven operation on a receive queue.
 	 *
@@ -60,7 +60,7 @@ typedef struct {
 	 * This pointer may be NULL if the device does not support
 	 * interrupt driven transmit.  The driver must set @ref chardevtx "dev->tx".
 	 */
-	int (*set_tx_queue)(struct chardev_t *dev, queue_t *q);
+	int (*set_tx_queue)(struct chardev *dev, queue_t *q);
 
 	/** Start or stop interrupt driven operation on a receive queue.
 	 *
@@ -72,11 +72,11 @@ typedef struct {
 	 * This pointer may be NULL if the device does not support
 	 * interrupt driven receive.  The driver must set @ref chardevrx "dev->rx".
 	 */
-	int (*set_rx_queue)(struct chardev_t *dev, queue_t *q);
+	int (*set_rx_queue)(struct chardev *dev, queue_t *q);
 } chardev_ops;
 
 /// Represents a device which can transmit and receive a byte stream.
-typedef struct chardev_t {
+typedef struct chardev {
 	const chardev_ops *ops;
 
 	/// @anchor chardevtx
