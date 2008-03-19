@@ -5,14 +5,16 @@
 /* MPIC defs */
 #define MPIC 0x40000
 #define CTPR 0x0080
+#define EOI  0x00B0
+#define IACK 0x00A0
 #define GCR 0x1020
 #define MPIC_IRQ_BASE 0x10000
 #define IRQ_STRIDE 0x20
 #define IIVPR 0x0
 #define IIDR 0x10
 #define IILR 0x18
-#define EOI 0x200B0
-#define IACK 0x200A0
+#define PER_CPU_EOI 0x200B0
+#define PER_CPU_IACK 0x200A0
 #define CPU_STRIDE 0x1000
 
 /* interrupt type-- IILR */

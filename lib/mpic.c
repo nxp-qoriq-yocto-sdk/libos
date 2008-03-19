@@ -46,7 +46,12 @@ void mpic_init(unsigned long devtree_ptr)
 	mpic_irq_set_ctpr(0xf);
 
 	gcr = mpic_read(GCR);
+
+#if 0	// FIXME : CoreInt mode is currently disabled for simics testing
 	gcr |= GCR_COREINT_DELIVERY_MODE | GCR_MIXED_OPERATING_MODE;
+#endif
+
+	gcr |= GCR_MIXED_OPERATING_MODE;
 	mpic_write(GCR, gcr);
 
 	/*
@@ -94,14 +99,14 @@ void mpic_init(unsigned long devtree_ptr)
 
 void mpic_eoi(int core)
 {
-	mpic_write(MPIC_IRQ_BASE+EOI+core*CPU_STRIDE, 0);
+	mpic_write(EOI, 0);
 }
 
 uint16_t mpic_iack(int core)
 {
 	uint16_t vector;
 
-	vector = mpic_read(MPIC_IRQ_BASE+IACK+core*CPU_STRIDE);
+	vector = mpic_read(IACK);
 	return vector;
 }
 
