@@ -140,6 +140,11 @@
 	mtspr	SPR_EPSC, %r4
 
 1:
+	.if	\savearea == CPU_NORMSAVE
+	mfmsr	%r0
+	oris	%r0, %r0, MSR_CE@h
+	mtmsr	%r0
+	.endif
 #endif
 	mr	%r3, %r1
 	bl	\handler
