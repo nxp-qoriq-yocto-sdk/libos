@@ -60,6 +60,16 @@ int32_t fh_byte_channel_send(uint32_t handle, int32_t count,
 	return status;
 }
 
+int32_t fh_partition_send_dbell(uint32_t handle)
+{
+	long status;
+
+	status = hcall_ret0(handle, 0, 0, 0, 0, 0, 0, 0, FH_PARTITION_SEND_DBELL);
+
+	return status;
+}
+
+
 int32_t fh_byte_channel_receive(uint32_t handle,int32_t maxrecv, uint8_t *buf,int32_t *count)
 {
 	long status;
