@@ -21,7 +21,7 @@
 #define FH_BYTE_CHANNEL_SEND	18
 #define FH_BYTE_CHANNEL_RECEIVE	19
 #define FH_BYTE_CHANNEL_POLL	20
-#define FH_GPIO_GET_ASSIGNED	21
+#define FH_VMPIC_IACK		21
 #define FH_GPIO_GET_CONFIG	22
 #define FH_GPIO_SET_CONFIG	23
 #define FH_GPIO_GET_GPDAT	24
@@ -51,6 +51,8 @@ int32_t fh_vmpic_get_priority(uint32_t intno, uint8_t *prio);
 
 int32_t fh_vmpic_set_int_config(uint32_t intno, uint8_t config,
 		uint8_t prio, uint8_t destcpu);
+
+int32_t fh_vmpic_iack(uint16_t *vector);
 
 int32_t fh_vmpic_eoi(uint32_t intno);
 

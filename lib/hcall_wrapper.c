@@ -129,6 +129,17 @@ int32_t fh_vmpic_set_int_config(uint32_t intno, uint8_t config,
 	return status;
 }
 
+int32_t fh_vmpic_iack(uint16_t *vector)
+{
+	long status;
+	uint32_t retbuf[1];
+
+	status = hcall_ret1(0,0,0,0,0,0,0,0,FH_VMPIC_IACK,&retbuf[0]);
+	*vector = retbuf[0];
+
+	return status;
+}
+
 int32_t fh_vmpic_eoi(uint32_t intno)
 {
 	long status;
