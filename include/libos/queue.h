@@ -6,6 +6,7 @@
 #define LIBOS_QUEUE_H
 
 #include <stdint.h>
+#include <string.h>
 
 /// Lockless single-producer, single-consumer queue.
 typedef struct queue {
@@ -96,6 +97,11 @@ static inline int queue_empty(const queue_t *q)
 static inline int queue_full(const queue_t *q)
 {
 	return queue_wrap(q, q->head + 1) == q->tail;
+}
+
+static inline ssize_t queue_writestr(queue_t *q, const char *str)
+{
+	return queue_write(q, (const uint8_t *)str, strlen(str));
 }
 
 #endif

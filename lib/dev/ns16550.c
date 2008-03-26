@@ -150,17 +150,22 @@ static int ns16550_isr(void *arg)
 			uint8_t data = in8(&priv->reg[NS16550_RBR]);
 			priv->rx_counter++;
 
-			int ret = queue_writechar(priv->cd.rx, data);
-			if (ret < 0)
+			if (priv->cd.rx) {
+				int ret = queue_writechar(priv->cd.rx, data);
+				if (ret < 0)
+					priv->err_counter++; 
+				else
+					rx_notify = 1;
+			} else {
+				/* Should never happen... */
 				priv->err_counter++;
-
-			rx_notify = 1;
+			}
 		}
 	}
 
 	/* Transmitter holding register empty */
 	/* Try to transmit data - if no data available desactivate ISR */
-	if (iir == NS16550_IIR_THREI) {
+	if (iir == NS16550_IIR_THREI && priv->cd.tx) {
 		__ns16550_tx_callback(priv);
 		tx_notify = 1;
 	}
