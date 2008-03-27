@@ -63,7 +63,7 @@
 #endif
 
 	.macro	exception, handler, exc, name, scratch, \
-	        srr0, srr1, stack, savearea, ret
+	        srr0, srr1, stack, savearea, ret, disable
 	.global \name
 	.align	4
 \name:
@@ -149,7 +149,31 @@
 	mr	%r3, %r1
 	bl	\handler
 
+	mfmsr	%r10
+	\disable %r10
+	mtmsr	%r10
+
+#ifdef LIBOS_RET_USER_HOOK
 	LOAD	%r10, FRAME_SRR1(%r1)
+#ifdef HYPERVISOR
+	andis.	%r11, %r10, MSR_GS@h
+	bne+	2f
+#endif
+
+	andi.	%r10, %r10, MSR_PR@l
+	beq-	1f
+	
+2:	lwz	%r10, CPU_RETUSERHOOK(%r2)
+	cmpwi	%r10, 0
+	beq+	1f
+	
+	mr	%r3, %r1
+	bl	LIBOS_RET_USER_HOOK
+1:
+#endif
+
+	LOAD	%r10, FRAME_SRR1(%r1)
+
 #ifdef HYPERVISOR
 	andis.	%r0, %r10, MSR_GS@h
 	beq	2f
@@ -204,36 +228,77 @@
 2:
 	.endm
 
-	.macro	baseexception, exc, name, handler
-	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          basestack CPU_NORMSAVE rfi
+	.macro	basedisable, reg
+	rlwinm	\reg, \reg, 0, ~MSR_EE
 	.endm
 
+	.macro	baseexception, exc, name, handler
+#ifdef TOPAZ
+	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
+	          basestack CPU_NORMSAVE rfi critdisable
+#else
+	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
+	          basestack CPU_NORMSAVE rfi basedisable
+#endif
+	.endm
+
+#ifdef TOPAZ
+	.macro	critstack
+	mfspr	%r1, SPR_SRR1
+	andis.	%r1, %r1, (MSR_GS | MSR_PR)@h
+	beq-	1f
+	
+	.subsection 1
+1:	LOAD	%r1, LONGBYTES*1 + CPU_CRITSAVE(%r2)
+	stwu	%r1, -FRAMELEN(%r1)
+	b	2f
+	.subsection 0
+
+	addi	%r1, %r2, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
+2:
+	.endm
+#else
 	.macro	critstack
 	addi	%r1, %r2, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
+	.endm
+#endif
+
+	.macro	critdisable, reg
+	andis.	\reg, \reg, ~(MSR_CE|MSR_EE)@h
+	andi.	\reg, \reg, ~(MSR_CE|MSR_EE)@l
 	.endm
 
 	.macro	critexception, exc, name, handler
 	exception \handler \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
-	          critstack CPU_CRITSAVE rfci
+	          critstack CPU_CRITSAVE rfci critdisable
 	.endm
 
 	.macro	mcheckstack
 	addi	%r1, %r2, CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
+	.macro	mcdisable, reg
+	andis.	\reg, \reg, ~(MSR_ME|MSR_DE|MSR_CE|MSR_EE)@h
+	andi.	\reg, \reg, ~(MSR_ME|MSR_DE|MSR_CE|MSR_EE)@l
+	.endm
+
 	.macro	machinecheck, exc, name, handler
 	exception \handler \exc \name SPR_SPRG8 SPR_MCSRR0 SPR_MCSRR1 \
-	          mcheckstack CPU_MACHKSAVE rfmci
+	          mcheckstack CPU_MACHKSAVE rfmci mcdisable
 	.endm
 
 	.macro	debugstack
 	addi	%r1, %r2, CPU_DEBUGSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
+	.macro	debugdisable, reg
+	andis.	\reg, \reg, ~(MSR_DE|MSR_CE|MSR_EE)@h
+	andi.	\reg, \reg, ~(MSR_DE|MSR_CE|MSR_EE)@l
+	.endm
+
 	.macro	debugexception, exc, name, handler
 	exception \handler \exc \name SPR_SPRG9 SPR_DSRR0 SPR_DSRR1 \
-	          debugstack CPU_DBGSAVE rfdi
+	          debugstack CPU_DBGSAVE rfdi debugdisable
 	.endm
 
 	.global interrupt_vector_base
