@@ -146,6 +146,11 @@
 	mtmsr	%r0
 	.endif
 #endif
+	
+	/* Terminate backchain */
+	li	%r0, 0
+	STORE	%r0, 0(%r1)
+	
 	mr	%r3, %r1
 	bl	\handler
 
