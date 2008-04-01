@@ -210,15 +210,17 @@ uint8_t mpic_irq_get_inttype(int irq)
  */
 void mpic_reset_core(void)
 {
-	int i;
+	int i, vector;
 
 	for (i = 0; i < 1000; i++) {
 		/* Is this still valid with coreint, or do we need to read EPR? */
-		int vector = mpic_iack();
+		vector = mpic_iack();
 		
 		if (vector == 0xffff)
-			break;
+			return;
 
 		mpic_eoi();
 	}
+	
+	printf("mpic_reset_core(): too many interrupts, vector %x\n", vector);
 }
