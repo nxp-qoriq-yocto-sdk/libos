@@ -70,11 +70,7 @@ secondary_start:
 	LOAD	%r1, CPU_KSTACK(%r3)
 
 	bl	ivor_setup
-
-	mtlr	%r7
-	mr	%r3, %r4
-
-	blrl
+	bl	secondary_init
 
 1:	lis	%r3, 0xffff
 	mtctr	%r3
