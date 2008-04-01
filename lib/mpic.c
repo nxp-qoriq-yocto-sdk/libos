@@ -83,31 +83,17 @@ void mpic_init(unsigned long devtree_ptr)
 
 	/* Set current processor priority to 0 */
 	mpic_irq_set_ctpr(0);
-
-	/*
-	 * Clear "all" pending interrupts on core0
-	 */
-	for (i = 0; i < MPIC_NUM_EXT_SRCS; i++) {
-		mpic_eoi(0);
-		mpic_iack(0);
-	}
-	for (i = 0; i < MPIC_NUM_INT_SRCS; i++) {
-		mpic_eoi(0);
-		mpic_iack(0);
-	}
+	mpic_reset_core();
 }
 
-void mpic_eoi(int core)
+void mpic_eoi(void)
 {
 	mpic_write(EOI, 0);
 }
 
-uint16_t mpic_iack(int core)
+uint16_t mpic_iack(void)
 {
-	uint16_t vector;
-
-	vector = mpic_read(IACK);
-	return vector;
+	return mpic_read(IACK);
 }
 
 void mpic_irq_mask(int irq)
@@ -219,3 +205,20 @@ uint8_t mpic_irq_get_inttype(int irq)
 	return iilr.inttgt;
 }
 
+/** Reset active interrupts on core.
+ * Call this with all interrupts masked to clear any in-service interrupts.
+ */
+void mpic_reset_core(void)
+{
+	int i;
+
+	for (i = 0; i < 1000; i++) {
+		/* Is this still valid with coreint, or do we need to read EPR? */
+		int vector = mpic_iack();
+		
+		if (vector == 0xffff)
+			break;
+
+		mpic_eoi();
+	}
+}

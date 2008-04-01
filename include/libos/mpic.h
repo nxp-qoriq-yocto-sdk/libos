@@ -21,8 +21,9 @@ void mpic_irq_set_inttype(int irq, uint8_t inttype);
 uint8_t mpic_irq_get_inttype(int irq);
 void mpic_irq_set_ctpr(uint8_t priority);
 int32_t mpic_irq_get_ctpr(void);
-void mpic_eoi(int core);
-uint16_t mpic_iack(int core);
+void mpic_eoi(void);
+uint16_t mpic_iack(void);
 void mpic_irq_set_destcpu(int irq, uint8_t destcpu);
+void mpic_reset_core(void);
 
 #endif
