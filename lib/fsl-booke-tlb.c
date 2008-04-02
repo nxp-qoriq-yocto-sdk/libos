@@ -50,11 +50,10 @@ int print_ok;
  * Entry TS is set to either 0 or MAS1_TS based on provided _ts.
  */
 void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
-                    uint32_t tsize, uint32_t mas2flags, uint32_t mas3flags,
-                    unsigned int _tid, unsigned int _ts,
-                    uint32_t mas8)
+                    register_t tsize, register_t mas2flags, register_t mas3flags,
+                    unsigned int _tid, unsigned int _ts, register_t mas8)
 {
-	uint32_t ts, tid;
+	register_t ts, tid;
 
 #if 0
 	if (print_ok)
@@ -91,7 +90,7 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
 
 void tlb1_write_entry(unsigned int idx)
 {
-	uint32_t mas0;
+	register_t mas0;
 
 	//debugf("tlb1_write_entry: s\n");
 

@@ -54,6 +54,7 @@
 #define   MAS1_TSIZE_MASK    0x00000F00
 #define   MAS1_TSIZE_SHIFT   8
 #define   MAS1_GETTID(mas1)  (((mas1) & MAS1_TID_MASK) >> MAS1_TID_SHIFT)
+#define   MAS1_GETTSIZE(mas1)(((mas1) & MAS1_TSIZE_MASK) >> MAS1_TSIZE_SHIFT)
 #define   MAS1_RESERVED      0x0000e0ff
 
 #define SPR_MAS2         626  // MMU Assist Register 2
@@ -151,16 +152,16 @@
 #include <libos/bitops.h>
 
 typedef struct tlb_entry {
-	uint32_t mas1;
-	uint32_t mas2;
-	uint32_t mas3;
-	uint32_t mas7;
-	uint32_t mas8;
+	register_t mas1;
+	register_t mas2;
+	register_t mas3;
+	register_t mas7;
+	register_t mas8;
 } tlb_entry_t;
 
 void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
-                    uint32_t size, uint32_t mas2flags, uint32_t mas3flags,
-                    unsigned int _tid, unsigned int _ts, uint32_t mas8);
+                    register_t size, register_t mas2flags, register_t mas3flags,
+                    unsigned int _tid, unsigned int _ts, register_t mas8);
 void tlb1_write_entry(unsigned int idx);
 
 static inline unsigned int pages_to_tsize(unsigned long epn)
