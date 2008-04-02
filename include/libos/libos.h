@@ -15,7 +15,10 @@
 	for(;;); \
 } while (0)
 
+extern int crashing;
+
 #define BUG() do { \
+	crashing = 1; \
 	printf("Assertion failure at %s:%d\n", __FILE__, __LINE__); \
 	__builtin_trap(); \
 } while (0)

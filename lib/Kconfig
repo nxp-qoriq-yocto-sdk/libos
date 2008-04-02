@@ -9,3 +9,6 @@ config LIBOS_NS16550
 
 config LIBOS_QUEUE
 	bool
+
+config LIBOS_READLINE
+	bool

@@ -4,10 +4,15 @@
 #include <libos/bitops.h>
 #include <libos/console.h>
 #include <libos/chardev.h>
+#include <libos/readline.h>
 
 static chardev_t *console;
 static uint32_t console_lock;
 int crashing;
+
+#ifdef CONFIG_LIBOS_READLINE
+readline_t *rl_console;
+#endif
 
 void console_init(chardev_t *cd)
 {
@@ -31,15 +36,41 @@ static int __putchar(int c)
 int putchar(int c)
 {
 	register_t saved = spin_lock_critsave(&console_lock);
+
+#ifdef CONFIG_LIBOS_READLINE
+	if (rl_console && !crashing)
+		readline_suspend(rl_console);
+#endif
+
 	int ret = __putchar(c);
+
+#ifdef CONFIG_LIBOS_READLINE
+	if (rl_console && !crashing && c == '\n')
+		readline_resume(rl_console);
+#endif
+
 	spin_unlock_critsave(&console_lock, saved);
 	return ret;
 }
 
 static void __puts_len(const char *s, size_t len)
 {
-	while (*s && len--)
+	int last = '\n';
+
+#ifdef CONFIG_LIBOS_READLINE
+	if (rl_console && !crashing)
+		readline_suspend(rl_console);
+#endif
+
+	while (*s && len--) {
+		last = *s;
 		__putchar(*s++);
+	}
+
+#ifdef CONFIG_LIBOS_READLINE
+	if (rl_console && !crashing && last == '\n')
+		readline_resume(rl_console);
+#endif
 }
 
 void puts_len(const char *s, size_t len)
@@ -55,7 +86,7 @@ int puts(const char *s)
 
 	if (console) {
 		__puts_len(s, INT_MAX);
-		console->ops->tx(console, (uint8_t *)"\r\n", 2, CHARDEV_BLOCKING);
+		__puts_len("\r\n", 2);
 	}
 
 	spin_unlock_critsave(&console_lock, saved);
@@ -80,6 +111,7 @@ size_t printf(const char *str, ...)
 		ret = buffer_size;
 	
 	__puts_len(buffer, ret);
+
 	spin_unlock_critsave(&console_lock, saved);
 	return ret;
 }
