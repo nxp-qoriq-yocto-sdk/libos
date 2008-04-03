@@ -50,6 +50,7 @@ typedef struct {
 	int err_counter;
 } ns16550;
 
+#ifdef CONFIG_LIBOS_QUEUE
 /** Transmit consumer callback
  *
  * Transmit as much as possible and activate Tx FIFO empty interrupt.
@@ -189,35 +190,6 @@ static int ns16550_isr(void *arg)
 	return 0;
 }
 
-ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf, size_t count, int flags)
-{
-	ns16550 *priv = to_container(cd, ns16550, cd);
-	size_t ret = 0;
-	int i;
-
-	do {
-		while (!(in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE))
-			if (!(flags & CHARDEV_BLOCKING))
-				return ret;
-
-		unsigned long saved = spin_lock_critsave(&priv->lock);
-
-		if (!(in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE)) {
-			spin_unlock_critsave(&priv->lock, saved);
-			continue;
-		}
-
-		for (i = 0; i < priv->txfifo && ret < count; i++) {
-			priv->tx_counter++;
-			out8(&priv->reg[NS16550_THR], buf[ret++]);
-		}
-
-		spin_unlock_critsave(&priv->lock, saved);
-	} while (ret < count);
-
-	return ret;
-}
-
 static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 {
 	ns16550 *priv = to_container(cd, ns16550, cd);
@@ -264,11 +236,43 @@ static int ns16550_set_rx_queue(chardev_t *cd, queue_t *q)
 	spin_unlock_critsave(&priv->lock, saved);
 	return 0;
 }
+#endif
+
+ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf, size_t count, int flags)
+{
+	ns16550 *priv = to_container(cd, ns16550, cd);
+	size_t ret = 0;
+	int i;
+
+	do {
+		while (!(in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE))
+			if (!(flags & CHARDEV_BLOCKING))
+				return ret;
+
+		unsigned long saved = spin_lock_critsave(&priv->lock);
+
+		if (!(in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE)) {
+			spin_unlock_critsave(&priv->lock, saved);
+			continue;
+		}
+
+		for (i = 0; i < priv->txfifo && ret < count; i++) {
+			priv->tx_counter++;
+			out8(&priv->reg[NS16550_THR], buf[ret++]);
+		}
+
+		spin_unlock_critsave(&priv->lock, saved);
+	} while (ret < count);
+
+	return ret;
+}
 
 static const chardev_ops ops = {
 	.tx = ns16550_tx,
+#ifdef CONFIG_LIBOS_QUEUE
 	.set_tx_queue = ns16550_set_tx_queue,
 	.set_rx_queue = ns16550_set_rx_queue,
+#endif
 };
 
 /** Initialize a ns16550 UART.
@@ -303,7 +307,7 @@ chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo)
 
 	out8(&priv->reg[NS16550_IER], 0);
 
-#ifdef INTERRUPTS
+#if defined(INTERRUPTS) && defined(CONFIG_LIBOS_QUEUE)
 	// FIXME: check return code
 	register_irq_handler(priv->irq, ns16550_isr, priv);
 #endif
