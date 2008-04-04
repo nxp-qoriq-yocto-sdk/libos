@@ -214,6 +214,51 @@ static void dup_line(readline_t *rl)
 	rl->line = rl->newest_line = line;
 }
 
+static void delete_char(readline_t *rl)
+{
+	assert(rl->line->pos <= rl->line->end);
+	if (rl->line->pos == rl->line->end)
+		return;
+
+	assert(rl->width);
+	if (rl->line->next)
+		dup_line(rl);
+
+	memmove(&rl->line->buf[rl->line->pos], &rl->line->buf[rl->line->pos + 1],
+	        rl->line->end - rl->line->pos - 1);
+
+	rl->line->buf[rl->line->end - 1] = ' ';
+	display_to_end(rl);
+	rl->line->end--;
+}
+
+static void backspace(readline_t *rl)
+{
+	if (rl->line->pos == 0)
+		return;
+	
+	assert(rl->line->pos > 0);
+	
+	if (rl->width) {
+		if (rl->line->next)
+			dup_line(rl);
+	
+		if (rl->line->pos != rl->line->end)
+			memmove(&rl->line->buf[rl->line->pos], &rl->line->buf[rl->line->pos + 1],
+			        rl->line->end - rl->line->pos - 1);
+
+		rl->line->buf[rl->line->end - 1] = ' ';
+
+		set_cursor(rl, rl->line->pos - 1);
+		display_to_end(rl);
+	} else {
+		rl->line->pos--;
+		queue_writestr(rl->out, "\b \b");
+	}
+
+	rl->line->end--;
+}
+
 static void readline_rx_callback(queue_t *q)
 {
 	register_t saved = spin_lock_critsave(&rl_lock);
@@ -296,29 +341,7 @@ static void readline_rx_callback(queue_t *q)
 			}
 			
 			case '\b':
-				if (rl->line->pos == 0)
-					break;
-				
-				assert(rl->line->pos > 0);
-				
-				if (rl->width) {
-					if (rl->line->next)
-						dup_line(rl);
-				
-					if (rl->line->pos != rl->line->end)
-						memmove(&rl->line->buf[rl->line->pos], &rl->line->buf[rl->line->pos + 1],
-						        rl->line->end - rl->line->pos - 1);
-
-					rl->line->buf[rl->line->end - 1] = ' ';
-
-					set_cursor(rl, rl->line->pos - 1);
-					display_to_end(rl);
-				} else {
-					rl->line->pos--;
-					queue_writestr(rl->out, "\b \b");
-				}
-
-				rl->line->end--;
+				backspace(rl);
 				break;
 
 			case 1: /* Ctrl-A */
@@ -351,6 +374,15 @@ static void readline_rx_callback(queue_t *q)
 
 				queue_writechar(rl->out, ch);
 				display_to_end(rl);
+				break;
+
+			case 127:
+				/* ANSI DEL is treated as delete on some terminals, and backspace
+				 * on others.  This should probably be configurable in the absence
+				 * of any way to detect the terminal type.
+				 */
+				backspace(rl);
+				break;
 			}
 			
 			break;
@@ -465,22 +497,26 @@ num:
 				break;
 
 			case '~':
-				assert(rl->line->pos <= rl->line->end);
-				if (rl->line->pos == rl->line->end)
+				if (rl->num_idx != 0)
 					break;
 
-				assert(rl->width);
-				if (rl->line->next)
-					dup_line(rl);
+				switch (rl->num[0]) {
+				case 1: /* home */
+					if (rl->width)
+						set_cursor(rl, 0);
+				
+					break;
+				
+				case 3: /* delete */
+					delete_char(rl);
+					break;
 
-				memmove(&rl->line->buf[rl->line->pos], &rl->line->buf[rl->line->pos + 1],
-				        rl->line->end - rl->line->pos - 1);
-
-				rl->line->buf[rl->line->end - 1] = ' ';
-				display_to_end(rl);
-				rl->line->end--;
-
-				break;
+				case 4: /* end */
+					if (rl->width)
+						set_cursor(rl, rl->line->end);
+				
+					break;
+				}
 			}
 
 			rl->state = st_normal;
