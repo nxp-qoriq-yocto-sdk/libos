@@ -25,5 +25,8 @@ void mpic_eoi(void);
 uint16_t mpic_iack(void);
 void mpic_irq_set_destcpu(int irq, uint8_t destcpu);
 void mpic_reset_core(void);
+uint8_t mpic_irq_get_mask(int irq);
+uint8_t mpic_irq_get_activity(int irq);
+uint8_t mpic_irq_get_destcpu(int irq);
 
 #endif

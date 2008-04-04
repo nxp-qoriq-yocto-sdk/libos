@@ -127,6 +127,20 @@ uint32_t mpic_irq_get_vector(int irq)
 	return vpr.iivpr.vector;
 }
 
+uint8_t mpic_irq_get_mask(int irq)
+{
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	return vpr.iivpr.msk;
+}
+
+uint8_t mpic_irq_get_activity(int irq)
+{
+	vpr_t vpr;
+	vpr.data = mpic_read(MPIC_IRQ_BASE+(irq*IRQ_STRIDE)+IIVPR);
+	return vpr.iivpr.active;
+}
+
 void mpic_irq_set_ctpr(uint8_t priority)
 {
 	 mpic_write(CTPR,priority&0xF);
