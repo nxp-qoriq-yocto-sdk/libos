@@ -54,6 +54,7 @@ struct readline {
 	} state;
 
 	int num[2], num_idx, width, suspended;
+	char action_buf[LINE_SIZE];
 };
 
 static uint32_t rl_lock;
@@ -278,8 +279,10 @@ static void readline_rx_callback(queue_t *q)
 				rl->state = st_action;
 				spin_unlock_critsave(&rl->lock, saved);
 				
-				oldline->buf[oldline->end] = 0;
-				if (rl->action(oldline->buf))
+				memcpy(rl->action_buf, oldline->buf, oldline->end);
+				rl->action_buf[oldline->end] = 0;
+				
+				if (rl->action(rl->action_buf))
 					return;
 
 				saved = spin_lock_critsave(&rl->lock);
