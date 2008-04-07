@@ -108,6 +108,27 @@ static void set_cursor(readline_t *rl, int pos)
 	rl->line->pos = pos;
 }
 
+static void display_to_end(readline_t *rl)
+{
+	if (rl->line->end != rl->line->pos) {
+		int pos = rl->line->pos;
+
+		queue_write(rl->out, (uint8_t *)&rl->line->buf[rl->line->pos],
+		            rl->line->end - rl->line->pos);
+
+		/* At least some terminals won't scroll until first
+		 * character of next line is output, which confuses
+		 * our idea of where the cursor is.
+		 */
+		if (column_at(rl, rl->line->end) == 0)
+			queue_writestr(rl->out, " \b");
+		
+		rl->line->pos = rl->line->end;
+		__set_cursor(rl, pos);
+		rl->line->pos = pos;
+	}
+}
+
 static void hide_line(readline_t *rl)
 {
 	int i;
@@ -121,29 +142,16 @@ static void hide_line(readline_t *rl)
 
 static void unhide_line(readline_t *rl)
 {
-	int pos = rl->line->pos;
-
 	queue_writestr(rl->out, rl->prompt);
-	queue_write(rl->out, (uint8_t *)&rl->line->buf, rl->line->end);
-
-	rl->line->pos = rl->line->end;
 	
-	if (pos != rl->line->end) {
-		assert(rl->width);
-		set_cursor(rl, pos);
-	}
-}
-
-static void display_to_end(readline_t *rl)
-{
-	if (rl->line->end != rl->line->pos) {
+	if (rl->width) {
 		int pos = rl->line->pos;
 
-		queue_write(rl->out, (uint8_t *)&rl->line->buf[rl->line->pos], rl->line->end - rl->line->pos);
-		
-		rl->line->pos = rl->line->end;
-		__set_cursor(rl, pos);
-		rl->line->pos = pos;
+		rl->line->pos = 0;
+		display_to_end(rl);
+		set_cursor(rl, pos);
+	} else {
+		queue_write(rl->out, (uint8_t *)&rl->line->buf, rl->line->end);
 	}
 }
 
