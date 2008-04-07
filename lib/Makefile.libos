@@ -8,13 +8,14 @@ LIBOS_STARTUP := head.S
 LIBOS_FSL_BOOKE_TLB := fsl-booke-tlb.c
 LIBOS_EXCEPTION := exceptions.S trap.c
 LIBOS_LIB := sprintf.c string.c alloc.c
-LIBOS_QUEUE := queue.c
-LIBOS_NS16550 := dev/ns16550.c
 LIBOS_CONSOLE := console.c
 LIBOS_HCALL := hcall.S hcall_wrapper.c
 LIBOS_MP := mp.c
 LIBOS_MPIC := mpic.c
-LIBOS_READLINE := readline.c
+
+libos-src-$(CONFIG_LIBOS_QUEUE) += queue.c
+libos-src-$(CONFIG_LIBOS_NS16550) += dev/ns16550.c
+libos-src-$(CONFIG_LIBOS_READLINE) += readline.c
 
 GENASSYM=$(LIBOS_DIR)/genassym.sh
 
