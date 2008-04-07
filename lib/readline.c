@@ -357,8 +357,8 @@ static void readline_rx_callback(queue_t *q)
 				break;
 			
 			case 32 ... 126: /* printable */
-				assert(rl->line->end <= LINE_SIZE);
-				if (rl->line->end == LINE_SIZE)
+				assert(rl->line->end < LINE_SIZE);
+				if (rl->line->end + 1 == LINE_SIZE)
 					break;
 
 				if (rl->line->next)
