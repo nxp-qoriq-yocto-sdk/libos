@@ -47,6 +47,7 @@ struct readline {
 	const char *prompt;
 	queue_t *in, *out;
 	line_t *oldest_line, *newest_line, *line;
+	void *user_ctx;
 	uint32_t lock;
 
 	enum {
@@ -335,7 +336,7 @@ static void readline_rx_callback(queue_t *q)
 				memcpy(rl->action_buf, oldline->buf, oldline->end);
 				rl->action_buf[oldline->end] = 0;
 				
-				if (rl->action(rl->action_buf))
+				if (rl->action(rl->user_ctx, rl->action_buf))
 					return;
 
 				saved = spin_lock_critsave(&rl->lock);
@@ -541,7 +542,8 @@ no_normal:
 }
 
 readline_t *readline_init(queue_t *in, queue_t *out,
-                          const char *prompt, rl_action_t action)
+                          const char *prompt, rl_action_t action,
+                          void *user_ctx)
 {
 	readline_t *rl = alloc_type(readline_t);
 	if (!rl)
@@ -556,6 +558,7 @@ readline_t *readline_init(queue_t *in, queue_t *out,
 
 	rl->prompt = prompt;
 	rl->action = action;
+	rl->user_ctx = user_ctx;
 	
 	rl->line = rl->newest_line = rl->oldest_line = alloc_type(line_t);
 	if (!rl->line)
