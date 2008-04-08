@@ -268,26 +268,11 @@ static void backspace(readline_t *rl)
 	rl->line->end--;
 }
 
-static void readline_rx_callback(queue_t *q)
+static void readline_rx(readline_t *rl)
 {
-	register_t saved = spin_lock_critsave(&rl_lock);
-	readline_t *rl = q->consumer;
 	int ch;
 
-	if (!rl) {
-		spin_unlock_critsave(&rl_lock, saved);
-		return;
-	}
-
-	spin_lock(&rl->lock);
-	spin_unlock(&rl_lock);
-
-	if (rl->state != st_action && rl->suspended) {
-		printf("\n");
-		readline_resume(rl);
-	}
-
-	while ((ch = queue_readchar(q)) >= 0) {
+	while ((ch = queue_readchar(rl->in)) >= 0) {
 		switch (rl->state) {
 		case st_normal:
 			switch (ch) {
@@ -331,15 +316,12 @@ static void readline_rx_callback(queue_t *q)
 				}
 				
 				rl->state = st_action;
-				spin_unlock_critsave(&rl->lock, saved);
 				
 				memcpy(rl->action_buf, oldline->buf, oldline->end);
 				rl->action_buf[oldline->end] = 0;
 				
 				if (rl->action(rl->user_ctx, rl->action_buf))
 					return;
-
-				saved = spin_lock_critsave(&rl->lock);
 
 				rl->state = st_normal;
 				rl->line->pos = 0;
@@ -538,6 +520,24 @@ no_normal:
 	}
 
 	queue_notify_consumer(rl->out);
+}
+
+static void readline_rx_callback(queue_t *q)
+{
+	register_t saved = spin_lock_critsave(&rl_lock);
+	readline_t *rl = q->consumer;
+
+	if (!rl) {
+		spin_unlock_critsave(&rl_lock, saved);
+		return;
+	}
+
+	spin_lock(&rl->lock);
+	spin_unlock(&rl_lock);
+
+	if (!rl->suspended)
+		readline_rx(rl);
+
 	spin_unlock_critsave(&rl->lock, saved);
 }
 
@@ -559,6 +559,7 @@ readline_t *readline_init(queue_t *in, queue_t *out,
 	rl->prompt = prompt;
 	rl->action = action;
 	rl->user_ctx = user_ctx;
+	rl->suspended = 1;
 	
 	rl->line = rl->newest_line = rl->oldest_line = alloc_type(line_t);
 	if (!rl->line)
@@ -577,7 +578,12 @@ readline_t *readline_init(queue_t *in, queue_t *out,
  */
 void readline_suspend(readline_t *rl)
 {
-	register_t saved = spin_lock_critsave(&rl->lock);
+	register_t saved;
+	
+ 	if (spin_lock_held(&rl->lock))
+		return;
+	
+	saved = spin_lock_critsave(&rl->lock);
 	
 	if (!rl->suspended && rl->state != st_action) {
 		if (rl->width)
@@ -595,12 +601,20 @@ void readline_suspend(readline_t *rl)
  */
 void readline_resume(readline_t *rl)
 {
-	register_t saved = spin_lock_critsave(&rl->lock);
+	register_t saved;
+
+ 	if (spin_lock_held(&rl->lock))
+		return;
+	
+	saved = spin_lock_critsave(&rl->lock);
 	
 	if (rl->state != st_action) {
 		unhide_line(rl);
 		queue_notify_consumer(rl->out);
 		rl->suspended = 0;
+		
+		/* Handle any input that occurred while suspended. */
+		readline_rx(rl);
 	}
 
 	spin_unlock_critsave(&rl->lock, saved);
