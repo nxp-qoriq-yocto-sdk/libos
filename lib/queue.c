@@ -29,6 +29,7 @@
 #include <libos/queue.h>
 #include <libos/io.h>
 #include <libos/errors.h>
+#include <libos/bitops.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -153,4 +154,38 @@ int queue_writechar(queue_t *q, uint8_t c)
 	smp_mbar();
 	raw_out32(&q->tail, queue_wrap(q, q->tail + 1));
 	return 0;
+}
+
+size_t qprintf(queue_t *q, const char *str, ...)
+{
+	enum {
+		buffer_size = 4096,
+	};
+
+	static char buffer[buffer_size];
+	static uint32_t lock;
+	size_t i;
+
+	register_t saved = spin_lock_critsave(&lock);
+
+	va_list args;
+	va_start(args, str);
+	size_t ret = vsnprintf(buffer, buffer_size, str, args);
+	va_end(args);
+	
+	if (ret > buffer_size)
+		ret = buffer_size;
+	
+	for (i = 0; i < ret; i++) {
+		/* This is needed if the destination is a serial port.
+		 * Is it safe for all destinations?
+		 */
+		if (buffer[i] == '\n')	
+			queue_writechar(q, '\r');
+			
+		queue_writechar(q, buffer[i]);
+	}
+
+	spin_unlock_critsave(&lock, saved);
+	return ret;
 }
