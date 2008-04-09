@@ -150,13 +150,16 @@ static inline register_t mfmsr(void)
 
 #define SPR_TSR          336  //  Timer Status Register
 #define   TSR_DIS          0x08000000 // Decrementer Int Pending
+#define   TSR_FIS          0x04000000 // Fixed Interval Int Pending
 
 #define SPR_LPIDR        338  // Logical Partition ID
 
 #define SPR_TCR          340  //  Timer Control Register
 #define   TCR_DIE          0x04000000 // Decrementer Int Enable
-#define   TCR_ARE          0x00400000 // Auto-reload enable
 #define   TCR_DIE_SHIFT    26
+#define   TCR_ARE          0x00400000 // Auto-reload enable
+#define   TCR_FIE          0x00800000 // Fixed Interval Int Enable
+#define   TCR_FIE_SHIFT    23
 
 // Guest SPR General Registers
 #define SPR_GSPRG0       368
