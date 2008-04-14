@@ -72,3 +72,8 @@ void start(unsigned long devtree_ptr)
 
 	printf("Hello World\n");
 }
+
+void secondary_init(void)
+{
+	/*  stub for now */
+}

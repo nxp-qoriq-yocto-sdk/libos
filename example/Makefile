@@ -14,7 +14,7 @@ LIBOS_BIN := bin/libos
 LIBOS_CLIENT_H := src/libos-client.h
 
 CC=$(CROSS_COMPILE)gcc
-CC_OPTS=-m32 -Wa,-me500 -Iinclude -I$(LIBFDT_DIR) -I$(LIBOS_INC) -g \
+CC_OPTS=-m32 -Wa,-me500 -Isrc -I$(LIBFDT_DIR) -I$(LIBOS_INC) -g \
         -std=gnu99  -include $(LIBOS_CLIENT_H)
 
 CC_OPTS_C= -Wall \
@@ -44,10 +44,12 @@ all: bin/example.uImage bin/example.map
 
 LIBFDT_objdir := src
 include $(LIBFDT_DIR)/Makefile.libfdt
+CONFIG_LIBOS_QUEUE=y
+CONFIG_LIBOS_NS16550=y
 include $(LIBOS_DIR)/Makefile.libos
 
 LIBOS_SRCS := $(LIBOS_STARTUP) $(LIBOS_FSL_BOOKE_TLB) $(LIBOS_EXCEPTION) \
-              $(LIBOS_LIB) $(LIBOS_NS16550) $(LIBOS_CONSOLE) $(LIBOS_QUEUE)
+              $(LIBOS_LIB) $(LIBOS_CONSOLE) $(libos-src-y)
 SRCS := $(LIBOS_SRCS:%=libos/%) src/init.c \
 
 OBJS := $(basename $(SRCS))
