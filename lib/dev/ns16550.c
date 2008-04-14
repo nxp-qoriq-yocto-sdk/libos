@@ -35,6 +35,8 @@
 #include <libos/io.h>
 #include <libos/bitops.h>
 #include <libos/uart.h>
+#include <libos/interrupts.h>
+#include <libos/errors.h>
 
 // FIXME -- get clock from device tree
 #define get_system_clock() 266
@@ -42,15 +44,15 @@
 typedef struct {
 	chardev_t cd;
 	uint8_t *reg;
+	interrupt_t *irq;
 	uint32_t lock;
-	int irq;
 	int txfifo;
 	int tx_counter;
 	int rx_counter;
 	int err_counter;
 } ns16550;
 
-#ifdef CONFIG_LIBOS_QUEUE
+#if defined(INTERRUPTS) && defined(CONFIG_LIBOS_QUEUE)
 /** Transmit consumer callback
  *
  * Transmit as much as possible and activate Tx FIFO empty interrupt.
@@ -193,8 +195,11 @@ static int ns16550_isr(void *arg)
 static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 {
 	ns16550 *priv = to_container(cd, ns16550, cd);
-	unsigned long saved = spin_lock_critsave(&priv->lock);
 
+	if (!priv->irq)
+		return -ERR_INVALID;
+
+	unsigned long saved = spin_lock_critsave(&priv->lock);
 	cd->tx = q;
 	
 	if (q) {
@@ -222,8 +227,11 @@ static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 static int ns16550_set_rx_queue(chardev_t *cd, queue_t *q)
 {
 	ns16550 *priv = to_container(cd, ns16550, cd);
-	unsigned long saved = spin_lock_critsave(&priv->lock);
 
+	if (!priv->irq)
+		return -ERR_INVALID;
+
+	unsigned long saved = spin_lock_critsave(&priv->lock);
 	cd->rx = q;
 
 	if (q)
@@ -269,7 +277,7 @@ ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf, size_t count, int flags)
 
 static const chardev_ops ops = {
 	.tx = ns16550_tx,
-#ifdef CONFIG_LIBOS_QUEUE
+#if defined(INTERRUPTS) && defined(CONFIG_LIBOS_QUEUE)
 	.set_tx_queue = ns16550_set_tx_queue,
 	.set_rx_queue = ns16550_set_rx_queue,
 #endif
@@ -285,7 +293,8 @@ static const chardev_ops ops = {
  * @param[in] baudclock frequency to be divided to produce baud rate
  * @param[in] txfifo size of the transmit fifo, or 1 to disable.
  */
-chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo)
+chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
+                        int baudclock, int txfifo)
 {
 	ns16550 *priv;
 //FIXME	byte_chan_reg_params_t byte_chan_reg_params;
@@ -296,7 +305,6 @@ chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo)
 
 	priv->cd.ops = &ops;
 	priv->reg = reg;
-	priv->irq = irq;
 	priv->txfifo = txfifo;
 
 	out8(&priv->reg[NS16550_FCR],
@@ -308,8 +316,9 @@ chardev_t *ns16550_init(uint8_t *reg, int irq, int baudclock, int txfifo)
 	out8(&priv->reg[NS16550_IER], 0);
 
 #if defined(INTERRUPTS) && defined(CONFIG_LIBOS_QUEUE)
-	// FIXME: check return code
-	register_irq_handler(priv->irq, ns16550_isr, priv);
+	if (irq && irq->ops->register_irq &&
+		 irq->ops->register_irq(irq, ns16550_isr, priv) == 0)
+		priv->irq = irq;
 #endif
 
 	return &priv->cd;

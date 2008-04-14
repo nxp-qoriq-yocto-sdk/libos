@@ -28,7 +28,7 @@ typedef struct {
 	tlb_entry_t tlb1[TLB1_SIZE];
 	uint8_t *kstack; // Set to stack[KSTACK_SIZE - FRAMELEN];
 	kstack_t debugstack, critstack, mcheckstack;
-	int coreid;
+	int coreid, console_ok;
 #ifdef LIBOS_RET_USER_HOOK
 	int ret_user_hook;
 #endif
