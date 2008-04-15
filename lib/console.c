@@ -14,8 +14,11 @@ int crashing;
 readline_t *rl_console;
 #endif
 
+uint8_t loglevels[NUM_LOGTYPES];
+
 void console_init(chardev_t *cd)
 {
+	memset(loglevels, 4, NUM_LOGTYPES);
 	console = cd;
 }
 
@@ -93,7 +96,7 @@ int puts(const char *s)
 	return 0;
 }
 
-size_t printf(const char *str, ...)
+size_t vprintf(const char *str, va_list args)
 {
 	enum {
 		buffer_size = 4096,
@@ -102,16 +105,24 @@ size_t printf(const char *str, ...)
 	static char buffer[buffer_size];
 	register_t saved = spin_lock_critsave(&console_lock);
 
-	va_list args;
-	va_start(args, str);
 	size_t ret = vsnprintf(buffer, buffer_size, str, args);
-	va_end(args);
-	
 	if (ret > buffer_size)
 		ret = buffer_size;
 	
 	__puts_len(buffer, ret);
 
 	spin_unlock_critsave(&console_lock, saved);
+	return ret;
+}
+
+size_t printf(const char *str, ...)
+{
+	size_t ret;
+	va_list args;
+
+	va_start(args, str);
+	ret = vprintf(str, args);
+	va_end(args);
+
 	return ret;
 }

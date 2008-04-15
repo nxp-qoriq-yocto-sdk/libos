@@ -34,8 +34,6 @@
 #include <libos/percpu.h>
 #include <libos/bitops.h>
 
-int print_ok;
-
 /*
  * Setup entry in a sw tlb1 table, write entry to TLB1 hardware.
  * This routine is used for low level operations on the TLB1,
@@ -55,13 +53,11 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
 {
 	register_t ts, tid;
 
-#if 0
-	if (print_ok)
-		printf("__tlb1_set_entry: s (idx = %d va = 0x%08lx pa = 0x%08llx "
-		       "tsize = 0x%08x mas2flags = 0x%08x mas3flags = 0x%08x "
-		       "_tid = %d _ts = %d mas8 = 0x%08x\n",
-		       idx, va, pa, tsize, mas2flags, mas3flags, _tid, _ts, mas8);
-#endif
+	printlog(LOGTYPE_MMU, LOGLEVEL_DEBUG,
+	         "__tlb1_set_entry: idx = %d va = %#lx pa = %#llx "
+	         "tsize = %#lx mas2flags = %#lx mas3flags = %#lx "
+	         "_tid = %d _ts = %d mas8 = %#lx\n",
+	         idx, va, pa, tsize, mas2flags, mas3flags, _tid, _ts, mas8);
 
 	tid = (_tid <<  MAS1_TID_SHIFT) & MAS1_TID_MASK;
 	ts = (_ts) ? MAS1_TS : 0;
@@ -76,15 +72,12 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
 	cpu->tlb1[idx].mas7 = pa >> 32;
 	cpu->tlb1[idx].mas8 = mas8;
 
-#if 0
-	if (print_ok)
-		printf("__tlb1_set_entry: mas1 = %08x mas2 = %08x mas3 = 0x%08x mas7 = 0x%08x\n",
-		       cpu->tlb1[idx].mas1, cpu->tlb1[idx].mas2, cpu->tlb1[idx].mas3,
-	   	    cpu->tlb1[idx].mas7);
-#endif
+	printlog(LOGTYPE_MMU, LOGLEVEL_DEBUG,
+	         "__tlb1_set_entry: mas1 = %#lx mas2 = %#lx mas3 = 0x%#lx mas7 = 0x%#lx\n",
+	         cpu->tlb1[idx].mas1, cpu->tlb1[idx].mas2, cpu->tlb1[idx].mas3,
+	         cpu->tlb1[idx].mas7);
 
 	tlb1_write_entry(idx);
-	//debugf("__tlb1_set_entry: e\n");
 }
 
 
@@ -92,11 +85,8 @@ void tlb1_write_entry(unsigned int idx)
 {
 	register_t mas0;
 
-	//debugf("tlb1_write_entry: s\n");
-
 	/* Select entry */
 	mas0 = MAS0_TLBSEL(1) | MAS0_ESEL(idx);
-	//debugf("tlb1_write_entry: mas0 = 0x%08x\n", mas0);
 
 	mtspr(SPR_MAS0, mas0);
 	mtspr(SPR_MAS1, cpu->tlb1[idx].mas1);
@@ -107,6 +97,4 @@ void tlb1_write_entry(unsigned int idx)
 	mtspr(SPR_MAS8, cpu->tlb1[idx].mas8);
 #endif
 	asm volatile("isync; tlbwe; isync; msync" : : : "memory");
-
-	//debugf("tlb1_write_entry: e\n");;
 }
