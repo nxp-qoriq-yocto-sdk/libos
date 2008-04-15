@@ -20,6 +20,7 @@ extern int crashing;
 #define LOGTYPE_MISC      0
 #define LOGTYPE_MMU       1
 #define LOGTYPE_IRQ       2
+#define LOGTYPE_MP        3
 
 #define MAX_LOGLEVEL 15
 #define LOGLEVEL_ALWAYS   0
@@ -46,5 +47,4 @@ extern void invalid_logtype(void);
 		printf(fmt, ##args); \
 } while (0)
 		
-	
 #endif
