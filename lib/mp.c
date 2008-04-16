@@ -33,7 +33,8 @@ extern int secondary_start;
 int start_secondary_spin_table(struct boot_spin_table *table, int num,
                                cpu_t *cpu)
 {
-	printf("table %p addr %lx pir %lx\n", table, table->addr_lo, table->pir);
+	printlog(LOGTYPE_MP, LOGLEVEL_DEBUG,
+	         "table %p addr %lx pir %lx\n", table, table->addr_lo, table->pir);
 
 	table->r3_lo = (unsigned long)cpu;
 	table->pir = num;

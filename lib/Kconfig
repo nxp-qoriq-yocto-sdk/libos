@@ -12,3 +12,24 @@ config LIBOS_QUEUE
 
 config LIBOS_READLINE
 	bool
+
+config LIBOS_DEFAULT_LOGLEVEL
+	int "Default console loglevel"
+	default 4
+	range 0 15
+	help
+		This is the default loglevel for all log message types; messages
+		with a greater loglevel will not be displayed by default.  The
+		loglevel for any given log message type can be increased dynamically,
+		up to CONFIG_LIBOS_MAX_BUILD_LOGLEVEL.  Set to 4 for normal-priority
+		messages.
+
+config LIBOS_MAX_BUILD_LOGLEVEL
+	int "Maximum console loglevel to build support for"
+	default 15
+	range LIBOS_DEFAULT_LOGLEVEL 15
+	help
+		Invocations of printlog() with loglevels greater than this
+		will be optimized away, and thus be unavailable for dynamically
+		enabled debug output.  Set to 15 to compile support for all
+		messages.
