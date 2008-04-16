@@ -29,10 +29,6 @@ extern int crashing;
 #define LOGLEVEL_DEBUG    8
 #define LOGLEVEL_VERBOSE 12
 
-#ifndef MAX_BUILD_LOGLEVEL
-#define MAX_BUILD_LOGLEVEL MAX_LOGLEVEL
-#endif
-
 extern uint8_t loglevels[NUM_LOGTYPES];
 extern void invalid_logtype(void);
 
@@ -42,7 +38,7 @@ extern void invalid_logtype(void);
 	if (logtype >= NUM_LOGTYPES || loglevel > MAX_LOGLEVEL) \
 		invalid_logtype(); \
 	\
-	if (loglevel <= MAX_BUILD_LOGLEVEL && \
+	if (loglevel <= CONFIG_LIBOS_MAX_BUILD_LOGLEVEL && \
 	    (loglevel == 0 || loglevels[logtype] >= loglevel)) \
 		printf(fmt, ##args); \
 } while (0)

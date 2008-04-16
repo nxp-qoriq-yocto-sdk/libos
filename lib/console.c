@@ -18,7 +18,7 @@ uint8_t loglevels[NUM_LOGTYPES];
 
 void console_init(chardev_t *cd)
 {
-	memset(loglevels, 4, NUM_LOGTYPES);
+	memset(loglevels, CONFIG_LIBOS_DEFAULT_LOGLEVEL, NUM_LOGTYPES);
 	console = cd;
 }
 
