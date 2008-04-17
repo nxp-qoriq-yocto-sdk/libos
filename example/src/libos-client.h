@@ -5,6 +5,9 @@
 #define HYPERVISOR
 #define BASE_TLB_ENTRY 15
 
+#define CONFIG_LIBOS_MAX_BUILD_LOGLEVEL LOGLEVEL_NORMAL
+#define CONFIG_LIBOS_DEFAULT_LOGLEVEL LOGLEVEL_NORMAL
+
 #ifndef _ASM
 typedef int client_cpu_t;
 #endif
