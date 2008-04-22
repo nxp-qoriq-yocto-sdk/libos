@@ -249,7 +249,7 @@
 
 #ifdef TOPAZ
 	.macro	critstack
-	mfspr	%r1, SPR_SRR1
+	mfspr	%r1, SPR_CSRR1
 	andis.	%r1, %r1, (MSR_GS | MSR_PR)@h
 	beq-	1f
 	
