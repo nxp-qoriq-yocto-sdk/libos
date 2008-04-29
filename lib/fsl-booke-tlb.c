@@ -47,7 +47,7 @@
  * Entry TID is set to _tid which must not exceed 8 bit value.
  * Entry TS is set to either 0 or MAS1_TS based on provided _ts.
  */
-void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
+void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
                     register_t tsize, register_t mas2flags, register_t mas3flags,
                     unsigned int _tid, unsigned int _ts, register_t mas8)
 {

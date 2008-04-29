@@ -44,7 +44,7 @@ extern int crashing;
 
 #define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))  /* to any y */
 
-typedef uint64_t physaddr_t;
+typedef uint64_t phys_addr_t;
 typedef unsigned long register_t;
 
 void *alloc(unsigned long size, unsigned long align);

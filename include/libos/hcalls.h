@@ -40,7 +40,6 @@
 #include <linux/types.h>
 #include <asm/byteorder.h>
 #else
-#define phys_addr_t physaddr_t
 #define be32_to_cpu(x) (x)
 #define cpu_to_be32(x) (x)
 #endif

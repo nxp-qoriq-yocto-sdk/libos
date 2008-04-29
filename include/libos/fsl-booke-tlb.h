@@ -159,7 +159,7 @@ typedef struct tlb_entry {
 	register_t mas8;
 } tlb_entry_t;
 
-void tlb1_set_entry(unsigned int idx, unsigned long va, physaddr_t pa,
+void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
                     register_t size, register_t mas2flags, register_t mas3flags,
                     unsigned int _tid, unsigned int _ts, register_t mas8);
 void tlb1_write_entry(unsigned int idx);
