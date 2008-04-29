@@ -459,7 +459,7 @@ static inline int fh_byte_channel_receive(unsigned int handle,
 {
 	register uintptr_t r11 __asm__("r11") = FH_BYTE_CHANNEL_RECEIVE;
 	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r4 __asm__("r4") = *count;
 	register uintptr_t r5 __asm__("r5");
 	register uintptr_t r6 __asm__("r6");
 	register uintptr_t r7 __asm__("r7");
@@ -468,8 +468,8 @@ static inline int fh_byte_channel_receive(unsigned int handle,
 	uint32_t *p = (uint32_t *) str;
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3),
-		  "=r" (r4), "=r" (r5), "=r" (r6), "=r" (r7), "=r" (r8)
+		: "+r" (r11), "+r" (r3), "+r" (r4),
+		  "=r" (r5), "=r" (r6), "=r" (r7), "=r" (r8)
 		: : SYSCALL_CLOBBERS6
 	);
 
