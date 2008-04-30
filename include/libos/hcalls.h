@@ -45,7 +45,6 @@
 #endif
 
 #define FH_CPU_WHOAMI                   1
-#define FH_SET_PROCESSOR_ID             3
 #define FH_PARTITION_RESTART            5
 #define FH_PARTITION_GET_STATUS         6
 #define FH_PARTITION_START              7
@@ -169,22 +168,18 @@ static inline int fh_partition_restart(unsigned int partition)
  * Returns 0 for success, or an error code.
  */
 static inline int fh_partition_get_status(unsigned int partition,
-	unsigned int *status, unsigned int *num_cpus, unsigned long *mem_size)
+	unsigned int *status)
 {
 	register uintptr_t r11 __asm__("r11") = FH_PARTITION_GET_STATUS;
 	register uintptr_t r3 __asm__("r3") = partition;
 	register uintptr_t r4 __asm__("r4");
-	register uintptr_t r5 __asm__("r5");
-	register uintptr_t r6 __asm__("r6");
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "=r" (r4), "=r" (r5), "=r" (r6)
-		: : SYSCALL_CLOBBERS4
+		: "+r" (r11), "+r" (r3), "=r" (r4)
+		: : SYSCALL_CLOBBERS2
 	);
 
 	*status = r4;
-	*num_cpus = r5;
-	*mem_size = r6;
 
 	return r3;
 }
@@ -195,16 +190,15 @@ static inline int fh_partition_get_status(unsigned int partition,
  * Returns 0 for success, or an error code.
  */
 static inline int fh_partition_start(unsigned int partition,
-	uint32_t entry_point, unsigned long device_tree)
+	uint32_t entry_point)
 {
 	register uintptr_t r11 __asm__("r11") = FH_PARTITION_START;
 	register uintptr_t r3 __asm__("r3") = partition;
 	register uintptr_t r4 __asm__("r4") = entry_point;
-	register uintptr_t r5 __asm__("r5") = device_tree;
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5)
-		: : SYSCALL_CLOBBERS3
+		: "+r" (r11), "+r" (r3), "+r" (r4)
+		: : SYSCALL_CLOBBERS2
 	);
 
 	return r3;
