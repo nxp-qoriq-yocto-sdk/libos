@@ -29,6 +29,7 @@ typedef struct {
 	uint8_t *kstack; // Set to stack[KSTACK_SIZE - FRAMELEN];
 	kstack_t debugstack, critstack, mcheckstack;
 	int coreid, console_ok;
+	int traplevel; /**< Normally 0, 1 if in critical exception context */
 #ifdef LIBOS_RET_USER_HOOK
 	int ret_user_hook;
 #endif

@@ -51,6 +51,7 @@ ASSYM(CPU_DEBUGSTACK, offsetof(cpu_t, debugstack));
 ASSYM(CPU_CRITSTACK, offsetof(cpu_t, critstack));
 ASSYM(CPU_MCHECKSTACK, offsetof(cpu_t, mcheckstack));
 ASSYM(CPU_KSTACK, offsetof(cpu_t, kstack));
+ASSYM(CPU_TRAPLEVEL, offsetof(cpu_t, traplevel));
 
 ASSYM(FRAMELEN, FRAMELEN);
 ASSYM(FRAME_GPREGS, offsetof(trapframe_t, gpregs[0]));
@@ -65,3 +66,4 @@ ASSYM(FRAME_ESR, offsetof(trapframe_t, esr));
 ASSYM(FRAME_EPLC, offsetof(trapframe_t, eplc));
 ASSYM(FRAME_EPSC, offsetof(trapframe_t, epsc));
 ASSYM(FRAME_EXC, offsetof(trapframe_t, exc));
+ASSYM(FRAME_TRAPLEVEL, offsetof(trapframe_t, traplevel));

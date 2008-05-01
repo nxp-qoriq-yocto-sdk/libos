@@ -11,7 +11,7 @@ typedef struct {
 	uint32_t cr, xer;
 	register_t srr0, srr1, dear, esr;
 	uint32_t eplc, epsc;
-	int exc;
+	int exc, traplevel;
 	uint32_t pad[4];
 } trapframe_t;
 

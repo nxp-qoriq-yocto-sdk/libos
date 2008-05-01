@@ -63,7 +63,7 @@
 #endif
 
 	.macro	exception, handler, exc, name, scratch, \
-	        srr0, srr1, stack, savearea, ret, disable
+	        srr0, srr1, stack, savearea, traplevel, ret, disable
 	.global \name
 	.align	4
 \name:
@@ -99,9 +99,18 @@
 	stw	%r8, FRAME_XER(%r1)
 	STORE	%r9, FRAME_SRR0(%r1)
 	STORE	%r10, FRAME_SRR1(%r1)
+
+	lwz	%r3, CPU_TRAPLEVEL(%r2)
 	STORE	%r11, FRAME_DEAR(%r1)
 	STORE	%r12, FRAME_ESR(%r1)
 	stw	%r13, FRAME_EXC(%r1)
+
+	cmplwi	%r3, \traplevel
+	stw	%r3, FRAME_TRAPLEVEL(%r1)
+	bgt-	1f
+	li	%r4, \traplevel
+	stw	%r4, CPU_TRAPLEVEL(%r2)
+1:
 	
 #ifdef HYPERVISOR
 	andis.	%r0, %r10, MSR_GS@h
@@ -197,6 +206,7 @@
 	lwz	%r7, FRAME_CR(%r1)
 	lwz	%r8, FRAME_XER(%r1)
 	LOAD	%r9, FRAME_SRR0(%r1)
+	lwz	%r11, FRAME_TRAPLEVEL(%r1)
 
 	mtlr	%r5
 	mtctr	%r6
@@ -204,6 +214,7 @@
 	mtxer	%r8
 	mtspr	\srr0, %r9
 	mtspr	\srr1, %r10
+	stw	%r11, CPU_TRAPLEVEL(%r2)
 
 	/* fixme for 64-bit */
 	lmw	%r2, LONGBYTES*2 + FRAME_GPREGS(%r1)
@@ -240,18 +251,19 @@
 	.macro	baseexception, exc, name, handler
 #ifdef TOPAZ
 	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          basestack CPU_NORMSAVE rfi critdisable
+	          basestack CPU_NORMSAVE 0 rfi critdisable
 #else
 	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          basestack CPU_NORMSAVE rfi basedisable
+	          basestack CPU_NORMSAVE 0 rfi basedisable
 #endif
 	.endm
 
 #ifdef TOPAZ
+	/* Topaz needs nestable critical interrupts */
 	.macro	critstack
-	mfspr	%r1, SPR_CSRR1
-	andis.	%r1, %r1, (MSR_GS | MSR_PR)@h
-	beq-	1f
+	lwz	%r1, CPU_TRAPLEVEL(%r2)
+	cmpwi	%r1, 0
+	bne-	1f
 	
 	.subsection 1
 1:	LOAD	%r1, LONGBYTES*1 + CPU_CRITSAVE(%r2)
@@ -275,7 +287,7 @@
 
 	.macro	critexception, exc, name, handler
 	exception \handler \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
-	          critstack CPU_CRITSAVE rfci critdisable
+	          critstack CPU_CRITSAVE 1 rfci critdisable
 	.endm
 
 	.macro	mcheckstack
@@ -289,7 +301,7 @@
 
 	.macro	machinecheck, exc, name, handler
 	exception \handler \exc \name SPR_SPRG8 SPR_MCSRR0 SPR_MCSRR1 \
-	          mcheckstack CPU_MACHKSAVE rfmci mcdisable
+	          mcheckstack CPU_MACHKSAVE 2 rfmci mcdisable
 	.endm
 
 	.macro	debugstack
@@ -303,7 +315,7 @@
 
 	.macro	debugexception, exc, name, handler
 	exception \handler \exc \name SPR_SPRG9 SPR_DSRR0 SPR_DSRR1 \
-	          debugstack CPU_DBGSAVE rfdi debugdisable
+	          debugstack CPU_DBGSAVE 3 rfdi debugdisable
 	.endm
 
 	.global interrupt_vector_base
