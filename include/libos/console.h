@@ -6,6 +6,7 @@
 #include <libos/chardev.h>
 
 void console_init(chardev_t *cd);
+void qconsole_init(queue_t *q);
 int putchar(int c);
 int puts(const char *s);
 void puts_len(const char *s, size_t len);

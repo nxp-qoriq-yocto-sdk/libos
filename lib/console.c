@@ -7,6 +7,9 @@
 #include <libos/readline.h>
 
 static chardev_t *console;
+#ifdef CONFIG_LIBOS_QUEUE
+static queue_t *qconsole;
+#endif
 static uint32_t console_lock;
 int crashing;
 
@@ -22,6 +25,14 @@ void console_init(chardev_t *cd)
 	console = cd;
 }
 
+#ifdef CONFIG_LIBOS_QUEUE
+void qconsole_init(queue_t *q)
+{
+	memset(loglevels, CONFIG_LIBOS_DEFAULT_LOGLEVEL, NUM_LOGTYPES);
+	qconsole = q;
+}
+#endif
+
 static int __putchar(int c)
 {
 	uint8_t ch = c;
@@ -32,6 +43,15 @@ static int __putchar(int c)
 
 		console->ops->tx(console, &ch, 1, CHARDEV_BLOCKING);
 	}
+
+#ifdef CONFIG_LIBOS_QUEUE
+	if (qconsole) {
+		if (c == '\n')
+			queue_writechar(qconsole, '\r');
+
+		queue_writechar(qconsole, ch);
+	}
+#endif
 
 	return c;
 }
@@ -46,6 +66,11 @@ int putchar(int c)
 #endif
 
 	int ret = __putchar(c);
+
+#ifdef CONFIG_LIBOS_QUEUE
+	if (qconsole)
+		queue_notify_consumer(qconsole);
+#endif
 
 #ifdef CONFIG_LIBOS_READLINE
 	if (rl_console && !crashing && c == '\n')
@@ -69,6 +94,11 @@ static void __puts_len(const char *s, size_t len)
 		last = *s;
 		__putchar(*s++);
 	}
+
+#ifdef CONFIG_LIBOS_QUEUE
+	if (qconsole)
+		queue_notify_consumer(qconsole);
+#endif
 
 #ifdef CONFIG_LIBOS_READLINE
 	if (rl_console && !crashing && last == '\n')
