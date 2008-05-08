@@ -15,6 +15,7 @@ LIBOS_MPIC := mpic.c
 libos-src-$(CONFIG_LIBOS_QUEUE) += queue.c
 libos-src-$(CONFIG_LIBOS_NS16550) += dev/ns16550.c
 libos-src-$(CONFIG_LIBOS_READLINE) += readline.c
+libos-src-$(CONFIG_LIBOS_MALLOC) += malloc.c
 
 GENASSYM=$(LIBOS_DIR)/genassym.sh
 

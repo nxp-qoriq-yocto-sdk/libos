@@ -1,3 +1,10 @@
+config LIBOS_MALLOC
+	bool
+	help
+		This supplies malloc(), free(), memalign(), and other
+		functions for dynamic memory allocation based on Doug Lea's
+		malloc implementation.
+
 config LIBOS_NS16550
 	bool "NS16550-compatible UART support"
 	help
