@@ -197,7 +197,7 @@ static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 	ns16550 *priv = to_container(cd, ns16550, cd);
 
 	if (!priv->irq)
-		return -ERR_INVALID;
+		return ERR_INVALID;
 
 	unsigned long saved = spin_lock_critsave(&priv->lock);
 	cd->tx = q;
@@ -229,7 +229,7 @@ static int ns16550_set_rx_queue(chardev_t *cd, queue_t *q)
 	ns16550 *priv = to_container(cd, ns16550, cd);
 
 	if (!priv->irq)
-		return -ERR_INVALID;
+		return ERR_INVALID;
 
 	unsigned long saved = spin_lock_critsave(&priv->lock);
 	cd->rx = q;

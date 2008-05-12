@@ -232,7 +232,7 @@ static int mpic_register(interrupt_t *irq, int_handler_t handler,
 {
 	irqaction_t *action = alloc_type(irqaction_t);
 	if (!action)
-		return -ERR_NOMEM;
+		return ERR_NOMEM;
 	
 	action->handler = handler;
 	action->devid = devid;
@@ -303,10 +303,10 @@ static int mpic_config_by_intspec(interrupt_t *irq,
                                   const uint32_t *intspec, int ncells)
 {
 	if (ncells < 2)
-		return -ERR_INVALID;
+		return ERR_INVALID;
 	
 	if (intspec[1] > 3)
-		return -ERR_INVALID;
+		return ERR_INVALID;
 	
 	mpic_irq_set_config(irq, mpic_intspec_to_config[intspec[1]]);
 	return 0;
