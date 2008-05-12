@@ -438,6 +438,33 @@ DEFAULT_MMAP_THRESHOLD       default: 256K
 
 */
 
+/* libos settings */
+#include <stdint.h>
+#include <libos/console.h>
+#include <libos/libos.h>
+#include <libos/bitops.h>
+
+#define MALLOC_FAILURE_ACTION do {} while (0)
+#define ABORT BUG()
+#define HAVE_MMAP 0
+#define HAVE_MREMAP 0
+#define HAVE_MORECORE 0
+#define ABORT_ON_ASSERT_FAILURE 0
+#define LACKS_UNISTD_H
+#define LACKS_FCNTL_H
+#define LACKS_SYS_PARAM_H
+#define LACKS_SYS_MMAN_H
+#define LACKS_STRINGS_H
+#define LACKS_SYS_TYPES_H
+#define LACKS_ERRNO_H
+#define LACKS_STDLIB_H
+#define LACKS_STDIO_H
+#define MSPACES 1
+#define ONLY_MSPACES 1
+#define ONLY_EXTERN 1
+#define USE_LOCKS 1
+#define DEBUG
+
 #ifndef WIN32
 #ifdef _WIN32
 #define WIN32 1
@@ -994,12 +1021,6 @@ void  dlmalloc_stats(void);
 #if MSPACES
 
 /*
-  mspace is an opaque type representing an independent
-  region of space that supports mspace_malloc, etc.
-*/
-typedef void* mspace;
-
-/*
   create_mspace creates and returns a new independent space with the
   given initial capacity, or, if 0, the default granularity size.  It
   returns null if there is no system memory available to create the
@@ -1144,7 +1165,9 @@ int mspace_mallopt(int, int);
 #pragma warning( disable : 4146 ) /* no "unsigned" warnings */
 #endif /* WIN32 */
 
+#ifndef LACKS_STDIO_H
 #include <stdio.h>       /* for printing in malloc_stats */
+#endif
 
 #ifndef LACKS_ERRNO_H
 #include <errno.h>       /* for MALLOC_FAILURE_ACTION */
@@ -1159,9 +1182,12 @@ int mspace_mallopt(int, int);
 #if ABORT_ON_ASSERT_FAILURE
 #define assert(x) if(!(x)) ABORT
 #else /* ABORT_ON_ASSERT_FAILURE */
+#ifndef CONFIG_LIBOS_MALLOC
 #include <assert.h>
+#endif
 #endif /* ABORT_ON_ASSERT_FAILURE */
 #else  /* DEBUG */
+#undef assert
 #define assert(x)
 #endif /* DEBUG */
 #ifndef LACKS_STRING_H
@@ -1388,6 +1414,17 @@ static int win32munmap(void* ptr, size_t size) {
 */
 
 #ifndef WIN32
+
+#ifdef CONFIG_LIBOS_MALLOC
+/* By default use posix locks */
+#define MLOCK_T uint32_t
+#define INITIAL_LOCK(l) do { *(l) = 0; } while (0)
+#define ACQUIRE_LOCK(l) (spin_lock(l), 0)
+#define RELEASE_LOCK(l) spin_unlock(l)
+
+static MLOCK_T magic_init_mutex;
+#else
+
 /* By default use posix locks */
 #include <pthread.h>
 #define MLOCK_T pthread_mutex_t
@@ -1395,11 +1432,13 @@ static int win32munmap(void* ptr, size_t size) {
 #define ACQUIRE_LOCK(l)      pthread_mutex_lock(l)
 #define RELEASE_LOCK(l)      pthread_mutex_unlock(l)
 
+
 #if HAVE_MORECORE
 static MLOCK_T morecore_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif /* HAVE_MORECORE */
 
 static MLOCK_T magic_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 #else /* WIN32 */
 /*
@@ -1694,8 +1733,12 @@ typedef unsigned int flag_t;           /* The type of various bit flag sets */
 #define set_free_with_pinuse(p, s, n)\
   (clear_pinuse(n), set_size_and_pinuse_of_free_chunk(p, s))
 
+#if ONLY_EXTERN
+#define is_mmapped(p) ((void)p, NULL)
+#else
 #define is_mmapped(p)\
   (!((p)->head & PINUSE_BIT) && ((p)->prev_foot & IS_MMAPPED_BIT))
+#endif
 
 /* Get the internal overhead associated with chunk p */
 #define overhead_for(p)\
@@ -2070,6 +2113,7 @@ static msegmentptr segment_holding(mstate m, char* addr) {
 }
 
 /* Return true if segment contains a segment link */
+__attribute__((unused))
 static int has_segment_link(mstate m, msegmentptr ss) {
   msegmentptr sp = &m->seg;
   for (;;) {
@@ -2155,7 +2199,7 @@ static void reset_on_error(mstate m);
 
 /* -------------------------- Debugging setup ---------------------------- */
 
-#if ! DEBUG
+#ifndef DEBUG
 
 #define check_free_chunk(M,P)
 #define check_inuse_chunk(M,P)
@@ -2181,7 +2225,7 @@ static void   do_check_malloced_chunk(mstate m, void* mem, size_t s);
 static void   do_check_tree(mstate m, tchunkptr t);
 static void   do_check_treebin(mstate m, bindex_t i);
 static void   do_check_smallbin(mstate m, bindex_t i);
-static void   do_check_malloc_state(mstate m);
+__attribute__((unused)) static void   do_check_malloc_state(mstate m);
 static int    bin_find(mstate m, mchunkptr x);
 static size_t traverse_and_check(mstate m);
 #endif /* DEBUG */
@@ -2263,14 +2307,8 @@ static size_t traverse_and_check(mstate m);
 
 /* index corresponding to given bit */
 
-#if defined(__GNUC__) && defined(i386)
-#define compute_bit2idx(X, I)\
-{\
-  unsigned int J;\
-  __asm__("bsfl %1,%0\n\t" : "=r" (J) : "rm" (X));\
-  I = (bindex_t)J;\
-}
-
+#if defined(__GNUC__)
+#define compute_bit2idx(X, I) do { I = __builtin_ffs(X) - 1; } while (0)
 #else /* GNUC */
 #if  USE_BUILTIN_FFS
 #define compute_bit2idx(X, I) I = ffs(X)-1
@@ -2349,7 +2387,7 @@ static size_t traverse_and_check(mstate m);
 /* Check if (alleged) mstate m has expected magic field */
 #define ok_magic(M)      ((M)->magic == mparams.magic)
 #else  /* (FOOTERS && !INSECURE) */
-#define ok_magic(M)      (1)
+#define ok_magic(M)      ((void)(M), 1)
 #endif /* (FOOTERS && !INSECURE) */
 
 
@@ -2511,7 +2549,7 @@ static int change_mparam(int param_number, int value) {
   }
 }
 
-#if DEBUG
+#ifdef DEBUG
 /* ------------------------- Debugging Support --------------------------- */
 
 /* Check properties of any chunk, whether free, inuse, mmapped etc  */
@@ -2821,6 +2859,11 @@ static struct mallinfo internal_mallinfo(mstate m) {
 }
 #endif /* !NO_MALLINFO */
 
+#ifdef LACKS_STDIO_H
+static void internal_malloc_stats(mstate m)
+{
+}
+#else
 static void internal_malloc_stats(mstate m) {
   if (!PREACTION(m)) {
     size_t maxfp = 0;
@@ -2852,6 +2895,7 @@ static void internal_malloc_stats(mstate m) {
     POSTACTION(m);
   }
 }
+#endif
 
 /* ----------------------- Operations on smallbins ----------------------- */
 
@@ -3101,6 +3145,7 @@ static void internal_malloc_stats(mstate m) {
 #endif /* MSPACES */
 #endif /* ONLY_MSPACES */
 
+#if !ONLY_EXTERN
 /* -----------------------  Direct-mmapping chunks ----------------------- */
 
 /*
@@ -3174,7 +3219,12 @@ static mchunkptr mmap_resize(mstate m, mchunkptr oldp, size_t nb) {
   }
   return 0;
 }
-
+#else
+static mchunkptr mmap_resize(mstate m, mchunkptr oldp, size_t nb)
+{
+	return 0;
+}
+#endif /* ONLY_EXTERN */
 /* -------------------------- mspace management -------------------------- */
 
 /* Initialize top chunk and its size */
@@ -3221,6 +3271,7 @@ static void reset_on_error(mstate m) {
 }
 #endif /* PROCEED_ON_ERROR */
 
+#if !ONLY_EXTERN
 /* Allocate chunk and prepend remainder with chunk in successor base. */
 static void* prepend_alloc(mstate m, char* newbase, char* oldbase,
                            size_t nb) {
@@ -3262,7 +3313,7 @@ static void* prepend_alloc(mstate m, char* newbase, char* oldbase,
   check_malloced_chunk(m, chunk2mem(p), nb);
   return chunk2mem(p);
 }
-
+#endif /* !ONLY_EXTERN */
 
 /* Add a segment to hold a new noncontiguous region */
 static void add_segment(mstate m, char* tbase, size_t tsize, flag_t mmapped) {
@@ -3318,7 +3369,7 @@ static void add_segment(mstate m, char* tbase, size_t tsize, flag_t mmapped) {
 }
 
 /* -------------------------- System allocation -------------------------- */
-
+#if !ONLY_EXTERN
 /* Get memory from system using MORECORE or MMAP */
 static void* sys_alloc(mstate m, size_t nb) {
   char* tbase = CMFAIL;
@@ -3393,7 +3444,7 @@ static void* sys_alloc(mstate m, size_t nb) {
             if (end != CMFAIL)
               asize += esize;
             else {            /* Can't use; try to release */
-              CALL_MORECORE(-asize);
+              (void)CALL_MORECORE(-asize);
               br = CMFAIL;
             }
           }
@@ -3614,7 +3665,17 @@ static int sys_trim(mstate m, size_t pad) {
 
   return (released != 0)? 1 : 0;
 }
+#else
+static void *sys_alloc(mstate m, size_t nb)
+{
+	return NULL;
+}
 
+static int sys_trim(mstate m, size_t pad)
+{
+	return 0;
+}
+#endif /* ONLY_EXTERN */
 /* ---------------------------- malloc support --------------------------- */
 
 /* allocate a large request from the best fitting chunk in a treebin */
@@ -3995,7 +4056,7 @@ static void** ialloc(mstate m,
     }
   }
 
-#if DEBUG
+#ifdef DEBUG
   if (marray != chunks) {
     /* final element must have exactly exhausted chunk */
     if (element_size != 0) {
@@ -4369,6 +4430,10 @@ static mstate init_user_mstate(char* tbase, size_t tsize) {
   size_t msize = pad_request(sizeof(struct malloc_state));
   mchunkptr mn;
   mchunkptr msp = align_as_chunk(tbase);
+  
+  tsize -= (char *)msp - tbase;
+  tsize &= ~(MALLOC_ALIGNMENT - 1);
+  
   mstate m = (mstate)(chunk2mem(msp));
   memset(m, 0, msize);
   INITIAL_LOCK(&m->mutex);
@@ -4418,10 +4483,28 @@ mspace create_mspace_with_base(void* base, size_t capacity, int locked) {
   return (mspace)m;
 }
 
+void mspace_add_segment(mspace msp, char *base, size_t size)
+{
+	char *aligned = (char *)align_as_chunk(base);
+	mstate ms = (mstate)msp;
+	if (PREACTION(ms))
+		return;
+
+	size -= aligned - base;
+	size &= ~(MALLOC_ALIGNMENT - 1);
+
+	if (aligned < ms->least_addr)
+		ms->least_addr = aligned;
+
+	add_segment(ms, aligned, size, EXTERN_BIT);
+	POSTACTION(ms);
+}
+
 size_t destroy_mspace(mspace msp) {
   size_t freed = 0;
   mstate ms = (mstate)msp;
   if (ok_magic(ms)) {
+#if !ONLY_EXTERN
     msegmentptr sp = &ms->seg;
     while (sp != 0) {
       char* base = sp->base;
@@ -4432,6 +4515,7 @@ size_t destroy_mspace(mspace msp) {
           CALL_MUNMAP(base, size) == 0)
         freed += size;
     }
+#endif
   }
   else {
     USAGE_ERROR_ACTION(ms,ms);

@@ -64,7 +64,7 @@ static inline void spin_lock(uint32_t *ptr)
 
 static inline void spin_unlock(uint32_t *ptr)
 {
-	uint32_t pir = mfspr(SPR_PIR) + 1;
+	__attribute__((unused)) uint32_t pir = mfspr(SPR_PIR) + 1;
 
 	assert(*ptr == pir);
 	asm volatile("mbar 1; stwx %0, 0, %1" : : "r" (0), "r" (ptr) : "memory");

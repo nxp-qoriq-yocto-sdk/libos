@@ -1,8 +1,10 @@
-/*
- * Memory allocation -- currently a simple alloc-and-never-free
- * pointer.
+/**
+ * Memory allocation using a simple alloc-and-never-free pointer.
  *
- * Copyright (C) 2007 Freescale Semiconductor, Inc.
+ * This is used for "remote heap" functionality such as valloc(),
+ * even when dlmalloc is used.
+ */
+/* Copyright (C) 2007-2008 Freescale Semiconductor, Inc.
  * Author: Scott Wood <scottwood@freescale.com>
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -29,24 +31,26 @@
 #include <string.h>
 #include <libos/bitops.h>
 
-extern int _end;
-
 typedef struct {	
-	unsigned long start, end;
+	uintptr_t start, end;
 } allocator;
 
-static allocator heap, virtual;
+#if !defined(CONFIG_LIBOS_MALLOC)
+static allocator heap;
+#endif
+
+static allocator virtual;
 static uint32_t alloc_lock;
 
-static void *__alloc(allocator *a, unsigned long size, unsigned long align)
+static void *__alloc(allocator *a, size_t size, size_t align)
 {
 	register_t saved = spin_lock_critsave(&alloc_lock);
 
-	unsigned long new_start = (a->start + align - 1) & ~(align - 1);
+	uintptr_t new_start = (a->start + align - 1) & ~(align - 1);
 	void *ret = (void *)new_start;
 	new_start += size;
 
-	if (new_start >= a->end || new_start < a->start)
+	if (new_start > a->end || new_start <= a->start)
 		ret = NULL;
 	else
 		a->start = new_start;
@@ -55,29 +59,28 @@ static void *__alloc(allocator *a, unsigned long size, unsigned long align)
 	return ret;
 }
 
-void *alloc(unsigned long size, unsigned long align)
+#if !defined(CONFIG_LIBOS_MALLOC)
+void *simple_alloc(size_t size, size_t align)
 {
-	void *ret = __alloc(&heap, size, align);
-
-	if (ret)
-		memset(ret, 0, size);
-
-	return ret;
+	return __alloc(&heap, size, align);
 }
+#endif
 
 void *valloc(unsigned long size, unsigned long align)
 {
 	return __alloc(&virtual, size, align);
 }
 
-void alloc_init(unsigned long start, unsigned long end)
+#if !defined(CONFIG_LIBOS_MALLOC)
+void simple_alloc_init(void *start, size_t size)
 {
-	heap.start = start;
-	heap.end = end;
+	heap.start = (uintptr_t)start;
+	heap.end = heap.start + size - 1;
 }
+#endif
 
 void valloc_init(unsigned long start, unsigned long end)
 {
-	virtual.start = start;
+	virtual.start = (uintptr_t)start;
 	virtual.end = end;
 }

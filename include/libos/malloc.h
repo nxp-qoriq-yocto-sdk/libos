@@ -25,6 +25,10 @@
 #ifndef MALLOC_280_H
 #define MALLOC_280_H
 
+#define MSPACES 1
+#define ONLY_MSPACES 1
+#define NO_MALLINFO 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -403,6 +407,9 @@ void  dlmalloc_stats();
 */
 typedef void* mspace;
 
+/** Create an mspace, and use it as the default libos allocator */
+mspace malloc_init(void *start, size_t len);
+
 /*
   create_mspace creates and returns a new independent space with the
   given initial capacity, or, if 0, the default granularity size.  It
@@ -434,6 +441,9 @@ size_t destroy_mspace(mspace msp);
   space (if possible) but not the initial base.
 */
 mspace create_mspace_with_base(void* base, size_t capacity, int locked);
+
+/** Add an independent segment of free space to an existing mspace object. */
+void mspace_add_segment(mspace msp, char *base, size_t size);
 
 /*
   mspace_malloc behaves as malloc, but operates within

@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <libos/console.h>
+#include <libos/malloc.h>
 
 #define to_container(memberinstance, containertype, membername) ({ \
 	typeof(memberinstance) _ptr = memberinstance; \
@@ -47,13 +48,31 @@ extern int crashing;
 typedef uint64_t phys_addr_t;
 typedef unsigned long register_t;
 
-void *alloc(unsigned long size, unsigned long align);
-void alloc_init(unsigned long start, unsigned long end);
+void *simple_alloc(size_t size, size_t align);
+void simple_alloc_init(void *start, size_t size);
+
+extern mspace libos_mspace;
+
+static inline void *alloc(unsigned long size, size_t align)
+{
+	void *ret;
+
+#ifdef CONFIG_LIBOS_MALLOC
+	if (__builtin_constant_p(align) && align <= 8)
+		ret = mspace_malloc(libos_mspace, size);
+	else
+		ret = mspace_memalign(libos_mspace, align, size);
+#else
+	ret = simple_alloc(size, align);
+#endif
+
+	memset(ret, 0, size);
+	return ret;
+}
 
 #define alloc_type(T) alloc(sizeof(T), __alignof__(T))
 
 void *valloc(unsigned long size, unsigned long align);
 void valloc_init(unsigned long start, unsigned long end);
-
 
 #endif
