@@ -85,6 +85,8 @@ static inline register_t mfmsr(void)
 
 #define SPR_PID          48   // Process ID Register
 
+#define SPR_DECAR        54   // Decrementer Auto-Reload
+
 #define SPR_CSRR0        58   // Critical SRR0
 #define SPR_CSRR1        59   // Critical SRR1
 #define SPR_DEAR         61   // Data Error Address Register
