@@ -407,8 +407,30 @@ void  dlmalloc_stats();
 */
 typedef void* mspace;
 
-/** Create an mspace, and use it as the default libos allocator */
-mspace malloc_init(void *start, size_t len);
+/** Add a segment of memory to be used by malloc_init().
+ *
+ * To add memory after malloc_init(), use mspace_add_segment().
+ *
+ * @param start[in] first byte of the segment
+ * @param end[in] last byte of the segment
+ */
+void malloc_add_segment(void *start, void *end);
+
+/** Exclude a segment of memory from the current list.
+ *
+ * Any portions of already added segments that overlap the
+ * segment to exclude will be removed.
+ *
+ * @param start[in] first byte of the segment
+ * @param end[in] last byte of the segment
+ */
+void malloc_exclude_segment(void *start, void *end);
+
+/** Create an mspace, and use it as the default libos allocator
+ *
+ * At least one segment must have been added using malloc_add_segment().
+ */
+mspace malloc_init(void);
 
 /*
   create_mspace creates and returns a new independent space with the
