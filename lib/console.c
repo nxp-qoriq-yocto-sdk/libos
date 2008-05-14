@@ -8,7 +8,8 @@
 
 static chardev_t *console;
 #ifdef CONFIG_LIBOS_QUEUE
-static queue_t *qconsole;
+DECLARE_QUEUE(early_console, 4096);
+static queue_t *qconsole = &early_console;
 #endif
 static uint32_t console_lock;
 int crashing;
@@ -17,18 +18,34 @@ int crashing;
 readline_t *rl_console;
 #endif
 
-uint8_t loglevels[NUM_LOGTYPES];
+uint8_t loglevels[NUM_LOGTYPES] = 
+	{ [0 ... NUM_LOGTYPES - 1] = CONFIG_LIBOS_DEFAULT_LOGLEVEL };
 
 void console_init(chardev_t *cd)
 {
-	memset(loglevels, CONFIG_LIBOS_DEFAULT_LOGLEVEL, NUM_LOGTYPES);
+#ifdef CONFIG_LIBOS_QUEUE
+	if (qconsole == &early_console) {
+		assert(early_console.head == 0);
+		
+		cd->ops->tx(cd, early_console.buf,
+		            early_console.tail, CHARDEV_BLOCKING);
+
+		qconsole = NULL;
+	}
+#endif
+
 	console = cd;
 }
 
 #ifdef CONFIG_LIBOS_QUEUE
 void qconsole_init(queue_t *q)
 {
-	memset(loglevels, CONFIG_LIBOS_DEFAULT_LOGLEVEL, NUM_LOGTYPES);
+	if (qconsole == &early_console) {
+		assert(early_console.head == 0);
+		queue_write(q, early_console.buf, early_console.tail);
+		queue_notify_consumer(q);
+	}
+
 	qconsole = q;
 }
 #endif
@@ -117,10 +134,8 @@ int puts(const char *s)
 {
 	register_t saved = spin_lock_critsave(&console_lock);
 
-	if (console) {
-		__puts_len(s, INT_MAX);
-		__puts_len("\r\n", 2);
-	}
+	__puts_len(s, INT_MAX);
+	__puts_len("\r\n", 2);
 
 	spin_unlock_critsave(&console_lock, saved);
 	return 0;
