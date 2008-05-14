@@ -4433,6 +4433,7 @@ static mstate init_user_mstate(char* tbase, size_t tsize) {
   
   tsize -= (char *)msp - tbase;
   tsize &= ~(MALLOC_ALIGNMENT - 1);
+  tbase = (char *)msp;
   
   mstate m = (mstate)(chunk2mem(msp));
   memset(m, 0, msize);
