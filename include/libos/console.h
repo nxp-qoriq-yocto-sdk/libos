@@ -22,6 +22,7 @@ extern int crashing;
 #define LOGTYPE_MMU       1
 #define LOGTYPE_IRQ       2
 #define LOGTYPE_MP        3
+#define LOGTYPE_MALLOC    4
 
 #define MAX_LOGLEVEL 15
 #define LOGLEVEL_ALWAYS   0
@@ -33,14 +34,20 @@ extern int crashing;
 extern uint8_t loglevels[NUM_LOGTYPES];
 extern void invalid_logtype(void);
 
-/* Unfortunately, GCC will not inline a varargs function. */
+/* Unfortunately, GCC will not inline a varargs function.
+ *
+ * The separate > and == comparisons are to shut up the
+ * "comparison is always true" warning with LOGTYPE_ALWAYS.
+ */
 #define printlog(logtype, loglevel, fmt, args...) do { \
 	/* Force a linker error if used improperly. */ \
 	if (logtype >= NUM_LOGTYPES || loglevel > MAX_LOGLEVEL) \
 		invalid_logtype(); \
 	\
-	if (loglevel <= CONFIG_LIBOS_MAX_BUILD_LOGLEVEL && \
-	    (loglevel == 0 || loglevels[logtype] >= loglevel)) \
+	if ((!__builtin_constant_p(loglevel) || \
+	     loglevel <= CONFIG_LIBOS_MAX_BUILD_LOGLEVEL) && \
+	    __builtin_expect(loglevels[logtype] == loglevel || \
+	                     loglevels[logtype] > loglevel, 0)) \
 		printf(fmt, ##args); \
 } while (0)
 		
