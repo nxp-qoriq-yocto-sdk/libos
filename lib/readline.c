@@ -565,8 +565,6 @@ readline_t *readline_init(queue_t *in, queue_t *out,
 	if (!rl->line)
 		return NULL;
 
-	queue_writestr(out, rl->prompt);
-
 	/* Request terminal status, to see if we have an ANSI-capable terminal */
 	queue_writestr(out, "\033[5n");
 	queue_notify_consumer(rl->out);
