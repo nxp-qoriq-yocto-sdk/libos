@@ -21,11 +21,40 @@ void *memcpy(void *dest, const void *src, size_t len)
 {
 	const char *cs = src;
 	char *cd = dest;
+	const long *ls;
+	long *ld;
 	size_t i;
+	const int lowbits = sizeof(long) - 1;
 
-	for (i = 0; i < len; i++)
-		cd[i] = cs[i];
+	if (__builtin_expect((((uintptr_t)dest) & lowbits) !=
+	                     (((uintptr_t)src) & lowbits), 0)) {
+		for (i = 0; i < len; i++)	
+			cd[i] = cs[i];
 
+		return dest;
+	}
+
+	while (len > 0 && (((uintptr_t)cd) & lowbits)) {
+		*cd++ = *cs++;
+		len--;
+	}
+
+	ls = (const long *)cs;
+	ld = (long *)cd;
+
+	while (len > lowbits) {
+		*ld++ = *ls++;
+		len -= sizeof(long);
+	}
+	
+	cs = (const char *)ls;
+	cd = (char *)ld;
+
+	while (len > 0) {
+		*cd++ = *cs++;
+		len--;
+	}
+	
 	return dest;
 }
 
