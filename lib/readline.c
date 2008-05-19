@@ -253,8 +253,9 @@ static void backspace(readline_t *rl)
 			dup_line(rl);
 	
 		if (rl->line->pos != rl->line->end)
-			memmove(&rl->line->buf[rl->line->pos], &rl->line->buf[rl->line->pos + 1],
-			        rl->line->end - rl->line->pos - 1);
+			memmove(&rl->line->buf[rl->line->pos - 1],
+			        &rl->line->buf[rl->line->pos],
+			        rl->line->end - rl->line->pos);
 
 		rl->line->buf[rl->line->end - 1] = ' ';
 
