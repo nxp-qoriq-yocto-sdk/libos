@@ -22,5 +22,8 @@ char *strchr(const char *s, int c);
 size_t sprintf(char *buf, const char *str, ...);
 size_t snprintf(char *buf, size_t size, const char *str, ...);
 size_t vsnprintf(char *buf, size_t size, const char *str, va_list args);
+unsigned long long strtoull(const char *restrict str, char **restrict endptr,
+                            int base);
+long long strtoll(const char *restrict str, char **restrict endptr, int base);
 
 #endif

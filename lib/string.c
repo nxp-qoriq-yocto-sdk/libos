@@ -1,6 +1,30 @@
+/** @file
+ * string and memory functions.
+ */
 /*
- *  string and memory functions.
+ * Copyright (C) 2008 Freescale Semiconductor, Inc.
  * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
+ * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/* 
  *  This software is copyright (c) 2007 Scott Wood <scott@buserror.net>.
  *  
  *  This software is provided 'as-is', without any express or implied warranty.
@@ -16,6 +40,10 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <limits.h>
+
+#include <libos/errors.h>
+#include <libos/percpu.h>
 
 void *memcpy(void *dest, const void *src, size_t len)
 {
@@ -233,4 +261,71 @@ void *memrchr(const void *s, int c, size_t len)
 		return (void *)&cp[len];
 
 	return NULL;
+}
+
+/* NOTE: These functions do not strip initial whitespace. */
+unsigned long long strtoull(const char *restrict str, char **restrict endptr,
+                            int base)
+{
+	unsigned long long ret = 0;
+	int maxnumdigit = base >= 10 ? '9' : base - 1;
+	
+	cpu->errno = ERR_INVALID;
+
+	while (*str) {
+		unsigned long long prev = ret;
+		char c = *str;
+		
+		ret *= base;
+	
+		if (c >= '0' && c <= maxnumdigit)
+			ret += c - '0';
+		else if (c >= 'a' && c < 'a' + base - 10)
+			ret += c - 'a' + 10;
+		else if (c >= 'A' && c < 'A' + base - 10)
+			ret += c - 'A' + 10;
+		else
+			break;
+
+		if (ret < prev) {
+			ret = 0;
+			cpu->errno = ERR_RANGE;
+			break;
+		}
+		
+ 		cpu->errno = 0;
+		str++;
+	}
+
+	if (endptr)
+		*endptr = (char *)str;
+
+	return ret;
+}
+
+long long strtoll(const char *restrict str, char **restrict endptr, int base)
+{
+	long long ret;
+	int neg = 0;
+	
+	if (*str == '-') {
+		neg = 1;
+		str++;
+	}
+
+	ret = strtoull(str, endptr, base);
+	if (cpu->errno)
+		return 0;
+	
+	if (neg) {
+		if ((unsigned long long)ret > ((unsigned long long)LONG_LONG_MAX) + 1)
+			cpu->errno = ERR_RANGE;
+
+		ret = -ret;
+	} else {
+		if ((unsigned long long)ret > LONG_LONG_MAX)
+			cpu->errno = ERR_RANGE;
+	}
+	
+	return ret;
 }

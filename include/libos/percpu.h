@@ -30,6 +30,7 @@ typedef struct {
 	kstack_t debugstack, critstack, mcheckstack;
 	int coreid, console_ok;
 	int traplevel; /**< Normally 0, 1 if in critical exception context */
+	int errno; /**< Used for C/POSIX funcitons that set errno */
 #ifdef LIBOS_RET_USER_HOOK
 	int ret_user_hook;
 #endif
