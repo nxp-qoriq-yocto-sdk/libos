@@ -222,7 +222,7 @@ int strncmp(const char *s1, const char *s2, int n)
 	if (i == n)
 		return 0;
 
-	return *s2 - *s1;
+	return s2[i] - s1[i];
 }
 
 char *strchr(const char *s, int c)
