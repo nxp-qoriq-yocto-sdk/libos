@@ -279,6 +279,12 @@ static inline register_t mfmsr(void)
 #define   L1CSR1_ICFI      0x00000002 // Instruction Cache Flash Invalidate
 #define   L1CSR1_ICE       0x00000001 // Instruction Cache Enable
 
+#define SPR_MMUCSR0      1012 // MMU Control and Status Register 0
+#define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
+#define   MMUCSR_L2TLB1_FI 0x00000002 // Invalidate TLB1
+
+#define SPR_MMUCFG       1015 // MMU Configuration Register
+
 #define SPR_SVR          1023 // System Version Register
 
 #endif
