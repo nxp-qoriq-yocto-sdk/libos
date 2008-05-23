@@ -50,7 +50,10 @@ int queue_init(queue_t *q, size_t size)
 
 void queue_destroy(queue_t *q)
 {
-	/* free q->buf */
+#ifdef CONFIG_LIBOS_MALLOC
+	free(q->buf);
+#endif
+
 	q->buf = NULL;
 }
 
