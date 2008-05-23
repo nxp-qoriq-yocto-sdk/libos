@@ -44,6 +44,8 @@
 #define cpu_to_be32(x) (x)
 #endif
 
+#define FH_API_VERSION 1
+
 #define FH_CPU_WHOAMI                   1
 #define FH_PARTITION_RESTART            5
 #define FH_PARTITION_GET_STATUS         6
