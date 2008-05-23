@@ -299,7 +299,7 @@ chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
 	ns16550 *priv;
 //FIXME	byte_chan_reg_params_t byte_chan_reg_params;
 
-	priv = alloc(sizeof(ns16550), __alignof__(ns16550));
+	priv = alloc_type(ns16550);
 	if (!priv)
 		return NULL;
 
