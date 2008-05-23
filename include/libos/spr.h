@@ -241,6 +241,18 @@ static inline register_t mfmsr(void)
 #define   TLBCFG_ASSOC_SHIFT 24
 #define   TLBCFG_NENTRY_MASK 0x00000fff // Number of entries in TLB
 
+#define SPR_CDCSR0       696  // Core Device Control and Status 0
+#define   CDCSR0_SPE       0
+#define   CDCSR0_MTHREAD   8
+#define   CDCSR0_ALTIVEC   16
+#define   CDCSR0_FPU       24
+#define   CDCSR_AWARE      0x80
+#define   CDCSR_PRESENT    0x40
+#define   CDCSR_GET_STATE(x)   ((x) >> 3) & 7)
+#define   CDCSR_GET_CONTROL(x) ((x) & 7)
+#define   CDCSR_STATE(x)       ((x) << 3) & 7)
+#define   CDCSR_CONTROL(x)     ((x) & 7)
+
 #define SPR_EPLC         947  // External PID Load Context
 #define SPR_EPSC         948  // External PID Store Context
 #define   EPC_EPR          0x80000000 // 1 = user, 0 = kernel
@@ -282,6 +294,10 @@ static inline register_t mfmsr(void)
 #define SPR_MMUCSR0      1012 // MMU Control and Status Register 0
 #define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
 #define   MMUCSR_L2TLB1_FI 0x00000002 // Invalidate TLB1
+
+#define SPR_BUCSR        1013
+#define   BUCSR_BBFI       0x00000200 // Branch Buffer Flash Invalidate
+#define   BUCSR_BPEN       0x00000001 // Branch Prediction Enable
 
 #define SPR_MMUCFG       1015 // MMU Configuration Register
 
