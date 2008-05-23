@@ -124,13 +124,3 @@ mspace malloc_init(void)
 
 	return libos_mspace;
 }
-
-void *malloc(size_t size)
-{
-	return mspace_malloc(libos_mspace, size);
-}
-
-void free(void *ptr)
-{
-	return mspace_free(libos_mspace, ptr);
-}

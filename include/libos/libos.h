@@ -75,4 +75,16 @@ static inline void *alloc(unsigned long size, size_t align)
 void *valloc(unsigned long size, unsigned long align);
 void valloc_init(unsigned long start, unsigned long end);
 
+#ifdef CONFIG_LIBOS_MALLOC
+static inline void *malloc(size_t size)
+{
+	return mspace_malloc(libos_mspace, size);
+}
+
+static inline void free(void *ptr)
+{
+	mspace_free(libos_mspace, ptr);
+}
+#endif
+
 #endif
