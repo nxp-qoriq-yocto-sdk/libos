@@ -1,3 +1,5 @@
+#define LIBOS_MALLOC
+
 /*
   This is a version (aka dlmalloc) of malloc/free/realloc written by
   Doug Lea and released to the public domain, as explained at
@@ -1182,7 +1184,7 @@ int mspace_mallopt(int, int);
 #if ABORT_ON_ASSERT_FAILURE
 #define assert(x) if(!(x)) ABORT
 #else /* ABORT_ON_ASSERT_FAILURE */
-#ifndef CONFIG_LIBOS_MALLOC
+#ifndef LIBOS_MALLOC
 #include <assert.h>
 #endif
 #endif /* ABORT_ON_ASSERT_FAILURE */
@@ -1415,7 +1417,7 @@ static int win32munmap(void* ptr, size_t size) {
 
 #ifndef WIN32
 
-#ifdef CONFIG_LIBOS_MALLOC
+#ifdef LIBOS_MALLOC
 /* By default use posix locks */
 #define MLOCK_T uint32_t
 #define INITIAL_LOCK(l) do { *(l) = 0; } while (0)

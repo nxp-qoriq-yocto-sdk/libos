@@ -40,3 +40,7 @@ config LIBOS_MAX_BUILD_LOGLEVEL
 		will be optimized away, and thus be unavailable for dynamically
 		enabled debug output.  Set to 15 to compile support for all
 		messages.
+
+config LIBOS_PHYS_64BIT
+	bool
+	default y

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo -n "$2: "
+
+egrep -o '[^[:alnum:]_]CONFIG_[[:alnum:]_]*' "$1" | uniq | \
+	awk -- '{ \
+		s = substr($0, 9); \
+		gsub("_", "/", s); \
+		s = tolower(s); \
+		printf "include/config/%s.h ", s; \
+	}'
+
+echo

@@ -19,18 +19,47 @@ libos-src-$(CONFIG_LIBOS_MALLOC) += malloc.c malloc-wrapper.c
 
 GENASSYM=$(LIBOS_DIR)/genassym.sh
 
-$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.c
-	@$(MKDIR) $(@D)
-	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C)  -c -o $@ $<
+ifeq ($(KCONFIG),y)
+KCONFIG_DEPS = $(LIBOS_DIR)/confdep "$(1)" "$$OBJ" >> "$(2)"
 
-$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.S $(LIBOS_BIN)/assym.s
+.PRECIOUS: $(LIBOS_BIN)/include/%.d
+$(LIBOS_BIN)/include/%.d : $(LIBOS_INC)/%.h
 	@$(MKDIR) $(@D)
-	$(CC) -MD $(CC_OPTS) $(CC_OPTS_ASM) -include $(LIBOS_BIN)/assym.s \
-	-include $(LIBOS_CLIENT_H) -c -o $@ $<
+	$(LIBOS_DIR)/confdep "$<" "$<" >> "$@"
 
-$(LIBOS_BIN)/libos_assym.o: $(LIBOS_DIR)/libos_assym.c
+LIBOS_HDRS := $(shell find $(LIBOS_INC) -name '*.h')
+-include $(LIBOS_HDRS:$(LIBOS_INC)/%.h=$(LIBOS_BIN)/include/%.d)
+else
+KCONFIG_DEPS := "true"
+endif
+
+.PRECIOUS: $(LIBOS_BIN)/%.d
+$(LIBOS_BIN)/%.d : $(LIBOS_DIR)/%.c
 	@$(MKDIR) $(@D)
-	$(CC) -MD $(CC_OPTS) -c -o $@ $<
+	OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
+	$(CC) -M $(CC_OPTS) $(CC_OPTS_C) -MF "$@" -MT "$$OBJ" $< && \
+	$(call KCONFIG_DEPS,$<,$@)
+
+$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.c $(LIBOS_BIN)/%.d
+	$(CC) $(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_C)  -c -o $@ $<
+
+$(LIBOS_BIN)/%.d : $(LIBOS_DIR)/%.S $(LIBOS_BIN)/assym.s
+	@$(MKDIR) $(@D)
+	OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
+	$(CC) -M $(CC_OPTS) $(CC_OPTS_ASM) -MF "$@" -MT "$$OBJ" $< && \
+	$(call KCONFIG_DEPS,$<,$@)
+
+$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.S $(LIBOS_BIN)/%.d
+	$(CC) $(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_ASM) -c -o $@ $<
+
+$(LIBOS_BIN)/libos_assym.d: $(LIBOS_DIR)/libos_assym.c
+	@$(MKDIR) $(@D)
+	OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
+	$(CC) -M $(CC_OPTS) $(CC_OPTS_C) -MF "$@" -MT "$$OBJ" $< && \
+	$(call KCONFIG_DEPS,$<,$@)
+
+$(LIBOS_BIN)/libos_assym.o: $(LIBOS_DIR)/libos_assym.c $(LIBOS_BIN)/libos_assym.d
+	$(CC) $(CC_OPTS_NODEP) $(CC_OPTS) -c -o $@ $<
 
 $(LIBOS_BIN)/assym.s: $(LIBOS_BIN)/libos_assym.o
 	@$(MKDIR) $(@D)

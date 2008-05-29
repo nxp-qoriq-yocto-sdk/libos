@@ -258,7 +258,7 @@ static inline int fh_partition_memcpy(unsigned int source, unsigned int target,
 	register uintptr_t r3 __asm__("r3") = source;
 	register uintptr_t r4 __asm__("r4") = target;
 	register uintptr_t r5 __asm__("r5") = (uint32_t) sg_list;
-#ifdef CONFIG_PHYS_64BIT
+#ifdef CONFIG_LIBOS_PHYS_64BIT
 	register uintptr_t r6 __asm__("r6") = sg_list >> 32;
 #else
 	register uintptr_t r6 __asm__("r6") = 0;
