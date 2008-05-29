@@ -40,6 +40,7 @@ typedef struct mpic_interrupt {
 
 static mpic_interrupt_t mpic_irqs[MPIC_NUM_SRCS];
 static uint32_t mpic_lock;
+int mpic_coreint;
 
 static inline void mpic_write(uint32_t reg, uint32_t val)
 {
@@ -345,21 +346,22 @@ interrupt_t *get_mpic_irq(const uint32_t *irqspec, int ncells)
 }
 
 /** Global MPIC initialization routine */
-void mpic_init(unsigned long devtree_ptr)
+void mpic_init(unsigned long devtree_ptr, int coreint)
 {
 	int i;
 	unsigned int gcr;
 	vpr_t vpr;
 	mpic_interrupt_t *mirq;
 
+	mpic_coreint = coreint;
+
 	/* Set current processor priority to max */
 	mpic_irq_set_ctpr(0xf);
 
 	gcr = mpic_read(MPIC_GCR);
 
-#if 0	// FIXME : CoreInt mode is currently disabled for simics testing
-	gcr |= GCR_COREINT_DELIVERY_MODE | GCR_MIXED_OPERATING_MODE;
-#endif
+	if (coreint)
+		gcr |= GCR_COREINT_DELIVERY_MODE | GCR_MIXED_OPERATING_MODE;
 
 	gcr |= GCR_MIXED_OPERATING_MODE;
 	mpic_write(MPIC_GCR, gcr);
