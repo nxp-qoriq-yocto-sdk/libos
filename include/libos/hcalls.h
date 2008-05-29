@@ -54,6 +54,8 @@
 #define FH_PARTITION_MEMCPY             9
 #define FH_VMPIC_SET_INT_CONFIG         10
 #define FH_VMPIC_GET_INT_CONFIG         11
+#define FH_DMA_ENABLE                   12
+#define FH_DMA_DISABLE                  13
 #define FH_VMPIC_SET_MASK               14
 #define FH_VMPIC_GET_MASK               15
 #define FH_VMPIC_GET_ACTIVITY           16
@@ -703,6 +705,32 @@ static inline int fh_partition_send_dbell(unsigned int partition)
 {
 	register uintptr_t r11 __asm__("r11") = FH_PARTITION_SEND_DBELL;
 	register uintptr_t r3 __asm__("r3") = partition;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3)
+		: : SYSCALL_CLOBBERS1
+	);
+
+	return r3;
+}
+
+static inline int fh_dma_enable(unsigned int liodn)
+{
+	register uintptr_t r11 __asm__("r11") = FH_DMA_ENABLE;
+	register uintptr_t r3 __asm__("r3") = liodn;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3)
+		: : SYSCALL_CLOBBERS1
+	);
+
+	return r3;
+}
+
+static inline int fh_dma_disable(unsigned int liodn)
+{
+	register uintptr_t r11 __asm__("r11") = FH_DMA_DISABLE;
+	register uintptr_t r3 __asm__("r3") = liodn;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)

@@ -41,6 +41,11 @@ config LIBOS_MAX_BUILD_LOGLEVEL
 		enabled debug output.  Set to 15 to compile support for all
 		messages.
 
+config LIBOS_PAMU
+	bool
+	help
+		Provides support for Peripheral Access Management Unit.
+
 config LIBOS_PHYS_64BIT
 	bool
 	default y
