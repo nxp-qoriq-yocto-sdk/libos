@@ -253,6 +253,8 @@ static inline register_t mfmsr(void)
 #define   CDCSR_STATE(x)       ((x) << 3) & 7)
 #define   CDCSR_CONTROL(x)     ((x) & 7)
 
+#define SPR_EPR          702  // External Proxy Register
+
 #define SPR_EPLC         947  // External PID Load Context
 #define SPR_EPSC         948  // External PID Store Context
 #define   EPC_EPR          0x80000000 // 1 = user, 0 = kernel
