@@ -31,7 +31,6 @@
 #include <libos/errors.h>
 #include <libos/bitops.h>
 
-#include <stdint.h>
 #include <string.h>
 
 

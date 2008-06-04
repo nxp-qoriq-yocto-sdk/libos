@@ -12,11 +12,6 @@ typedef short               int16_t;
 typedef int                 int32_t;
 typedef long long           int64_t;
 
-#ifndef _SSIZE_T
-#define _SSIZE_T
-typedef long ssize_t;
-#endif
-
 #ifndef _INTPTR_T
 #define _INTPTR_T
 typedef long intptr_t;

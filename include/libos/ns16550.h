@@ -6,6 +6,8 @@
 #ifndef NS16550_H
 #define NS16550_H
 
+#include <stdint.h>
+
 #define NS16550_RBR  0x00 // receiver buffer register
 #define NS16550_THR  0x00 // transmitter holding register
 #define NS16550_DLB  0x00 // divisor least significant byte register

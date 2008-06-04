@@ -2,7 +2,7 @@
 #define LIBOS_H
 
 #include <stddef.h>
-#include <stdint.h>
+#include <libos/types.h>
 #include <libos/console.h>
 #include <libos/malloc.h>
 

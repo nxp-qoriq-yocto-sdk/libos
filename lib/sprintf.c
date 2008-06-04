@@ -14,7 +14,7 @@
  * substantial portions of this software.
  */
 
-#include <stdint.h>
+#include <libos/types.h>
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>

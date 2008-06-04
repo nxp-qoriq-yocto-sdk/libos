@@ -5,7 +5,7 @@
 #ifndef LIBOS_QUEUE_H
 #define LIBOS_QUEUE_H
 
-#include <stdint.h>
+#include <libos/types.h>
 #include <string.h>
 
 /// Lockless single-producer, single-consumer queue.
