@@ -30,7 +30,7 @@
  */
 
 #include <libos/fsl-booke-tlb.h>
-#include <libos/spr.h>
+#include <libos/core-regs.h>
 #include <libos/percpu.h>
 #include <libos/bitops.h>
 

@@ -4,7 +4,7 @@
  *
  */
 
-#include <libos/spr.h>
+#include <libos/core-regs.h>
 #include <libos/fsl-booke-tlb.h>
 
 #if 1

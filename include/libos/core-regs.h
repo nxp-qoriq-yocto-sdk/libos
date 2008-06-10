@@ -1,43 +1,5 @@
-#ifndef LIBOS_SPR_H
-#define LIBOS_SPR_H
-
-#ifndef _ASM
-#include <libos/libos.h>
-#include <stdint.h>
-
-static inline void mtspr(int reg, register_t val)
-{
-	asm volatile("mtspr %0, %1" : : "i" (reg), "r" (val) : "memory");
-}
-
-static inline register_t mfspr(int reg)
-{
-	register_t ret;
-	asm volatile("mfspr %0, %1" : "=r" (ret) : "i" (reg) : "memory");
-	return ret;
-}
-
-// Use this version when the compiler may combine multiple calls.
-static inline register_t mfspr_nonvolatile(int reg)
-{
-	register_t ret;
-	asm("mfspr %0, %1" : "=r" (ret) : "i" (reg));
-	return ret;
-}
-
-static inline void mtmsr(register_t val)
-{
-	asm volatile("mtmsr %0" : : "r" (val) : "memory");
-}
-
-static inline register_t mfmsr(void)
-{
-	register_t ret;
-	asm volatile("mfmsr %0" : "=r" (ret) :  : "memory");
-	return ret;
-}
-
-#endif
+#ifndef LIBOS_CORE_REGS_H
+#define LIBOS_CORE_REGS_H
 
 // FIXME: Separate out APUs and other target-specific definitions
 

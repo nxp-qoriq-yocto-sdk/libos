@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libos/spr.h> 
+#include <libos/core-regs.h>
 #include <libos/percpu.h>
 #include <libos/trap_booke.h>
 

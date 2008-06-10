@@ -2,7 +2,7 @@
 #define LIBOS_BITOPS_H
 
 #include <libos/libos.h>
-#include <libos/spr.h>
+#include <libos/core-regs.h>
 #include <libos/io.h>
 
 // Returns non-zero if the operation succeeded.

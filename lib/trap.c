@@ -3,7 +3,8 @@
 #include <libos/trap_booke.h>
 #include <libos/trapframe.h>
 #include <libos/console.h>
-#include <libos/spr.h>
+#include <libos/core-regs.h>
+#include <libos/io.h>
 
 struct powerpc_exception {
 	int vector;
