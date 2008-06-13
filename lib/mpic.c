@@ -216,7 +216,7 @@ void mpic_reset_core(void)
 	mpic_irq_set_ctpr(0);
 
 	for (i = 0; i < 1000; i++) {
-		/* Is this still valid with coreint, or do we need to read EPR? */
+		/* FIXME: Is this still valid with coreint, or do we need to read EPR? */
 		vector = mpic_iack();
 		
 		if (vector == 0xffff)
