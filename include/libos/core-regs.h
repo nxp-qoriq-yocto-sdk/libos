@@ -38,6 +38,7 @@
 // MOVE
 #define MSR_HVPRIV       (MSR_GS | MSR_UCLE | MSR_DE | MSR_WE | MSR_PMM)
 
+#define SPR_XER          1    // Integer Exception Register
 #define SPR_LR           8    // Link Register
 #define SPR_CTR          9    // Count Register
 #define SPR_DEC          22   // Decrementer
@@ -81,6 +82,13 @@
 #define SPR_TBU          269  // Timebase Upper
 
 // SPR General Registers
+#define SPR_USPRG0       256
+#define SPR_USPRG3       259
+#define SPR_USPRG4       260
+#define SPR_USPRG5       261
+#define SPR_USPRG6       262
+#define SPR_USPRG7       263
+
 #define SPR_SPRG0        272
 #define SPR_SPRG1        273
 #define SPR_SPRG2        274
@@ -94,6 +102,7 @@
 #define SPR_TBWU         285  // Timebase Upper for Writing
 
 #define SPR_PIR          286  // Processor ID Register
+#define SPR_PVR          287  // Processor Version Register
 
 #define SPR_DBSRWR       306  // DBSR Write Register
 
@@ -169,6 +178,9 @@
 #define SPR_GIVOR14      445  // Guest ITLB Error
 #define SPR_GIVPR        447  // Guest IVPR
 
+#define SPR_ATBL         526  // Alternate Time Base Lower
+#define SPR_ATBU         527  // Alternate Time Base Upper
+
 #define SPR_IVOR32       528  // Altivec/SPE/Embedded FP Unavailable
 #define SPR_IVOR33       529  // Altivec Assist/Embedded FP Data
 #define SPR_IVOR34       530  // Embedded FP Round
@@ -194,8 +206,8 @@
 #define SPR_SPRG8        604
 #define SPR_SPRG9        605
 
-#define SPR_PID1         633 // Process ID Register 1 (e500v1, e500v2)
-#define SPR_PID2         634 // Process ID Register 2 (e500v1, e500v2)
+#define SPR_PID1         633  // Process ID Register 1 (e500v1, e500v2)
+#define SPR_PID2         634  // Process ID Register 2 (e500v1, e500v2)
 
 #define SPR_TLB0CFG      688  // TLB 0 Config Register
 #define SPR_TLB1CFG      689  // TLB 1 Config Register
@@ -232,6 +244,7 @@
 
 #define SPR_HID0         1008 // Hardware Implementation Dependent 0
 #define   HID0_EMCP        0x80000000 // Enable Machine Check Pin
+#define   HID0_L2MMU_MHD   0x40000000 // Enable L2MMU Multi-Hit Detection
 #define   HID0_DOZE        0x00800000
 #define   HID0_NAP         0x00400000
 #define   HID0_SLEEP       0x00200000
@@ -241,11 +254,15 @@
 #define   HID0_EIEC        0x00008000 // Enable Internal Error Checking
 #define   HID0_TBEN        0x00004000 // Timebase Enable
 #define   HID0_SEL_TBCLK   0x00002000 // Select Timebase Clock
-#define   HID0_ENMAS7      0x00000080 // Enable MAS7 update
+#define   HID0_ENMAS7      0x00000080 // Enable MAS7 Update
+#define   HID0_DCFA        0x00000040 // Data Cache Flush Assist
+#define   HID0_CIGLSO      0x00000010 // Cache-Inhibited Guarded Ordering
+#define   HID0_NOPTI       0x00000001 // No-op Cache Touch Instructions
 
 #define SPR_L1CSR0       1010 // L1 Cache Control and Status Register 0
 #define   L1CSR0_DCPE      0x00010000 // Data Cache Parity Enable
 #define   L1CSR0_DCLFR     0x00000100 // Data Cache Lock Bits Flash Reset
+#define   L1CSR0_DCBZ32    0x00000008 // dcbz works on 32-byte blocks
 #define   L1CSR0_DCFI      0x00000002 // Data Cache Flash Invalidate
 #define   L1CSR0_DCE       0x00000001 // Data Cache Enable
 
@@ -264,6 +281,17 @@
 #define   BUCSR_BPEN       0x00000001 // Branch Prediction Enable
 
 #define SPR_MMUCFG       1015 // MMU Configuration Register
+#define   MMUCFG_LPIDSIZE  0x0f000000 // Number of LPID bits
+#define   MMUCFG_LPIDSIZE_SHIFT 24
+#define   MMUCFG_RASIZE    0x00fe0000 // Number of real-address bits
+#define   MMUCFG_RASIZE_SHIFT   17
+#define   MMUCFG_NPIDS     0x00007800 // Number of PID registers
+#define   MMUCFG_NPIDS_SHIFT    11
+#define   MMUCFG_PIDSIZE   0x000007c0 // Bits in a PID register, minus one
+#define   MMUCFG_PIDSIZE_SHIFT  6
+#define   MMUCFG_NTLBS     0x0000000c // Number of TLBs
+#define   MMUCFG_NTLBS_SHIFT    2
+#define   MMUCFG_MAVN      0x00000003 // MMU architecture version
 
 #define SPR_SVR          1023 // System Version Register
 
