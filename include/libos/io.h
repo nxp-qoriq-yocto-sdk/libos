@@ -128,41 +128,41 @@ static inline uint32_t raw_in32(const uint32_t *ptr)
 
 static inline void raw_out8(uint8_t *ptr, uint8_t val)
 {
-	asm volatile("stb%U1%X1 %0, %1" : : "r" (val), "m" (*ptr) : "memory");
+	asm volatile("stb%U0%X0 %1, %0" : "=m" (*ptr) : "r" (val) : "memory");
 }
 
 static inline void raw_out16(uint16_t *ptr, uint16_t val)
 {
-	asm volatile("sth%U1%X1 %0, %1" : : "r" (val), "m" (*ptr) : "memory");
+	asm volatile("sth%U0%X0 %1, %0" : "=m" (*ptr) : "r" (val) : "memory");
 }
 
 static inline void raw_out32(uint32_t *ptr, uint32_t val)
 {
-	asm volatile("stw%U1%X1 %0, %1" : : "r" (val), "m" (*ptr) : "memory");
+	asm volatile("stw%U0%X0 %1, %0" : "=m" (*ptr) : "r" (val) : "memory");
 }
 
 static inline uint16_t raw_in16_rev(const uint16_t *ptr)
 {
 	uint16_t ret;
-	asm volatile("lhbrx %0, 0, %1" : "=r" (ret) : "r" (ptr) : "memory");
+	asm volatile("lhbrx %0, %y1" : "=r" (ret) : "Z" (*ptr) : "memory");
 	return ret;
 }
 
 static inline uint32_t raw_in32_rev(const uint32_t *ptr)
 {
 	uint32_t ret;
-	asm volatile("lwbrx %0, 0, %1" : "=r" (ret) : "r" (ptr) : "memory");
+	asm volatile("lwbrx %0, %y1" : "=r" (ret) : "Z" (*ptr) : "memory");
 	return ret;
 }
 
 static inline void raw_out16_rev(uint16_t *ptr, uint16_t val)
 {
-	asm volatile("sthbrx %0, 0, %1" : : "r" (val), "r" (ptr) : "memory");
+	asm volatile("sthbrx %1, %y0" : "=Z" (*ptr) : "r" (val) : "memory");
 }
 
 static inline void raw_out32_rev(uint32_t *ptr, uint32_t val)
 {
-	asm volatile("stwbrx %0, 0, %1" : : "r" (val), "r" (ptr) : "memory");
+	asm volatile("stwbrx %1, %y0" : "=Z" (*ptr) : "r" (val) : "memory");
 }
 
 #ifdef _BIG_ENDIAN

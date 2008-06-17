@@ -13,14 +13,14 @@ static inline int compare_and_swap(unsigned long *ptr,
 	unsigned long ret;
 
 	// FIXME 64-bit
-	asm volatile("1: lwarx %0, 0, %1;"
+	asm volatile("1: lwarx %0, %y1;"
 	             "cmpw %0, %2;"
 	             "bne 2f;"
-	             "stwcx. %3, 0, %1;"
+	             "stwcx. %3, %y1;"
 	             "bne 1b;"
 	             "2:" :
-	             "=&r" (ret) :
-	             "r" (ptr), "r" (old), "r" (new) :
+	             "=&r" (ret), "+Z" (*ptr) :
+	             "r" (old), "r" (new) :
 	             "memory", "cc");
 
 	return ret == old;
@@ -45,20 +45,20 @@ static inline void spin_lock(uint32_t *ptr)
 		BUG();
 	}
 
-	asm volatile("1: lwarx %0, 0, %1;"
+	asm volatile("1: lwarx %0, %y1;"
 	             "cmpwi %0, 0;"
 	             "bne 2f;"
-	             "stwcx. %2, 0, %1;"
+	             "stwcx. %2, %y1;"
 	             "bne 1b;"
 	             "mbar 1;"
 	             ".subsection 1;"
-	             "2: lwzx %0, 0, %1;"
+	             "2: lwzx %0, %y1;"
 	             "cmpwi %0, 0;"
 	             "bne 2b;"
 	             "b 1b;"
 	             ".previous" :
-	             "=&r" (tmp) :
-	             "r" (ptr), "r" (pir) :
+	             "=&r" (tmp), "+Z" (*ptr) :
+	             "r" (pir) :
 	             "memory", "cc");
 }
 
@@ -67,7 +67,7 @@ static inline void spin_unlock(uint32_t *ptr)
 	__attribute__((unused)) uint32_t pir = mfspr(SPR_PIR) + 1;
 
 	assert(*ptr == pir);
-	asm volatile("mbar 1; stwx %0, 0, %1" : : "r" (0), "r" (ptr) : "memory");
+	asm volatile("mbar 1; stw%U0%X0 %1, %0" : "=m" (*ptr) : "r" (0) : "memory");
 }
 
 static inline register_t spin_lock_critsave(uint32_t *ptr)
@@ -88,12 +88,12 @@ static inline unsigned long atomic_or(unsigned long *ptr, unsigned long val)
 	unsigned long ret;
 
 	// FIXME 64-bit
-	asm volatile("1: lwarx %0, 0, %1;"
+	asm volatile("1: lwarx %0, %y1;"
 	             "or %0, %0, %2;"
-	             "stwcx. %0, 0, %1;"
+	             "stwcx. %0, %y1;"
 	             "bne 1b;" :
-	             "=&r" (ret) :
-	             "r" (ptr), "r" (val) :
+	             "=&r" (ret), "+Z" (*ptr) :
+	             "r" (val) :
 	             "memory", "cc");
 
 	return ret;
@@ -104,12 +104,12 @@ static inline unsigned long atomic_and(unsigned long *ptr, unsigned long val)
 	unsigned long ret;
 
 	// FIXME 64-bit
-	asm volatile("1: lwarx %0, 0, %1;"
+	asm volatile("1: lwarx %0, %y1;"
 	             "and %0, %0, %2;"
-	             "stwcx. %0, 0, %1;"
+	             "stwcx. %0, %y1;"
 	             "bne 1b;" :
-	             "=&r" (ret) :
-	             "r" (ptr), "r" (val) :
+	             "=&r" (ret), "+Z" (*ptr) :
+	             "r" (val) :
 	             "memory", "cc");
 
 	return ret;
@@ -120,12 +120,12 @@ static inline unsigned long atomic_add(unsigned long *ptr, long val)
 	unsigned long ret;
 
 	// FIXME 64-bit
-	asm volatile("1: lwarx %0, 0, %1;"
+	asm volatile("1: lwarx %0, %y1;"
 	             "add %0, %0, %2;"
-	             "stwcx. %0, 0, %1;"
+	             "stwcx. %0, %y1;"
 	             "bne 1b;" :
-	             "=&r" (ret) :
-	             "r" (ptr), "r" (val) :
+	             "=&r" (ret), "+Z" (*ptr) :
+	             "r" (val) :
 	             "memory", "cc");
 
 	return ret;
