@@ -53,6 +53,7 @@
 #define FH_API_VERSION 1
 
 #define FH_CPU_WHOAMI                   1
+#define FH_DMA_LIODN_GET                2
 #define FH_PARTITION_RESTART            5
 #define FH_PARTITION_GET_STATUS         6
 #define FH_PARTITION_START              7
