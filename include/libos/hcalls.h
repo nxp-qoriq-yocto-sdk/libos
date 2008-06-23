@@ -1,4 +1,4 @@
-/*
+/** @file
  * Freescale hypervisor call interface
  *
  * Author: Timur Tabi <timur@freescale.com>
@@ -41,6 +41,9 @@
  * language functions in a .S file, for optimization.  It allows
  * the caller to issue the hypercall instruction directly, improving both
  * performance and memory footprint.
+ *
+ * If adding a hypercall, please make sure the functions are in the same
+ * order as the corresponding hypercall numbers.
  */
 
 #ifndef _FREESCALE_HCALLS_H
@@ -141,10 +144,10 @@
  */
 
 /**
- * fh_cpu_whoami: get the index number of the running virtual CPU
- * @cpu_index: returned index of the calling CPU
+ * Get the index number of the running virtual CPU.
+ * @param[out] cpu_index index of the calling CPU
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_cpu_whoami(unsigned int *cpu_index)
 {
@@ -163,10 +166,10 @@ static inline unsigned int fh_cpu_whoami(unsigned int *cpu_index)
 }
 
 /**
- * fh_partition_restart: reboot the current partition
- * @partition: partition ID
+ * Reboot the current partition.
+ * @param[in] partition partition ID
  *
- * Returns an error code if reboot failed.  Does not return if it succeeds.
+ * @return an error code if reboot failed.  Does not return if it succeeds.
  */
 static inline unsigned int fh_partition_restart(unsigned int partition)
 {
@@ -182,11 +185,11 @@ static inline unsigned int fh_partition_restart(unsigned int partition)
 }
 
 /**
- * fh_partition_get_status: gets the status of a partition
- * @partition: partition ID
- * @status: returned status code
+ * Gets the status of a partition.
+ * @param[in] partition partition ID
+ * @param[out] status status code
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_get_status(unsigned int partition,
 	unsigned int *status)
@@ -206,14 +209,14 @@ static inline unsigned int fh_partition_get_status(unsigned int partition,
 }
 
 /**
- * fh_partition_start: boots and starts execution of the specified partition
- * @partition: partition ID
- * @entry_point: guest physical address to start execution
+ * Boots and starts execution of the specified partition.
+ * @param[in] partition partition ID
+ * @param[in] entry_point guest physical address to start execution
  *
  * The hypervisor creates a 1-to-1 virtual/physical IMA mapping, so at boot
  * time, guest physical address are the same as guest virtual addresses.
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_start(unsigned int partition,
 	uint32_t entry_point)
@@ -231,10 +234,10 @@ static inline unsigned int fh_partition_start(unsigned int partition,
 }
 
 /**
- * fh_partition_stop: stops another partition
- * @partition: partition ID
+ * Stops another partition.
+ * @param[in] partition partition ID
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_stop(unsigned int partition)
 {
@@ -250,11 +253,7 @@ static inline unsigned int fh_partition_stop(unsigned int partition)
 }
 
 /**
- * struct fh_sg_list: definition of the fh_partition_memcpy S/G list
- * @source: guest physical address to copy from
- * @target: guest physical address to copy to
- * @size: number of bytes to copy
- * @reserved: reserved, must be zero
+ * Definition of the fh_partition_memcpy S/G list.
  *
  * The scatter/gather list for fh_partition_memcpy is an array of these
  * structures.  The array must be guest physically contiguous.
@@ -263,20 +262,20 @@ static inline unsigned int fh_partition_stop(unsigned int partition)
  * strucuture can span two pages.
  */
 struct fh_sg_list {
-	uint64_t source;
-	uint64_t target;
-	uint64_t size;
-	uint64_t reserved;
+	uint64_t source;   /**< guest physical address to copy from */
+	uint64_t target;   /**< guest physical address to copy to */
+	uint64_t size;     /**< number of bytes to copy */
+	uint64_t reserved; /**< reserved, must be zero */
 } __attribute__ ((aligned(32)));
 
 /**
- * fh_partition_memcpy: copies data from one guest to another
- * @source: the ID of the partition to copy from
- * @target: the ID of the partition to copy to
- * @sg_list: guest physical address of an array of fh_sg_list structures
- * @count: the number of entries in sg_list[]
+ * Copies data from one guest to another.
+ * @param[in] source the ID of the partition to copy from
+ * @param[in] target the ID of the partition to copy to
+ * @param[in] sg_list guest physical address of an array of fh_sg_list structures
+ * @param[in] count the number of entries in sg_list[]
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_memcpy(unsigned int source,
 	unsigned int target, phys_addr_t sg_list, unsigned int count)
@@ -302,13 +301,13 @@ static inline unsigned int fh_partition_memcpy(unsigned int source,
 }
 
 /**
- * fh_vmpic_set_int_config: configure the specified interrupt
- * @interrupt: the interrupt number
- * @config: configuration for this interrupt
- * @priority: interrupt priority
- * @destination: destination CPU ID mask
+ * Configure the specified interrupt.
+ * @param[in] interrupt the interrupt number
+ * @param[in] config configuration for this interrupt
+ * @param[in] priority interrupt priority
+ * @param[in] destination destination CPU ID mask
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_set_int_config(unsigned int interrupt,
 	uint32_t config, unsigned int priority, uint32_t destination)
@@ -328,13 +327,13 @@ static inline unsigned int fh_vmpic_set_int_config(unsigned int interrupt,
 }
 
 /**
- * fh_vmpic_get_int_config: return the config of the specified interrupt
- * @interrupt: the interrupt number
- * @config: returned configuration for this interrupt
- * @priority: returned interrupt priority
- * @destination: returned destination CPU ID mask
+ * Return the config of the specified interrupt.
+ * @param[in] interrupt the interrupt number
+ * @param[out] config configuration for this interrupt
+ * @param[out] priority interrupt priority
+ * @param[out] destination destination CPU ID mask
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_get_int_config(unsigned int interrupt,
 	uint32_t *config, unsigned int *priority, uint32_t *destination)
@@ -358,10 +357,10 @@ static inline unsigned int fh_vmpic_get_int_config(unsigned int interrupt,
 }
 
 /**
- * fh_dma_enable: enable DMA for the specified device
- * @liodn: the LIODN of the I/O device for which to enable DMA
+ * Enable DMA for the specified device.
+ * @param[in] liodn the LIODN of the I/O device for which to enable DMA
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_dma_enable(unsigned int liodn)
 {
@@ -377,10 +376,10 @@ static inline unsigned int fh_dma_enable(unsigned int liodn)
 }
 
 /**
- * fh_dma_disable: disable DMA for the specified device
- * @liodn: the LIODN of the I/O device for which to disable DMA
+ * Disable DMA for the specified device.
+ * @param[in] liodn the LIODN of the I/O device for which to disable DMA
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_dma_disable(unsigned int liodn)
 {
@@ -396,11 +395,11 @@ static inline unsigned int fh_dma_disable(unsigned int liodn)
 }
 
 /**
- * fh_vmpic_set_mask: sets the mask for the specified interrupt source
- * @interrupt: the interrupt number
- * @mask: 0=enable interrupts, 1=disable interrupts
+ * Sets the mask for the specified interrupt source.
+ * @param[in] interrupt the interrupt number
+ * @param[in] mask 0=enable interrupts, 1=disable interrupts
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_set_mask(unsigned int interrupt,
 	unsigned int mask)
@@ -418,11 +417,11 @@ static inline unsigned int fh_vmpic_set_mask(unsigned int interrupt,
 }
 
 /**
- * fh_vmpic_get_mask: returns the mask for the specified interrupt source
- * @interrupt: the interrupt number
- * @mask: returned mask for this interrupt (0=enabled, 1=disabled)
+ * Returns the mask for the specified interrupt source.
+ * @param[in] interrupt the interrupt number
+ * @param[out] mask mask for this interrupt (0=enabled, 1=disabled)
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_get_mask(unsigned int interrupt,
 	unsigned int *mask)
@@ -442,14 +441,14 @@ static inline unsigned int fh_vmpic_get_mask(unsigned int interrupt,
 }
 
 /**
- * fh_vmpic_get_activity: returns the activity status of an interrupt source
- * @interrupt: the interrupt number
- * @activity: returned activity status.
+ * Returns the activity status of an interrupt source.
+ * @param[in] interrupt the interrupt number
+ * @param[out] activity activity status.
  *
  * The activity status is a value that indicates whether an interrupt has
  * been requested (i.e. is in service).
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_get_activity(unsigned int interrupt,
 	unsigned int *activity)
@@ -469,14 +468,14 @@ static inline unsigned int fh_vmpic_get_activity(unsigned int interrupt,
 }
 
 /**
- * fh_vmpic_eoi: signal the end of interrupt processing
- * @interrupt: the interrupt number
+ * Signal the end of interrupt processing.
+ * @param[in] interrupt the interrupt number
  *
  * This function signals the end of processing for the the specified
  * interrupt, which must be the interrupt currently in service. By
  * definition, this is also the highest-priority interrupt.
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_eoi(unsigned int interrupt)
 {
@@ -492,15 +491,15 @@ static inline unsigned int fh_vmpic_eoi(unsigned int interrupt)
 }
 
 /**
- * fh_byte_channel_send: send characters to a byte stream
- * @handle: byte stream handle
- * @count: number of characters to send
- * @buffer: pointer to a 16-byte buffer
+ * Send characters to a byte stream.
+ * @param[in] handle byte stream handle
+ * @param[in] count number of characters to send
+ * @param[in] buffer pointer to a 16-byte buffer
  *
  * 'buffer' must be at least 16 bytes long, because all 16 bytes will be
  * read from memory into registers, even if count < 16.
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_byte_channel_send(unsigned int handle,
 	unsigned int count, const char buffer[16])
@@ -525,16 +524,17 @@ static inline unsigned int fh_byte_channel_send(unsigned int handle,
 }
 
 /**
- * fh_byte_channel_receive: fetch characters from a byte channel
- * @handle: byte channel handle
- * @count: (input) max num of chars to receive, (output) num chars received
- * @buffer: pointer to a 16-byte buffer
+ * Fetch characters from a byte channel.
+ * @param[in] handle byte channel handle
+ * @param[in,out] count input: max num of chars to receive, output: num
+ * chars received
+ * @param[out] buffer pointer to a 16-byte buffer
  *
  * The size of 'buffer' must be at least 16 bytes, even if you request fewer
  * than 16 charactgers, because we always write 16 bytes to 'buffer'.  This
  * is for performance reasons.
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_byte_channel_receive(unsigned int handle,
 	unsigned int *count, char buffer[16])
@@ -565,12 +565,12 @@ static inline unsigned int fh_byte_channel_receive(unsigned int handle,
 }
 
 /**
- * fh_byte_channel_poll: returns the status of the byte channel buffers
- * @handle: byte channel handle
- * @rx_count: returned count of bytes in receive queue
- * @tx_count: returned count of bytes in transmit queue
+ * Returns the status of the byte channel buffers.
+ * @param[in] handle byte channel handle
+ * @param[out] rx_count count of bytes in receive queue
+ * @param[out] tx_count count of bytes in transmit queue
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_byte_channel_poll(unsigned int handle,
 	unsigned int *rx_count,	unsigned int *tx_count)
@@ -592,10 +592,10 @@ static inline unsigned int fh_byte_channel_poll(unsigned int handle,
 }
 
 /**
- * fh_vmpic_iack: acknowledge an interrupt
- * @vector: returned interrupt vector
+ * Acknowledge an interrupt.
+ * @param[out] vector interrupt vector
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_iack(unsigned int *vector)
 {
@@ -614,10 +614,10 @@ static inline unsigned int fh_vmpic_iack(unsigned int *vector)
 }
 
 /**
- * fh_partition_send_dbell: send a doorbell to another partition
- * @partition: partition ID
+ * Send a doorbell to another partition.
+ * @param[in] partition partition ID
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_send_dbell(unsigned int partition)
 {
