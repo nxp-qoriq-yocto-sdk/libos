@@ -167,7 +167,9 @@ char *strncpy(char *dest, const char *src, size_t len)
 			break;
 	}
 	
-	memset(dest, 0, len);
+	if (len > 0)
+		memset(dest, 0, len);
+
 	return orig;
 }
 
@@ -198,7 +200,9 @@ char *strncat(char *dest, const char *src, size_t len)
 			break;
 	}
 	
-	memset(dest, 0, len);
+	if (len > 0)
+		memset(dest, 0, len);
+
 	return orig;
 }
 
