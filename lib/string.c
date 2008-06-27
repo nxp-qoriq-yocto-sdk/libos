@@ -158,19 +158,17 @@ char *strcpy(char *dest, const char *src)
 
 char *strncpy(char *dest, const char *src, size_t len)
 {
-	char *orig = dest;
+	size_t pos = 0;
 
-	while (len--) {
-		*dest = *src++;
+	while (pos < len) {
+		dest[pos] = src[pos];
 		
-		if (!*dest++)
+		if (!dest[pos++])
 			break;
 	}
 	
-	if (len > 0)
-		memset(dest, 0, len);
-
-	return orig;
+	memset(&dest[pos], 0, len - pos);
+	return dest;
 }
 
 char *strcat(char *dest, const char *src)
@@ -187,23 +185,19 @@ char *strcat(char *dest, const char *src)
 
 char *strncat(char *dest, const char *src, size_t len)
 {
-	char *orig = dest;
-	int orig_len = strlen(dest);
+	size_t pos = strlen(dest);
 	
-	len -= orig_len;
-	dest += orig_len;
-
-	while (len--) {
-		*dest = *src++;
+	while (pos < len) {
+		dest[pos] = src[pos];
 		
-		if (!*dest++)
+		if (!dest[pos++])
 			break;
 	}
 	
-	if (len > 0)
-		memset(dest, 0, len);
+	if (pos < len)
+		memset(&dest[pos], 0, len - pos);
 
-	return orig;
+	return dest;
 }
 
 int strcmp(const char *s1, const char *s2)
