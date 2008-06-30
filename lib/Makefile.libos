@@ -1,8 +1,4 @@
 # LibOS Makefile
-#
-# Copyright © 2007 Freescale Semiconductor, Inc
-# Copyright © 1999 Paul D. Smith
-
 
 LIBOS_STARTUP := head.S
 LIBOS_FSL_BOOKE_TLB := fsl-booke-tlb.c
