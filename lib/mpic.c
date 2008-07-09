@@ -29,7 +29,6 @@
 #include <libos/mpic.h>
 #include <libos/io.h>
 #include <libos/core-regs.h>
-#include <libos/8578.h>
 #include <libos/mpic.h>
 #include <libos/errors.h>
 
