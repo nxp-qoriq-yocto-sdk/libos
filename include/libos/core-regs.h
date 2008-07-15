@@ -276,8 +276,6 @@
 #define   HID0_EDPM        0x00080000 // Enhanced Dynamic Power Management
 #define   HID0_ICR         0x00020000 // Interrupts Clear Reservation
 #define   HID0_EIEC        0x00008000 // Enable Internal Error Checking
-#define   HID0_TBEN        0x00004000 // Timebase Enable
-#define   HID0_SEL_TBCLK   0x00002000 // Select Timebase Clock
 #define   HID0_ENMAS7      0x00000080 // Enable MAS7 Update
 #define   HID0_DCFA        0x00000040 // Data Cache Flush Assist
 #define   HID0_CIGLSO      0x00000010 // Cache-Inhibited Guarded Ordering
