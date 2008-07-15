@@ -56,7 +56,7 @@
 #define FH_API_VERSION 1
 
 #define FH_CPU_WHOAMI                   1
-#define FH_DMA_LIODN_GET                2
+#define FH_DMA_MAP_PPID_LIODN           3
 #define FH_PARTITION_RESTART            5
 #define FH_PARTITION_GET_STATUS         6
 #define FH_PARTITION_START              7
@@ -390,6 +390,31 @@ static inline unsigned int fh_dma_disable(unsigned int liodn)
 		: "+r" (r11), "+r" (r3)
 		: : HCALL_CLOBBERS1
 	);
+
+	return r3;
+}
+
+
+/**
+ * Map PPID handle to LIODN handle
+ * @param[in] ppid handle
+ * @param[out] liodn handle
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_dma_map_ppid_liodn(unsigned int ppid_handle,
+unsigned int *liodn_handle)
+{
+	register uintptr_t r11 __asm__("r11") = FH_DMA_MAP_PPID_LIODN;
+	register uintptr_t r3 __asm__("r3") = ppid_handle;
+	register uintptr_t r4 __asm__("r4");
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3), "=r" (r4)
+		: : HCALL_CLOBBERS2
+	);
+
+	*liodn_handle = r4;
 
 	return r3;
 }
