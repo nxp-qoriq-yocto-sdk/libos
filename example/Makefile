@@ -23,8 +23,6 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-CROSS_COMPILE=powerpc-e500mc-linux-gnu-
 LIBFDT_DIR := ../../dtc/libfdt
 LIBOS_DIR := ../lib
 LIBOS_INC := ../include
@@ -32,7 +30,8 @@ LIBOS_BIN := bin/libos
 LIBOS_CLIENT_H := src/libos-client.h
 
 CC=$(CROSS_COMPILE)gcc
-CC_OPTS=-m32 -Wa,-me500 -Isrc -I$(LIBFDT_DIR) -I$(LIBOS_INC) -g \
+GCCINCDIR := $(shell $(CC) -print-file-name=include)
+CC_OPTS=-m32 -Wa,-me500 -nostdinc -I $(GCCINCDIR) -I $(GCCINCDIR)-fixed -Isrc -I$(LIBFDT_DIR) -I$(LIBOS_INC) -g \
         -std=gnu99  -include $(LIBOS_CLIENT_H)
 
 CC_OPTS_C= -Wall \
@@ -52,7 +51,7 @@ CC_OPTS_C= -Wall \
   -fomit-frame-pointer \
   -Wno-unused \
   -Werror
-CC_OPTS_ASM=-D_ASM -Ibin/src
+CC_OPTS_ASM=-D_ASM -Ibin/src -include $(LIBOS_BIN)/assym.s
 LD=$(CROSS_COMPILE)ld
 LD_OPTS=-Wl,-m -Wl,elf32ppc -Wl,-Bstatic -nostdlib
 GENASSYM=$(LIBOS_DIR)/tools/genassym.sh

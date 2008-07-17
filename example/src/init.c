@@ -60,7 +60,7 @@ void init(unsigned long devtree_ptr)
 	unsigned long heap = (unsigned long)0x11000000; // FIXME-- hardcoded location for heap
 	heap = (heap + 15) & ~15;
 
-	alloc_init(heap, heap + (0x100000-1));  // FIXME: hardcoded 1MB heap
+	simple_alloc_init((void *)heap, heap + (0x100000-1));  // FIXME: hardcoded 1MB heap
 	console_init(ns16550_init((uint8_t *)CCSRBAR_VA + UART_OFFSET, 0, 0, 16));
 }
 
