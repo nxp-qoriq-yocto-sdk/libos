@@ -145,12 +145,12 @@
 #define TLB_MAS8_GUEST MAS8_GTS
 
 #define TLBIVAX_VA       (~0xfffUL)
-#define TLBIVAX_RESERVED 0xfe3
+#define TLBIVAX_RESERVED 0xff3
 #define TLBIVAX_INV_ALL  0x004
-#define TLBIVAX_TLB_NUM  0x0f0
+#define TLBIVAX_TLB_NUM  0x018
 #define TLBIVAX_TLB0     0x000
-#define TLBIVAX_TLB1     0x010
-#define TLBIVAX_TLB_NUM_SHIFT 4
+#define TLBIVAX_TLB1     0x008
+#define TLBIVAX_TLB_NUM_SHIFT 3
 
 #if !defined(_ASM)
 
