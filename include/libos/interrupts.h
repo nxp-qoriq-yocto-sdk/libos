@@ -58,7 +58,7 @@ typedef struct int_ops {
 	void (*eoi)(interrupt_t *irq);
 	void (*enable)(interrupt_t *irq);
 	void (*disable)(interrupt_t *irq);
-	int (*is_enabled)(interrupt_t *irq);
+	int (*is_disabled)(interrupt_t *irq);
 	void (*set_delivery_type)(interrupt_t *irq, int type);
 	int (*get_delivery_type)(interrupt_t *irq);
 	void (*set_priority)(interrupt_t *irq, int priority);
