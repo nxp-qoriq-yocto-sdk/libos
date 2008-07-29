@@ -40,9 +40,9 @@ typedef struct queue {
 	/// Size of queue, must be a power of two.
 	size_t size;
 
-	/** Producer callback to indicate space available.
+	/** Consumer callback to indicate data available.
 	 *
-	 * @param[in] q the queue with space available.
+	 * @param[in] q the queue with data available.
 	 *
 	 * This pointer should be NULL when a callback is not requested. 
 	 * This function must not be called from within a space_avail()
@@ -51,12 +51,12 @@ typedef struct queue {
 	 */
 	void (*volatile data_avail)(struct queue *q);
 
-	/// Private data for the producer.
-	void *producer;
+	/// Private data for the consumer.
+	void *consumer;
 
-	/** Consumer callback to indicate data available.
+	/** Producer callback to indicate space available.
 	 *
-	 * @param[in] q the queue with data available.
+	 * @param[in] q the queue with space available.
 	 *
 	 * This pointer should be NULL when a callback is not requested. 
 	 * This function must not be called from within a data_avail()
@@ -65,8 +65,8 @@ typedef struct queue {
 	 */
 	void (*volatile space_avail)(struct queue *q);
 
-	/// Private data for the consumer.
-	void *consumer;
+	/// Private data for the producer.
+	void *producer;
 } queue_t;
 
 /** Initialize a queue.
