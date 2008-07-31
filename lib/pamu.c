@@ -105,6 +105,9 @@ void pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 ppaace_t *get_ppaace(uint32_t liodn)
 {
 	ppaace_t *table_head;
+
+	if (!pamu_regs)
+		return NULL;
 	
 	table_head = (ppaace_t *) in32(&pamu_regs->ppbal);
 	table_head = (ppaace_t *) ((unsigned char *)table_head + PHYSBASE);
