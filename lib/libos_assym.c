@@ -37,7 +37,6 @@
 #include <libos/assym.h>
 #include <libos/percpu.h>
 #include <libos/trapframe.h>
-#include <libos-client.h>
 
 ASSYM(CPU_SIZE, sizeof(cpu_t));
 ASSYM(CPU_NORMSAVE, offsetof(cpu_t, normsave));
