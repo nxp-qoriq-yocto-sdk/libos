@@ -11,3 +11,7 @@ egrep -o '[^[:alnum:]_]CONFIG_[[:alnum:]_]*' "$1" | uniq | \
 	}'
 
 echo
+
+if echo "$2" |  grep -q '\.h$'; then
+	echo -e \\t@touch "$2"
+fi

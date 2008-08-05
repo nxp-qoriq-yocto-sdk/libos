@@ -46,7 +46,7 @@ KCONFIG_DEPS = $(LIBOS_DIR)/confdep "$(1)" "$$OBJ" >> "$(2)"
 .PRECIOUS: $(LIBOS_BIN)/include/%.d
 $(LIBOS_BIN)/include/%.d : $(LIBOS_INC)/%.h
 	@$(MKDIR) $(@D)
-	$(LIBOS_DIR)/confdep "$<" "$<" >> "$@"
+	@$(LIBOS_DIR)/confdep "$<" "$<" > "$@"
 
 LIBOS_HDRS := $(shell find $(LIBOS_INC) -name '*.h')
 -include $(LIBOS_HDRS:$(LIBOS_INC)/%.h=$(LIBOS_BIN)/include/%.d)
