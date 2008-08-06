@@ -90,7 +90,9 @@ static inline void *alloc(unsigned long size, size_t align)
 	ret = simple_alloc(size, align);
 #endif
 
-	memset(ret, 0, size);
+	if (likely(ret))
+	 	memset(ret, 0, size);
+
 	return ret;
 }
 
