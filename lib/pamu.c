@@ -27,46 +27,46 @@
 #include <libos/console.h>
 #include <libos/io.h>
 
-uintptr_t pp;
-uintptr_t ppl;
-uintptr_t sp;
-uintptr_t spl;
-uintptr_t ob;
-uintptr_t obl;
 pamu_mmap_regs_t *pamu_regs;
 
-void pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
+int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 {
     	uint32_t pamu_offset;
     	uintptr_t *pc;	
 	uint32_t table_size;
+	static uintptr_t ppaact_pointer, ppaact_pointer_end;
+	static uintptr_t spaact_pointer, spaact_pointer_end;
+	static uintptr_t omt_pointer, omt_pointer_end;
 
 	printlog(LOGTYPE_MISC, LOGLEVEL_DEBUG, "Starting PAMU init\n");
 
-	if (!pp) {
+	if (!ppaact_pointer) {
 		table_size = sizeof(ppaace_t) * PAACE_NUMBER_ENTRIES;
-		pp = (uintptr_t)alloc(table_size, PAMU_TABLE_ALIGNMENT);
-		if (!pp) {
+		ppaact_pointer = (uintptr_t)
+			 alloc(table_size, PAMU_TABLE_ALIGNMENT);
+		if (!ppaact_pointer) {
 			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU ppaact.\n");
-			return;
+			return -1;
 		}
-   		ppl = pp + table_size;
+		ppaact_pointer_end = ppaact_pointer + table_size;
 
 		table_size = sizeof(spaace_t) * SPAACE_NUMBER_ENTRIES;
-    		sp = (uintptr_t) alloc(table_size, PAMU_TABLE_ALIGNMENT);
-		if (!sp) {
+		spaact_pointer = (uintptr_t)
+			alloc(table_size, PAMU_TABLE_ALIGNMENT);
+		if (!spaact_pointer) {
 			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU spaact.\n");
-			return;
+			return -1;
 		}
-   		spl = sp + table_size;
+		spaact_pointer_end = spaact_pointer + table_size;
 
 		table_size = sizeof(ome_t) * OME_NUMBER_ENTRIES;
-		ob = (uintptr_t) alloc(table_size, PAMU_TABLE_ALIGNMENT);
-		if (!ob) {
+		omt_pointer = (uintptr_t)
+			alloc(table_size, PAMU_TABLE_ALIGNMENT);
+		if (!omt_pointer) {
 			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU omt.\n");
-			return;
+			return -1;
 		}
-		obl = ob + table_size;
+		omt_pointer_end = omt_pointer + table_size;
 	}
 
 	pamu_offset = CCSRBAR_VA + pamu_reg_base;
@@ -94,12 +94,14 @@ void pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 	out32(&pamu_regs->obah, 0);
 	out32(&pamu_regs->olah, 0);
 
-	out32(&pamu_regs->ppbal, pp-PHYSBASE);
-	out32(&pamu_regs->pplal, ppl-PHYSBASE);
-	out32(&pamu_regs->spbal, sp-PHYSBASE);
-	out32(&pamu_regs->splal, spl-PHYSBASE);
-	out32(&pamu_regs->obal, ob-PHYSBASE);
-	out32(&pamu_regs->olal, obl-PHYSBASE);
+	out32(&pamu_regs->ppbal, ppaact_pointer-PHYSBASE);
+	out32(&pamu_regs->pplal, ppaact_pointer_end-PHYSBASE);
+	out32(&pamu_regs->spbal, spaact_pointer-PHYSBASE);
+	out32(&pamu_regs->splal, spaact_pointer_end-PHYSBASE);
+	out32(&pamu_regs->obal, omt_pointer-PHYSBASE);
+	out32(&pamu_regs->olal, omt_pointer_end-PHYSBASE);
+
+	return 0;
 }
 
 ppaace_t *get_ppaace(uint32_t liodn)

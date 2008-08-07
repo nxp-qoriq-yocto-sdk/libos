@@ -380,7 +380,7 @@ typedef struct ome_t {
 	uint8_t moe[NUM_MOE];
 } __attribute__((packed)) ome_t;
 
-void pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size);
+int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size);
 ppaace_t *get_ppaace(uint32_t liodn);
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);
 
