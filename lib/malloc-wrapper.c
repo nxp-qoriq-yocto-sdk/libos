@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libos/libos.h>
+#include <libos/io.h>
 #include <libos/malloc.h>
 #include <libos/console.h>
 

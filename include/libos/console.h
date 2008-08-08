@@ -72,7 +72,7 @@ extern void invalid_logtype(void);
 	     loglevel <= CONFIG_LIBOS_MAX_BUILD_LOGLEVEL) && \
 	    __builtin_expect(loglevels[logtype] == loglevel || \
 	                     loglevels[logtype] > loglevel, 0)) \
-		printf(fmt, ##args); \
+		printf("[%ld] " fmt, mfspr(SPR_PIR), ##args); \
 } while (0)
 		
 #endif
