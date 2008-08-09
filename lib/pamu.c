@@ -94,6 +94,8 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 	out32(&pamu_regs->obah, 0);
 	out32(&pamu_regs->olah, 0);
 
+	// FIXME: this assumes that hv is running at phys addr 0x0
+	// which may not be the case in the future
 	out32(&pamu_regs->ppbal, ppaact_pointer-PHYSBASE);
 	out32(&pamu_regs->pplal, ppaact_pointer_end-PHYSBASE);
 	out32(&pamu_regs->spbal, spaact_pointer-PHYSBASE);
@@ -112,6 +114,9 @@ ppaace_t *get_ppaace(uint32_t liodn)
 		return NULL;
 	
 	table_head = (ppaace_t *) in32(&pamu_regs->ppbal);
+	if (!table_head)
+		return NULL;
+
 	table_head = (ppaace_t *) ((unsigned char *)table_head + PHYSBASE);
 		
 	return table_head + liodn;
