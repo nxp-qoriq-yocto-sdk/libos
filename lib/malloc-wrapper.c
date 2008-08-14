@@ -82,11 +82,7 @@ static int next_usable_segment(int next, ssize_t *size)
 	while (next < nextseg) {
 		*size = segments[next].end - segments[next].start + 1;
 	
-		if (*size < 1024) {
-			printlog(LOGTYPE_MALLOC, LOGLEVEL_NORMAL,
-			         "malloc_init: discarded %ld bytes at 0x%p (too small)\n",
-			         *size, segments[next].start);
-		} else {
+		if (*size >= 1024) {
 			printlog(LOGTYPE_MALLOC, LOGLEVEL_NORMAL,
 			         "malloc_init: using %ld %ciB at 0x%p - 0x%p\n",
 			         *size >= 1024 * 1024 ? *size / (1024 * 1024) : *size / 1024,
@@ -95,6 +91,12 @@ static int next_usable_segment(int next, ssize_t *size)
 
 			return next;
 		}
+
+		printlog(LOGTYPE_MALLOC, LOGLEVEL_NORMAL,
+		         "malloc_init: discarded %ld bytes at 0x%p (too small)\n",
+		         *size, segments[next].start);
+
+		next++;
 	}
 	
 	return -1;
