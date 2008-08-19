@@ -147,6 +147,7 @@
 	
 	mtspr	SPR_EPLC, %r3
 	mtspr	SPR_EPSC, %r4
+	isync
 
 1:
 	.if	\savearea == CPU_NORMSAVE
