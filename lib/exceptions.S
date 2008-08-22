@@ -44,7 +44,7 @@
  * SPRG0: per-CPU data pointer
  * SPRG1: normal exception scratch
  * SPRG2: critical exception scratch
- * SPRG3: unused
+ * SPRG3: reserved for client
  * SPRG4-7: reserved for guest
  * SPRG8: machine check scratch
  * SPRG9: debug exception scratch
