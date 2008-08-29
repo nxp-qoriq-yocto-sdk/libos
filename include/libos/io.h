@@ -94,6 +94,21 @@ static inline void smp_mbar(void)
 	mbar(1);
 }
 
+static inline void tlb_inv_addr(register_t vaddr)
+{
+	asm volatile("tlbilxva 0, %0" : : "r" (vaddr));
+}
+
+static inline void tlb_inv_pid(void)
+{
+	asm volatile("tlbilxpid");
+}
+
+static inline void tlb_inv_lpid(void)
+{
+	asm volatile("tlbilxlpid");
+}
+
 static inline register_t disable_critint_save(void)
 {
 	register_t ret, tmp;
