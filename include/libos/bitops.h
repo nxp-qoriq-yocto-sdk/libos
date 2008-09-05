@@ -74,7 +74,7 @@ static inline void spin_lock(uint32_t *ptr)
 	             "bne 2f;"
 	             "stwcx. %2, %y1;"
 	             "bne 1b;"
-	             "mbar 1;"
+	             "lwsync;"
 	             ".subsection 1;"
 	             "2: lwzx %0, %y1;"
 	             "cmpwi %0, 0;"
@@ -91,7 +91,7 @@ static inline void spin_unlock(uint32_t *ptr)
 	__attribute__((unused)) uint32_t pir = mfspr(SPR_PIR) + 1;
 
 	assert(*ptr == pir);
-	asm volatile("mbar 1; stw%U0%X0 %1, %0" : "=m" (*ptr) : "r" (0) : "memory");
+	asm volatile("lwsync; stw%U0%X0 %1, %0" : "=m" (*ptr) : "r" (0) : "memory");
 }
 
 static inline register_t spin_lock_critsave(uint32_t *ptr)

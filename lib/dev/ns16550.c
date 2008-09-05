@@ -199,24 +199,24 @@ static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 		return ERR_INVALID;
 
 	unsigned long saved = spin_lock_critsave(&priv->lock);
-	cd->tx = q;
 	
 	if (q) {
+		cd->tx = q;
 		q->consumer = priv;
 		smp_mbar();
 		q->data_avail = ns16550_tx_callback;
-		smp_mbar();
+		smp_sync();
 
 		if (!queue_empty(q))
 			out8(&priv->reg[NS16550_IER],
 			     in8(&priv->reg[NS16550_IER]) | NS16550_IER_ETHREI);
-	} else {
-		q->data_avail = NULL;
+	} else if (cd->tx) {
+		cd->tx->data_avail = NULL;
 		out8(&priv->reg[NS16550_IER],
 		     in8(&priv->reg[NS16550_IER]) & ~NS16550_IER_ETHREI);
-		smp_mbar();
 		// FIXME: sync with IRQ handlers/callbacks
-		q->consumer = NULL;
+		cd->tx->consumer = NULL;
+		cd->tx = NULL;
 	}
 
 	spin_unlock_critsave(&priv->lock, saved);

@@ -102,7 +102,7 @@ int queue_readchar(queue_t *q)
 		return -1;
 
 	int ret = q->buf[q->head];
-	smp_mbar();
+	smp_lwsync();
 	raw_out32(&q->head, queue_wrap(q, q->head + 1));
 	return ret;
 }

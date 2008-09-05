@@ -94,6 +94,18 @@ static inline void smp_mbar(void)
 	mbar(1);
 }
 
+static inline void smp_lwsync(void)
+{
+	// FIXME: ifdef SMP
+	lwsync();
+}
+
+static inline void smp_sync(void)
+{
+	// FIXME: ifdef SMP
+	sync();
+}
+
 static inline void tlb_inv_addr(register_t vaddr)
 {
 	asm volatile("tlbilxva 0, %0" : : "r" (vaddr));
