@@ -239,14 +239,17 @@ static inline void raw_out32_rev(uint32_t *ptr, uint32_t val)
 #define IO_DEF_IN(name, type) \
 static inline type name(const type *ptr) \
 { \
-	mbar(1); \
-	return raw_##name(ptr); \
+	type ret; \
+	sync(); \
+	ret = raw_##name(ptr); \
+	sync(); \
+	return ret; \
 }
 
 #define IO_DEF_OUT(name, type) \
 static inline void name(type *ptr, type val) \
 { \
-	mbar(1); \
+	sync(); \
 	raw_##name(ptr, val); \
 	sync(); \
 }
