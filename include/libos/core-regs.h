@@ -220,6 +220,10 @@
 #define   MCSR_NMI         0x00100000 // Non-Maskable Interrupt
 #define   MCSR_MAV         0x00080000 // Address Valid
 #define   MCSR_MEA         0x00040000 // MCAR is virtual
+#define   MCSR_IF          0x00010000 // Instruction Fetch
+#define   MCSR_LD          0x00008000 // Load
+#define   MCSR_ST          0x00004000 // Store
+
 #define SPR_MCAR         573  // Machine check Address
 
 #define SPR_DSRR0        574  // Debug SRR0
