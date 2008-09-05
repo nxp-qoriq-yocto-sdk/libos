@@ -193,5 +193,12 @@ static inline int max_page_size(unsigned long start, unsigned long num)
 	return min(natural_alignment(start), pages_to_tsize(num));
 }
 
+// Return the tsize of the largest page size that can be used
+// to map the specified range (in tsize).
+static inline int max_page_tsize(unsigned long start, int tsize)
+{
+	return min(natural_alignment(start), tsize);
+}
+
 #endif
 #endif
