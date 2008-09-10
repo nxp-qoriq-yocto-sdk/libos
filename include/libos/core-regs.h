@@ -291,12 +291,14 @@
 #define   L1CSR0_DCBZ32    0x00000008 // dcbz works on 32-byte blocks
 #define   L1CSR0_DCFI      0x00000002 // Data Cache Flash Invalidate
 #define   L1CSR0_DCE       0x00000001 // Data Cache Enable
+#define   L1CSR0_DCUL      0x00000400 // Data Cache Unable to Lock
 
 #define SPR_L1CSR1       1011 // L1 Cache Control and Status Register 1
 #define   L1CSR1_ICPE      0x00010000 // Instruction Cache Parity Enable
 #define   L1CSR1_ICLFR     0x00000100 // Instruction Cache Lock Bits Flash Reset
 #define   L1CSR1_ICFI      0x00000002 // Instruction Cache Flash Invalidate
 #define   L1CSR1_ICE       0x00000001 // Instruction Cache Enable
+#define   L1CSR1_ICUL      0x00000400 // Instruction Cache Unable to Lock
 
 #define SPR_MMUCSR0      1012 // MMU Control and Status Register 0
 #define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
