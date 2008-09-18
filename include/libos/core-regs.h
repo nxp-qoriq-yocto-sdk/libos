@@ -140,6 +140,38 @@
 #define   EHCSR_DGTMI      0x00800000 // Disable guest TLB management insns
 #define   EHCSR_DMIUH      0x00400000 // Disable MAS int updates for hypervisor
 
+#define SPR_DBSR         304  // Debug Status Register
+#define   DBSR_ICMP        0x08000000 // Instruction complete debug event
+#define   DBSR_BRT         0x04000000 // Branch taken debug event
+#define   DBSR_IRPT        0x02000000 // Interrupt taken debug event
+#define   DBSR_TRAP        0x01000000 // Trap instruction debug event
+#define   DBSR_IAC1        0x00800000 // IAC1 debug event
+#define   DBSR_IAC2        0x00400000 // IAC2 debug event
+#define   DBSR_IAC3        0x00200000 // IAC3 debug event
+#define   DBSR_IAC4        0x00100000 // IAC4 debug event
+#define   DBSR_DAC1R       0x00080000 // DAC1 read debug event
+#define   DBSR_DAC1W       0x00040000 // DAC1 write debug event
+#define   DBSR_DAC2R       0x00020000 // DAC2 read debug event
+#define   DBSR_DAC2W       0x00010000 // DAC2 write debug event
+#define   DBSR_RET         0x00008000 // Return debug event
+
+#define SPR_DBCR0        308  // Debug control register 0
+#define   DBCR0_IDM        0x40000000 // Internal debug mode
+#define   DBCR0_RST        0x30000000 // Reset mask
+#define   DBCR0_ICMP       0x08000000 // Instruction complete debug event
+#define   DBCR0_BRT        0x04000000 // Branch taken debug event
+#define   DBCR0_IRPT       0x02000000 // Interrupt taken debug event
+#define   DBCR0_TRAP       0x01000000 // Trap instruction debug event
+#define   DBCR0_IAC1       0x00800000 // IAC1 debug event
+#define   DBCR0_IAC2       0x00400000 // IAC2 debug event
+#define   DBCR0_IAC3       0x00200000 // IAC3 debug event
+#define   DBCR0_IAC4       0x00100000 // IAC4 debug event
+#define   DBCR0_DAC1R      0x00080000 // DAC1 read debug event
+#define   DBCR0_DAC1W      0x00040000 // DAC1 write debug event
+#define   DBCR0_DAC2R      0x00020000 // DAC2 read debug event
+#define   DBCR0_DAC2W      0x00010000 // DAC2 write debug event
+#define   DBCR0_RET        0x00008000 // Return debug event
+
 #define SPR_MSRP         311  // MSR Protect
 #define   MSRP_UCLEP     0x04000000 // Protect MSR[UCLE]
 #define   MSRP_DEP       0x00000200 // Protect MSR[DE]
