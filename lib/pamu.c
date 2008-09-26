@@ -27,99 +27,85 @@
 #include <libos/console.h>
 #include <libos/io.h>
 
-pamu_mmap_regs_t *pamu_regs;
+static pamu_mmap_regs_t *pamu_regs;
+
+static ppaace_t *ppaact;
+static spaace_t *spaact;
+static ome_t *omt;
 
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 {
-	uint32_t pamu_offset;
-	uintptr_t *pc;
-	uint32_t table_size;
-	static uintptr_t ppaact_pointer, ppaact_pointer_end;
-	static uintptr_t spaact_pointer, spaact_pointer_end;
-	static uintptr_t omt_pointer, omt_pointer_end;
+	uintptr_t pamu_offset;
+	uint32_t *pc;
+	phys_addr_t phys;
 
 	printlog(LOGTYPE_MISC, LOGLEVEL_DEBUG, "Starting PAMU init\n");
 
-	if (!ppaact_pointer) {
-		table_size = sizeof(ppaace_t) * PAACE_NUMBER_ENTRIES;
-		ppaact_pointer = (uintptr_t)
-			alloc(table_size, PAMU_TABLE_ALIGNMENT);
-		if (!ppaact_pointer) {
+	if (!ppaact) {
+		ppaact = alloc(sizeof(ppaace_t) * PAACE_NUMBER_ENTRIES,
+		               PAMU_TABLE_ALIGNMENT);
+		if (!ppaact) {
 			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU ppaact.\n");
 			return -1;
 		}
-		ppaact_pointer_end = ppaact_pointer + table_size;
 
-		table_size = sizeof(spaace_t) * SPAACE_NUMBER_ENTRIES;
-		spaact_pointer = (uintptr_t)
-			alloc(table_size, PAMU_TABLE_ALIGNMENT);
-		if (!spaact_pointer) {
+		spaact = alloc(sizeof(spaace_t) * SPAACE_NUMBER_ENTRIES,
+		               PAMU_TABLE_ALIGNMENT);
+		if (!spaact) {
 			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU spaact.\n");
 			return -1;
 		}
-		spaact_pointer_end = spaact_pointer + table_size;
 
-		table_size = sizeof(ome_t) * OME_NUMBER_ENTRIES;
-		omt_pointer = (uintptr_t)
-			alloc(table_size, PAMU_TABLE_ALIGNMENT);
-		if (!omt_pointer) {
+		omt = alloc(sizeof(ome_t) * OME_NUMBER_ENTRIES,
+		            PAMU_TABLE_ALIGNMENT);
+		if (!omt) {
 			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU omt.\n");
 			return -1;
 		}
-		omt_pointer_end = omt_pointer + table_size;
 	}
 
 	pamu_offset = CCSRBAR_VA + pamu_reg_base;
-	pc = (uintptr_t *) (pamu_offset + PAMU_PC);
+	pc = (uint32_t *) (pamu_offset + PAMU_PC);
 	pamu_regs = (pamu_mmap_regs_t *) (pamu_offset + PAMU_MMAP_REGS_BASE);
 
+	/* set up pointers to corenet control blocks */
+
+	phys = virt_to_phys(ppaact);
+	out32(&pamu_regs->ppbah, phys >> 32);
+	out32(&pamu_regs->ppbal, (uint32_t)phys);
+	phys = virt_to_phys(ppaact + PAACE_NUMBER_ENTRIES);
+	out32(&pamu_regs->pplah, phys >> 32);
+	out32(&pamu_regs->pplal, (uint32_t)phys);
+
+	phys = virt_to_phys(spaact);
+	out32(&pamu_regs->spbah, phys >> 32);
+	out32(&pamu_regs->spbal, (uint32_t)phys);
+	phys = virt_to_phys(spaact + SPAACE_NUMBER_ENTRIES);
+	out32(&pamu_regs->splah, phys >> 32);
+	out32(&pamu_regs->splal, (uint32_t)phys);
+
+	phys = virt_to_phys(omt);
+	out32(&pamu_regs->obah, phys >> 32);
+	out32(&pamu_regs->obal, (uint32_t)phys);
+	phys = virt_to_phys(omt + OME_NUMBER_ENTRIES);
+	out32(&pamu_regs->olah, phys >> 32);
+	out32(&pamu_regs->olal, (uint32_t)phys);
+
 	/*
-	 * Clear the Gate bit, and
 	 * set PAMU enable bit,
 	 * plus allow ppaact and spaact to be cached
 	 */
 
-	out32((uint32_t *)pc, PAMU_PC_PE | PAMU_PC_SPCC | PAMU_PC_PPCC);
-
-	/*
-	 * set up pointers to corenet control blocks
-	 * since we are currently only 32 bit, set the high
-	 * end addresses to zero
-	 */
-
-	out32(&pamu_regs->ppbah, 0);
-	out32(&pamu_regs->pplah, 0);
-	out32(&pamu_regs->spbah, 0);
-	out32(&pamu_regs->splah, 0);
-	out32(&pamu_regs->obah, 0);
-	out32(&pamu_regs->olah, 0);
-
-	// FIXME: this assumes that hv is running at phys addr 0x0
-	// which may not be the case in the future
-	out32(&pamu_regs->ppbal, ppaact_pointer-PHYSBASE);
-	out32(&pamu_regs->pplal, ppaact_pointer_end-PHYSBASE);
-	out32(&pamu_regs->spbal, spaact_pointer-PHYSBASE);
-	out32(&pamu_regs->splal, spaact_pointer_end-PHYSBASE);
-	out32(&pamu_regs->obal, omt_pointer-PHYSBASE);
-	out32(&pamu_regs->olal, omt_pointer_end-PHYSBASE);
-
+	out32(pc, PAMU_PC_PE | PAMU_PC_SPCC | PAMU_PC_PPCC);
 	return 0;
 }
 
 ppaace_t *get_ppaace(uint32_t liodn)
 {
-	ppaace_t *table_head;
-
-	if (!pamu_regs)
+	if (!ppaact)
 		return NULL;
 
-	table_head = (ppaace_t *) in32(&pamu_regs->ppbal);
-	if (!table_head)
-		return NULL;
-
-	table_head = (ppaace_t *) ((unsigned char *)table_head + PHYSBASE);
-
-	return table_head + liodn;
+	return &ppaact[liodn];
 }
 
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace)
