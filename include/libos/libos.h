@@ -113,4 +113,11 @@ static inline void free(void *ptr)
 }
 #endif
 
+#ifndef HAVE_VIRT_TO_PHYS
+static inline phys_addr_t virt_to_phys(void *ptr)
+{
+	return (uintptr_t)ptr - PHYSBASE;
+}
+#endif
+
 #endif
