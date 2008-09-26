@@ -31,8 +31,8 @@ pamu_mmap_regs_t *pamu_regs;
 
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 {
-    	uint32_t pamu_offset;
-    	uintptr_t *pc;	
+	uint32_t pamu_offset;
+	uintptr_t *pc;
 	uint32_t table_size;
 	static uintptr_t ppaact_pointer, ppaact_pointer_end;
 	static uintptr_t spaact_pointer, spaact_pointer_end;
@@ -43,7 +43,7 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 	if (!ppaact_pointer) {
 		table_size = sizeof(ppaace_t) * PAACE_NUMBER_ENTRIES;
 		ppaact_pointer = (uintptr_t)
-			 alloc(table_size, PAMU_TABLE_ALIGNMENT);
+			alloc(table_size, PAMU_TABLE_ALIGNMENT);
 		if (!ppaact_pointer) {
 			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU ppaact.\n");
 			return -1;
@@ -73,24 +73,24 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 	pc = (uintptr_t *) (pamu_offset + PAMU_PC);
 	pamu_regs = (pamu_mmap_regs_t *) (pamu_offset + PAMU_MMAP_REGS_BASE);
 
-	/* 
-	 * Clear the Gate bit, and 
-	 * set PAMU enable bit, 
-	 * plus allow ppaact and spaact to be cached 
+	/*
+	 * Clear the Gate bit, and
+	 * set PAMU enable bit,
+	 * plus allow ppaact and spaact to be cached
 	 */
 
-    	out32((uint32_t *)pc, PAMU_PC_PE | PAMU_PC_SPCC | PAMU_PC_PPCC);
+	out32((uint32_t *)pc, PAMU_PC_PE | PAMU_PC_SPCC | PAMU_PC_PPCC);
 
-	/* 
-	 * set up pointers to corenet control blocks 
+	/*
+	 * set up pointers to corenet control blocks
 	 * since we are currently only 32 bit, set the high
 	 * end addresses to zero
 	 */
 
 	out32(&pamu_regs->ppbah, 0);
-    	out32(&pamu_regs->pplah, 0);
-    	out32(&pamu_regs->spbah, 0);
-    	out32(&pamu_regs->splah, 0);
+	out32(&pamu_regs->pplah, 0);
+	out32(&pamu_regs->spbah, 0);
+	out32(&pamu_regs->splah, 0);
 	out32(&pamu_regs->obah, 0);
 	out32(&pamu_regs->olah, 0);
 
@@ -112,17 +112,17 @@ ppaace_t *get_ppaace(uint32_t liodn)
 
 	if (!pamu_regs)
 		return NULL;
-	
+
 	table_head = (ppaace_t *) in32(&pamu_regs->ppbal);
 	if (!table_head)
 		return NULL;
 
 	table_head = (ppaace_t *) ((unsigned char *)table_head + PHYSBASE);
-		
+
 	return table_head + liodn;
 }
 
-void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace) 
+void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace)
 {
 	ppaace->wbah = 0;
 	ppaace->ap = PAACE_AP_PERMS_ALL;
@@ -136,7 +136,7 @@ void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace)
 	ppaace->domain_attr.to_host.did = PAACE_DID_MEM_1_4;
 
 	/* Aquila platform does not support PID */
-	ppaace->domain_attr.to_host.pid = PAACE_PID_0;	
+	ppaace->domain_attr.to_host.pid = PAACE_PID_0;
 
 	ppaace->domain_attr.to_host.coherency_required = PAACE_M_COHERENCE_REQ;
 }
