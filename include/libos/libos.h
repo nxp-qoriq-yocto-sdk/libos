@@ -97,6 +97,7 @@ static inline void *alloc(unsigned long size, size_t align)
 }
 
 #define alloc_type(T) alloc(sizeof(T), __alignof__(T))
+#define alloc_type_num(T, n) alloc(sizeof(T) * (n), __alignof__(T))
 
 void *valloc(unsigned long size, unsigned long align);
 void valloc_init(unsigned long start, unsigned long end);
