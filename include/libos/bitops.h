@@ -61,10 +61,7 @@ static inline void spin_lock(uint32_t *ptr)
 	uint32_t tmp;
 
 	if (spin_lock_held(ptr)) {
-		if (crashing)
-			return;
-		
-		crashing = 1;
+		set_crashing();
 		printf("Recursive spin_lock detected on %p\n", ptr);
 		BUG();
 	}

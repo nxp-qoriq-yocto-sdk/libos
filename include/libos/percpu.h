@@ -51,7 +51,7 @@ typedef struct {
 	tlb_entry_t tlb1[TLB1_SIZE];
 	uint8_t *kstack; // Set to stack[KSTACK_SIZE - FRAMELEN];
 	kstack_t debugstack, critstack, mcheckstack;
-	int coreid, console_ok;
+	int coreid, console_ok, crashing;
 	int traplevel; /**< Normally 0, 1 if in critical exception context */
 	int errno; /**< Used for C/POSIX funcitons that set errno */
 #ifdef LIBOS_RET_USER_HOOK

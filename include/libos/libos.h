@@ -40,10 +40,10 @@
 	for(;;); \
 } while (0)
 
-extern int crashing;
+extern void set_crashing(void);
 
 #define BUG() do { \
-	crashing = 1; \
+	set_crashing(); \
 	printf("Assertion failure at %s:%d\n", __FILE__, __LINE__); \
 	__builtin_trap(); \
 } while (0)

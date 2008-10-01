@@ -36,6 +36,7 @@
 #include <libos/uart.h>
 #include <libos/interrupts.h>
 #include <libos/errors.h>
+#include <libos/percpu.h>
 
 // FIXME -- get clock from device tree
 #define get_system_clock() 266
@@ -98,10 +99,19 @@ void ns16550_tx_callback(queue_t *q)
 {
 	ns16550 *priv = q->consumer;
 	assert(q == priv->cd.tx);
-	
-	register_t saved = spin_lock_critsave(&priv->lock);
+	int lock = !unlikely(cpu->crashing);
+
+	register_t saved = disable_critint_save();
+
+	if (lock)
+		spin_lock(&priv->lock);
+
 	__ns16550_tx_callback(priv);
-	spin_unlock_critsave(&priv->lock, saved);
+
+	if (lock)
+		spin_unlock(&priv->lock);
+
+	restore_critint(saved);
 }
 
 /*!
