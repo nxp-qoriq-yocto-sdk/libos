@@ -7,12 +7,15 @@ digit-grouping 16 8
 output-radix 16
 
 if not defined uboot		{$uboot  = "u-boot.4080"}
-if not defined kernel_image	{$kernel_image  = "%script%/bin/uv.uImage"}
+if not defined kernel_image	{$kernel_image  = "%script%/bin/hv.uImage"}
 if not defined kernel_addr      {$kernel_addr   = 0x40000}
 if not defined kernel_symbols	{$kernel_symbols = ""}
 if not defined uboot_symbols	{$uboot_symbols = ""}
 if not defined dtb_image	{$dtb_image  = "%script%/bin/mpc8578sim-hv.dtb"}
-if not defined dtb_addr      	{$dtb_addr   = 0x20000}
+if not defined flash_base	{$flash_base   = 0xe8000000}
+if not defined dtb_flash_offset	{$dtb_flash_offset   = 0x20000}
+if not defined dtb_ram_addr	{$dtb_ram_addr  = 0x00f00000}
+if not defined dtb_size		{$dtb_size  = 0x00100000}
 if not defined use_uart0	{$use_uart0 = 1}
 if not defined use_uart1	{$use_uart1 = 0}
 if not defined use_uart2	{$use_uart2 = 1}
@@ -22,8 +25,7 @@ if not defined create_network  {$create_network = "yes"}
 if not defined host_name	{$host_name   = "MPC8578-simple"}
 if not defined system_info	{$system_info = $host_name + " - Linux 2.6.x (IP " + $ip_address + ")" }
 if not defined guest_image	{$guest_image = ""}
-if not defined initrd_image	{$initrd_image = ""}
-if not defined boot_command  {$boot_command  = "bootm 0x40000 - 0x20000"}
+if not defined boot_command  {$boot_command  = "bootm 0xe8040000 - 0x00f00000"}
 if not defined mac_address   {$mac_address   = "00:01:af:07:9b:8a"}
 if not defined mac_address1  {$mac_address1  = "00:01:af:07:9b:8b"}
 if not defined mac_address2  {$mac_address2  = "00:01:af:07:9b:8c"}
@@ -52,17 +54,19 @@ if $want_magic_inst == 1 {
 
 ###
 
-if not defined freq_mhz      {$freq_mhz      = 1333.3}
+if not defined freq_mhz      {$freq_mhz      = 30}
+if not defined sysclk_frequency {$sysclk_frequency = 5}
 if not defined memory_megs   {$memory_megs   = 2048}
 if not defined cpu_cores     {$cpu_cores     = 8}
 ###
 
-load-module mpc8578-components
+load-module p4080-components
 load-module memory-components
 load-module std-components
 load-module phy-components
 
-$system = (create-simple-MPC8578-board cpu_cores = $cpu_cores
+$system = (create-simple-P4080-board cpu_cores = $cpu_cores
+                                       sysclk_frequency = $sysclk_frequency
                                        cpu_frequency = $freq_mhz)
 
 if $use_uart0 == 1 {
@@ -93,6 +97,21 @@ if $use_uart2 == 1 {
 	if defined terminal_fg_color   {$con3->fg_color   = $terminal_fg_color}
 	if defined terminal_win32_font {$con3->win32_font = $terminal_win32_font}
 	if defined terminal_x11_font   {$con3->x11_font   = $terminal_x11_font}
+}
+
+if $use_uart2_tty == 1 {
+	$con3_tty = (create-std-host-serial-console)
+	$system.connect uart2 $con3_tty
+}
+
+if $use_uart1_net == 1 {
+	$con2_tty = (create-std-server-console "foo" 9124)
+	$system.connect uart1 $con2_tty
+}
+
+if $use_uart2_net == 1 {
+	$con3_tty = (create-std-server-console "foo" 9999)
+	$system.connect uart2 $con3_tty
 }
 
 if $use_uart3 == 1 {
@@ -135,7 +154,6 @@ cpu0->compat_magic = FALSE
 
 # work arounds
 
-
 $eth_comp = $phy[0]
 if not defined eth_cnt { $eth_cnt = eth }
 run-command-file "%simics%/targets/common/add-eth-link.include"
@@ -156,6 +174,14 @@ default-port-forward-target $ip_address
 
 $phys_mem = ($system:phys_mem)
 $phys_mem.load-file $uboot 0xfff80000
+
+if ($kernel_image != "") {
+	flash_space.load-file $kernel_image $kernel_addr
+}
+
+if ($dtb_image != "") {
+	flash_space.load-file $dtb_image $dtb_flash_offset
+}
 
 # U-boot uses l1 cache without backing RAM
 # the address has to match u-boot build/config
@@ -181,10 +207,8 @@ if $do_boot == "yes" {
 	local $con          = ($console:con)
         local $phys_mem     = ($system:phys_mem)
 
-        local $initrd_image = $initrd_image
-        local $initrd_addr  = $initrd_addr
-        local $kernel_image = $kernel_image
-        local $kernel_addr  = $kernel_addr
+#        local $kernel_image = $kernel_image
+#        local $kernel_addr  = $kernel_addr
         local $boot_command = $boot_command
         local $cmdline      = $kernel_cmdline
         local $mac_address  = $mac_address
@@ -195,7 +219,7 @@ if $do_boot == "yes" {
         local $ip_address1  = $ip_address1
         local $ip_address2  = $ip_address2
         local $ip_address3  = $ip_address3
-        local $dtb_addr     = $dtb_addr
+        local $dtb_flash_offset     = $dtb_flash_offset
         local $dtb_image    = $dtb_image
 
         $con.wait-for-string "autoboot:"
@@ -227,36 +251,39 @@ if $do_boot == "yes" {
                 $con.wait-then-write "=> " "setenv serverip 10.10.0.1\n"
         }
 
-        # Boot the linux kernel
-        $con.wait-for-string "=> "
-        if ($kernel_image != "") {
-            $phys_mem.load-file $kernel_image $kernel_addr
-        }
-        if ($guest_image != "") {
-            $phys_mem.load-file $guest_image $guest_addr
-        }
-        if ($initrd_image != "") {
-            $phys_mem.load-file $initrd_image $initrd_addr
-        }
-        if ($dtb_image != "") {
-            # Must load to address covered by initial TLB entry
-            $phys_mem.load-file $dtb_image $dtb_addr
-        }
-	$con.input "# images has been forced into memory\n"
-
         if ($cmdline != "") {
             $con.wait-then-write "=> " "setenv bootargs " + $cmdline + "\n"
         }
 
+	# Work-around for QMAN FDQ transactions accessing portal DLIODNs
+	# instead of QMAN_LIODNR,program all s/w portal DLIODNs to QMAN_LIODNR
+	$phys_mem.set 0xfe318000 0x10016
+	$phys_mem.set 0xfe318010 0x20016
+	$phys_mem.set 0xfe318020 0x30016
+	$phys_mem.set 0xfe318030 0x40016
+	$phys_mem.set 0xfe318040 0x50016
+	$phys_mem.set 0xfe318050 0x60016
+	$phys_mem.set 0xfe318060 0x70016
+	$phys_mem.set 0xfe318070 0x80016
+	$phys_mem.set 0xfe318080 0x90016
+	$phys_mem.set 0xfe318090 0xa0016
+
+
+        # Note: user must override boot_command if dev_tree_blob is set
+	$con.wait-then-write "=> " "fdt move " + (hex ($flash_base + $dtb_flash_offset)) + " " + (hex $dtb_ram_addr) + " " + (hex $dtb_size) + "\n"
 	if ($binary_image == "true") {
-		$con.wait-then-write "=> " "go 0x10000000\n"
+		if ($kernel_image != "") {
+			$phys_mem.load-file $kernel_image $kernel_addr
+		}
+		$con.wait-then-write "=> " "go " + (hex $kernel_addr) + "\n"
         } else {
-        	# Note: user must override boot_command if dev_tree_blob is set
 		$con.wait-then-write "=> " "setenv bootcmd " + $boot_command + "\n"
-                $con.wait-then-write "=> " "boot\n"
-        }
-
-
-
+		$con.wait-then-write "=> " "boot\n"
+	}
     }
 }
+
+# workaround for qman: disable delays for Simics 3.2.35
+qman->push_interval=0
+qman->enqueue_interval=0
+
