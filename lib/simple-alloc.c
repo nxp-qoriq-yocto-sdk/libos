@@ -35,7 +35,7 @@ typedef struct {
 	uintptr_t start, end;
 } allocator;
 
-#if !defined(CONFIG_LIBOS_MALLOC)
+#ifdef CONFIG_LIBOS_SIMPLE_ALLOC
 static allocator heap;
 #endif
 
@@ -59,19 +59,12 @@ static void *__alloc(allocator *a, size_t size, size_t align)
 	return ret;
 }
 
-#if !defined(CONFIG_LIBOS_MALLOC)
+#ifdef CONFIG_LIBOS_SIMPLE_ALLOC
 void *simple_alloc(size_t size, size_t align)
 {
 	return __alloc(&heap, size, align);
 }
-#endif
 
-void *valloc(unsigned long size, unsigned long align)
-{
-	return __alloc(&virtual, size, align);
-}
-
-#if !defined(CONFIG_LIBOS_MALLOC)
 void simple_alloc_init(void *start, size_t size)
 {
 	heap.start = (uintptr_t)start;
@@ -79,8 +72,15 @@ void simple_alloc_init(void *start, size_t size)
 }
 #endif
 
+#ifdef CONFIG_LIBOS_VIRT_ALLOC
+void *valloc(unsigned long size, unsigned long align)
+{
+	return __alloc(&virtual, size, align);
+}
+
 void valloc_init(unsigned long start, unsigned long end)
 {
 	virtual.start = (uintptr_t)start;
 	virtual.end = end;
 }
+#endif

@@ -24,7 +24,7 @@
  */
 
 #include <libos/pamu.h>
-#include <libos/console.h>
+#include <libos/printlog.h>
 #include <libos/io.h>
 
 static pamu_mmap_regs_t *pamu_regs;

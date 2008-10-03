@@ -27,7 +27,7 @@
 
 #include <stddef.h>
 #include <libos/types.h>
-#include <libos/console.h>
+#include <libos/printlog.h>
 #include <libos/malloc.h>
 
 #define to_container(memberinstance, containertype, membername) ({ \

@@ -22,17 +22,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LIBOS_CONSOLE_H
-#define LIBOS_CONSOLE_H
+#include <stdint.h>
+#include <libos/printlog.h>
 
-#include <stdarg.h>
-#include <libos/chardev.h>
-
-void console_init(chardev_t *cd);
-void qconsole_init(queue_t *q);
-int putchar(int c);
-int puts(const char *s);
-size_t printf(const char *str, ...);
-size_t vprintf(const char *str, va_list args);
-
-#endif
+uint8_t loglevels[NUM_LOGTYPES] = 
+	{ [0 ... NUM_LOGTYPES - 1] = CONFIG_LIBOS_DEFAULT_LOGLEVEL };

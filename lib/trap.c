@@ -26,7 +26,7 @@
 #include <libos/libos.h>
 #include <libos/trap_booke.h>
 #include <libos/trapframe.h>
-#include <libos/console.h>
+#include <libos/printlog.h>
 #include <libos/core-regs.h>
 #include <libos/io.h>
 

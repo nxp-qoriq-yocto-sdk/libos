@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libos/console.h>
+#include <libos/printlog.h>
 #include <libos/mpic.h>
 #include <libos/io.h>
 #include <libos/core-regs.h>

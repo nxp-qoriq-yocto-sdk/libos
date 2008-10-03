@@ -442,7 +442,7 @@ DEFAULT_MMAP_THRESHOLD       default: 256K
 
 /* libos settings */
 #include <stdint.h>
-#include <libos/console.h>
+#include <libos/printlog.h>
 #include <libos/libos.h>
 #include <libos/bitops.h>
 

@@ -44,9 +44,6 @@ static uint32_t console_lock;
 readline_t *rl_console;
 #endif
 
-uint8_t loglevels[NUM_LOGTYPES] = 
-	{ [0 ... NUM_LOGTYPES - 1] = CONFIG_LIBOS_DEFAULT_LOGLEVEL };
-
 void console_init(chardev_t *cd)
 {
 #ifdef CONFIG_LIBOS_QUEUE

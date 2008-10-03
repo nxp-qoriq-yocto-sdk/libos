@@ -22,17 +22,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LIBOS_CONSOLE_H
-#define LIBOS_CONSOLE_H
+#ifndef LIBOS_PRINTLOG
+#define LIBOS_PRINTLOG
 
-#include <stdarg.h>
-#include <libos/chardev.h>
+#include <stdint.h>
+#include <stdio.h>
 
-void console_init(chardev_t *cd);
-void qconsole_init(queue_t *q);
-int putchar(int c);
-int puts(const char *s);
-size_t printf(const char *str, ...);
-size_t vprintf(const char *str, va_list args);
+#define NUM_LOGTYPES 256
+#define LIBOS_BASE_LOGTYPE  0
+#define CLIENT_BASE_LOGTYPE 64
+
+#define LOGTYPE_MISC      0
+#define LOGTYPE_MMU       1
+#define LOGTYPE_IRQ       2
+#define LOGTYPE_MP        3
+#define LOGTYPE_MALLOC    4
+
+#define MAX_LOGLEVEL 15
+#define LOGLEVEL_ALWAYS   0
+#define LOGLEVEL_ERROR    2
+#define LOGLEVEL_NORMAL   4
+#define LOGLEVEL_DEBUG    8
+#define LOGLEVEL_VERBOSE 12
+
+extern uint8_t loglevels[NUM_LOGTYPES];
+extern void invalid_logtype(void);
+
+/* Unfortunately, GCC will not inline a varargs function.
+ *
+ * The separate > and == comparisons are to shut up the
+ * "comparison is always true" warning with LOGTYPE_ALWAYS.
+ */
+#define printlog(logtype, loglevel, fmt, args...) do { \
+	/* Force a linker error if used improperly. */ \
+	if (logtype >= NUM_LOGTYPES || loglevel > MAX_LOGLEVEL) \
+		invalid_logtype(); \
+	\
+	if ((!__builtin_constant_p(loglevel) || \
+	     loglevel <= CONFIG_LIBOS_MAX_BUILD_LOGLEVEL) && \
+	    __builtin_expect(loglevels[logtype] == loglevel || \
+	                     loglevels[logtype] > loglevel, 0)) \
+		printf("[%ld] " fmt, mfspr(SPR_PIR), ##args); \
+} while (0)
 
 #endif

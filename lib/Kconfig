@@ -1,18 +1,62 @@
+config LIBOS_INIT
+	bool
+	help
+		Code (head.S) intended to directly receive control from a
+		loader, and set up a stack and exception vectors, clear
+		the BSS, establish a known TLB mapping, etc.
+
+config LIBOS_EXCEPTION
+	bool
+	help
+		Exception handler infrastructure, and register/stack
+		dumps on unhandled exceptions.
+
+config LIBOS_FSL_BOOKE_TLB 
+	bool
+	help
+		Support functions for Freescale Book-E MMUs.
+
+config LIBOS_LIBC
+	bool
+	help
+		A libc subset, containing string and memory functions,
+		and vsnprintf.
+
+config LIBOS_CONSOLE
+	bool
+	help
+		A printf() implementation layered on vsnprintf()
+		and a character device or queue.  Also supplies
+		puts().
+		
+config LIBOS_MP
+	bool
+	help
+		Multiprocessor code, including a secondary entry point
+		(if LIBOS_INIT is selected) and a spin-table accessor.
+		
 config LIBOS_MALLOC
 	bool
 	help
-		This supplies malloc(), free(), memalign(), and other
-		functions for dynamic memory allocation based on Doug Lea's
-		malloc implementation.
+		malloc(), free(), memalign(), and other functions for
+		dynamic memory allocation based on Doug Lea's malloc
+		implementation.
 
-config LIBOS_NS16550
-	bool "NS16550-compatible UART support"
+config LIBOS_ALLOC_IMPL
+	bool
+
+config LIBOS_SIMPLE_ALLOC
+	bool
+	depends on !LIBOS_MALLOC
+	select LIBOS_ALLOC_IMPL
 	help
-		Say "Y" to support serial ports compatible with the National
-		Semiconductor 16550 line of UART chips (including PC-style
-		UARTs).  This provides a libos character device that can
-		be used for byte channels, byte channel muxes, and the
-		hypervisor console.
+		A simple count-up allocator, without free() support.
+
+config LIBOS_VIRT_ALLOC
+	bool
+	select LIBOS_ALLOC_IMPL
+	help
+		A simple count-up allocator of virtual address space.
 
 config LIBOS_QUEUE
 	bool
@@ -41,11 +85,30 @@ config LIBOS_MAX_BUILD_LOGLEVEL
 		enabled debug output.  Set to 15 to compile support for all
 		messages.
 
-config LIBOS_PAMU
-	bool
-	help
-		Provides support for Peripheral Access Management Unit.
-
 config LIBOS_PHYS_64BIT
 	bool
 	default y
+
+menu "Device Drivers"
+
+config LIBOS_NS16550
+	bool "NS16550-compatible UART"
+	help
+		Say "Y" to support serial ports compatible with the National
+		Semiconductor 16550 line of UART chips (including PC-style
+		UARTs).  This provides a libos character device that can
+		be used for byte channels, byte channel muxes, and the
+		hypervisor console.
+
+config LIBOS_MPIC
+	bool "Freescale MPIC interrupt controller"
+	help
+		Say "Y" to support Freescale MPIC interrupt controllers
+		(found on 85xx, 86xx, and Pxxxx chips).
+
+config LIBOS_PAMU
+	bool "Freescale PAMU"
+	help
+		Provides support for Peripheral Access Management Unit.
+
+endmenu
