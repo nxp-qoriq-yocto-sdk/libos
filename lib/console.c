@@ -123,6 +123,35 @@ static void __puts_len(const char *s, size_t len)
 #endif
 }
 
+int putchar(int c)
+{
+	int lock = 1;
+	char ch = c;
+
+	if (unlikely(cpu->crashing)) {
+		if (cpu->crashing > 1)
+			return -1;
+
+		cpu->crashing++;
+		lock = 0;
+	}
+
+	register_t saved = disable_critint_save();
+
+	if (lock)
+		spin_lock(&console_lock);
+		
+	__puts_len(&ch, 1);
+
+	if (lock)
+		spin_unlock(&console_lock);
+	else
+		cpu->crashing--;
+
+	restore_critint(saved);
+	return 0;
+}
+
 int puts(const char *s)
 {
 	int lock = 1;
@@ -199,12 +228,6 @@ size_t printf(const char *str, ...)
 	va_end(args);
 
 	return ret;
-}
-
-int putchar(int c)
-{
-	printf("%c", c);
-	return c;
 }
 
 void set_crashing(void)
