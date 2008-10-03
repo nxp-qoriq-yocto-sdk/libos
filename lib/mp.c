@@ -40,7 +40,7 @@ int start_secondary_spin_table(struct boot_spin_table *table, int num,
 	table->pir = num;
 
 	// FIXME 64-bit
-	out32((uint32_t *)&table->addr_lo, (uint32_t)&secondary_start - PHYSBASE);
+	out32((uint32_t *)&table->addr_lo, virt_to_phys(&secondary_start));
 
 	return 0;
 }

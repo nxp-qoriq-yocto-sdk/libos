@@ -39,6 +39,10 @@
 #define STORE std
 #endif
 
+#ifndef PHYSMAPSIZE
+#define PHYSMAPSIZE TLB_TSIZE_256M
+#endif
+
 .text
 
 /*
@@ -185,19 +189,20 @@ fixup_mmu:
 /*
  * Setup final mapping in TLB1[BASE_TLB_ENTRY] and switch to it
  */
-	/* Final kernel mapping, map in 256 MB of RAM */
+	/* Final kernel mapping */
 	lis	%r16, MAS0_TLBSEL1@h	/* Select TLB1 */
 	li	%r17, BASE_TLB_ENTRY	/* Entry index  */
 	rlwimi	%r16, %r17, 16, 10, 15
 	mtspr	SPR_MAS0, %r16
 	isync
 
-	li	%r16, (TLB_TSIZE_256M << MAS1_TSIZE_SHIFT)@l
+	li	%r16, (PHYSMAPSIZE << MAS1_TSIZE_SHIFT)@l
 	oris	%r16, %r16, (MAS1_VALID | MAS1_IPROT)@h
 	mtspr	SPR_MAS1, %r16
 	isync
 
-	andis.	%r18, %r19, 0xf000	/* 256MB alignment mask */
+	/* Align mapping to size */
+	rlwinm	%r18, %r19, 0, ~((((PHYSMAPSIZE - 1) * 2) << 12) - 1)
 
 	addis	%r15, %r18, PHYSBASE@h
 	ori	%r15, %r15, 4

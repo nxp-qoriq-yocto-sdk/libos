@@ -33,10 +33,8 @@ void console_init(chardev_t *cd);
 void qconsole_init(queue_t *q);
 int putchar(int c);
 int puts(const char *s);
-void puts_len(const char *s, size_t len);
 size_t printf(const char *str, ...);
 size_t vprintf(const char *str, va_list args);
-extern int crashing;
 
 #define NUM_LOGTYPES 256
 #define LIBOS_BASE_LOGTYPE  0

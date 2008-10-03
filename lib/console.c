@@ -31,6 +31,7 @@
 #include <libos/console.h>
 #include <libos/chardev.h>
 #include <libos/readline.h>
+#include <libos/percpu.h> 
 
 static chardev_t *console;
 #ifdef CONFIG_LIBOS_QUEUE
@@ -38,7 +39,6 @@ DECLARE_QUEUE(early_console, 4096);
 static queue_t *qconsole = &early_console;
 #endif
 static uint32_t console_lock;
-int crashing;
 
 #ifdef CONFIG_LIBOS_READLINE
 readline_t *rl_console;
@@ -79,7 +79,6 @@ void qconsole_init(queue_t *q)
 static int __putchar(int c)
 {
 	uint8_t ch = c;
-
 	if (console) {
 		if (c == '\n')
 			console->ops->tx(console, (uint8_t *)"\r", 1, CHARDEV_BLOCKING);
@@ -99,37 +98,12 @@ static int __putchar(int c)
 	return c;
 }
 
-int putchar(int c)
-{
-	register_t saved = spin_lock_critsave(&console_lock);
-
-#ifdef CONFIG_LIBOS_READLINE
-	if (rl_console && !crashing)
-		readline_suspend(rl_console);
-#endif
-
-	int ret = __putchar(c);
-
-#ifdef CONFIG_LIBOS_QUEUE
-	if (qconsole)
-		queue_notify_consumer(qconsole);
-#endif
-
-#ifdef CONFIG_LIBOS_READLINE
-	if (rl_console && !crashing && c == '\n')
-		readline_resume(rl_console);
-#endif
-
-	spin_unlock_critsave(&console_lock, saved);
-	return ret;
-}
-
 static void __puts_len(const char *s, size_t len)
 {
 	int last = '\n';
 
 #ifdef CONFIG_LIBOS_READLINE
-	if (rl_console && !crashing)
+	if (rl_console && !cpu->crashing)
 		readline_suspend(rl_console);
 #endif
 
@@ -144,26 +118,37 @@ static void __puts_len(const char *s, size_t len)
 #endif
 
 #ifdef CONFIG_LIBOS_READLINE
-	if (rl_console && !crashing && last == '\n')
+	if (rl_console && !cpu->crashing && last == '\n')
 		readline_resume(rl_console);
 #endif
 }
 
-void puts_len(const char *s, size_t len)
-{
-	register_t saved = spin_lock_critsave(&console_lock);
-	__puts_len(s, len);
-	spin_unlock_critsave(&console_lock, saved);
-}
-
 int puts(const char *s)
 {
-	register_t saved = spin_lock_critsave(&console_lock);
+	int lock = 1;
 
+	if (unlikely(cpu->crashing)) {
+		if (cpu->crashing > 1)
+			return -1;
+
+		cpu->crashing++;
+		lock = 0;
+	}
+
+	register_t saved = disable_critint_save();
+
+	if (lock)
+		spin_lock(&console_lock);
+		
 	__puts_len(s, INT_MAX);
 	__puts_len("\r\n", 2);
 
-	spin_unlock_critsave(&console_lock, saved);
+	if (lock)
+		spin_unlock(&console_lock);
+	else
+		cpu->crashing--;
+
+	restore_critint(saved);
 	return 0;
 }
 
@@ -174,15 +159,33 @@ size_t vprintf(const char *str, va_list args)
 	};
 
 	static char buffer[buffer_size];
-	register_t saved = spin_lock_critsave(&console_lock);
+	int lock = 1;
 
+	if (unlikely(cpu->crashing)) {
+		if (cpu->crashing > 1)
+			return -1;
+
+		cpu->crashing++;
+		lock = 0;
+	}
+
+	register_t saved = disable_critint_save();
+
+	if (lock)
+		spin_lock(&console_lock);
+		
 	size_t ret = vsnprintf(buffer, buffer_size, str, args);
 	if (ret > buffer_size)
 		ret = buffer_size;
 	
 	__puts_len(buffer, ret);
 
-	spin_unlock_critsave(&console_lock, saved);
+	if (lock)
+		spin_unlock(&console_lock);
+	else
+		cpu->crashing--;
+
+	restore_critint(saved);
 	return ret;
 }
 
@@ -196,4 +199,15 @@ size_t printf(const char *str, ...)
 	va_end(args);
 
 	return ret;
+}
+
+int putchar(int c)
+{
+	printf("%c", c);
+	return c;
+}
+
+void set_crashing(void)
+{
+	cpu->crashing = 1;
 }

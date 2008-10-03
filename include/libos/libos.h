@@ -40,10 +40,10 @@
 	for(;;); \
 } while (0)
 
-extern int crashing;
+extern void set_crashing(void);
 
 #define BUG() do { \
-	crashing = 1; \
+	set_crashing(); \
 	printf("Assertion failure at %s:%d\n", __FILE__, __LINE__); \
 	__builtin_trap(); \
 } while (0)
@@ -97,6 +97,7 @@ static inline void *alloc(unsigned long size, size_t align)
 }
 
 #define alloc_type(T) alloc(sizeof(T), __alignof__(T))
+#define alloc_type_num(T, n) alloc(sizeof(T) * (n), __alignof__(T))
 
 void *valloc(unsigned long size, unsigned long align);
 void valloc_init(unsigned long start, unsigned long end);
@@ -110,6 +111,13 @@ static inline void *malloc(size_t size)
 static inline void free(void *ptr)
 {
 	mspace_free(libos_mspace, ptr);
+}
+#endif
+
+#ifndef HAVE_VIRT_TO_PHYS
+static inline phys_addr_t virt_to_phys(void *ptr)
+{
+	return (uintptr_t)ptr - PHYSBASE;
 }
 #endif
 

@@ -27,14 +27,21 @@
 #ifndef LIBOS_CLIENT_H
 #define LIBOS_CLIENT_H
 
-#define PHYSBASE 0x0
+#define PHYSBASE 0x40000000
+#define TEXTSIZE TLB_TSIZE_1M
 #define HYPERVISOR
-#define BASE_TLB_ENTRY 15
+#define TEXT_TLB_ENTRY 63
 
 #define CONFIG_LIBOS_MAX_BUILD_LOGLEVEL LOGLEVEL_NORMAL
 #define CONFIG_LIBOS_DEFAULT_LOGLEVEL LOGLEVEL_NORMAL
 
 #ifndef _ASM
+#define HAVE_VIRT_TO_PHYS
+static uint64_t virt_to_phys(void *ptr)
+{
+	return (uintptr_t)ptr - PHYSBASE;
+}
+
 typedef int client_cpu_t;
 #endif
 

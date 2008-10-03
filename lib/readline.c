@@ -82,11 +82,6 @@ static void __set_cursor(readline_t *rl, int pos)
 		virt = -virt;
 		back = 1;
 		
-		if (pos >= rl->line->pos) {
-			crashing = 1;
-			printf(">= pos %d rl->line->pos %d virt %d horiz %d\n", pos, rl->line->pos, virt, horiz);
-		}
-		
 		assert(pos < rl->line->pos);
 	}
 
