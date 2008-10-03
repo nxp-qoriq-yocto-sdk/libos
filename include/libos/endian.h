@@ -29,7 +29,7 @@
 
 static inline uint16_t swap16(uint16_t val)
 {
-	return (uint16_t)val | (((uint16_t)val >> 8) << 8);
+	return (val & 0x00ff) << 8 | ((val >> 8) &  0x00FF);
 }
 
 static inline uint32_t swap32(uint32_t val)
