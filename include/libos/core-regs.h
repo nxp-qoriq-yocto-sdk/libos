@@ -178,12 +178,24 @@
 #define   MSRP_PMMP      0x00000040 // Protect MSR[PMM]
 
 #define SPR_TSR          336  //  Timer Status Register
+#define   TSR_ENW          0x80000000 // Watchdog enabled
+#define   TSR_WIS          0x40000000 // Watchdog Int Pending
+#define   TSR_WRS          0x30000000 // Watchdog Reset Status
 #define   TSR_DIS          0x08000000 // Decrementer Int Pending
 #define   TSR_FIS          0x04000000 // Fixed Interval Int Pending
 
 #define SPR_LPIDR        338  // Logical Partition ID
 
 #define SPR_TCR          340  //  Timer Control Register
+#define   TCR_WP_VAL(x)    ((((x) >> 15) & 0x3c) | ((x) >> 30))
+#define   TCR_WP_MASK      0xC01E0000 // Watchdog Time Period Mask
+#define   TCR_WP_SET(x)    ((((x) & 0x3c) << 15) | (((x) & 3) << 30))
+#define   TCR_WRC          0x30000000 // Watchdog Reset Control
+#define   TCR_WRC_NOP      0x00000000 // Do nothing on 2nd Timeout
+#define   TCR_WRC_INT      0x10000000 // Send Int to MPIC on 2nd Timeout
+#define   TCR_WRC_REQ      0x20000000 // Ext Reset Request on 2nd Timeout
+#define   TCR_WRC_RESET    0x30000000 // Reset Core on 2nd Timeout
+#define   TCR_WIE          0x08000000 // Watchdog Int Enable
 #define   TCR_DIE          0x04000000 // Decrementer Int Enable
 #define   TCR_DIE_SHIFT    26
 #define   TCR_ARE          0x00400000 // Auto-reload enable
