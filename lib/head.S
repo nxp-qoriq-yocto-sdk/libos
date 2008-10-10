@@ -202,7 +202,7 @@ fixup_mmu:
 	isync
 
 	/* Align mapping to size */
-	rlwinm	%r18, %r19, 0, ~((((PHYSMAPSIZE - 1) * 2) << 12) - 1)
+	rlwinm	%r18, %r19, 0, ~((1 << ((PHYSMAPSIZE - 1) * 2 + 12)) - 1)
 
 	addis	%r15, %r18, PHYSBASE@h
 	ori	%r15, %r15, 4
