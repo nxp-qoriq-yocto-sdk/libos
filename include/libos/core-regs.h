@@ -331,18 +331,34 @@
 
 #define SPR_L1CSR0       1010 // L1 Cache Control and Status Register 0
 #define   L1CSR0_DCPE      0x00010000 // Data Cache Parity Enable
-#define   L1CSR0_DCLFR     0x00000100 // Data Cache Lock Bits Flash Reset
+#define   L1CSR0_DCSLC     0x00000800 // Data Cache Snoop Lock Clear
+#define   L1CSR0_DCUL      0x00000400 // Data Cache Unable to Lock
+#define   L1CSR0_DCLO      0x00000200 // Data Cache Lock Overflow
+#define   L1CSR0_DCLFC     0x00000100 // Data Cache Lock Bits Flash Clear
 #define   L1CSR0_DCBZ32    0x00000008 // dcbz works on 32-byte blocks
 #define   L1CSR0_DCFI      0x00000002 // Data Cache Flash Invalidate
 #define   L1CSR0_DCE       0x00000001 // Data Cache Enable
-#define   L1CSR0_DCUL      0x00000400 // Data Cache Unable to Lock
 
 #define SPR_L1CSR1       1011 // L1 Cache Control and Status Register 1
 #define   L1CSR1_ICPE      0x00010000 // Instruction Cache Parity Enable
-#define   L1CSR1_ICLFR     0x00000100 // Instruction Cache Lock Bits Flash Reset
+#define   L1CSR1_ICSLC     0x00000800 // Instruction Cache Snoop Lock Clear
+#define   L1CSR1_ICUL      0x00000400 // Instruction Cache Unable to Lock
+#define   L1CSR1_ICLO      0x00000200 // Instruction Cache Lock Overflow
+#define   L1CSR1_ICLFC     0x00000100 // Instruction Cache Lock Bits Flash Clear
 #define   L1CSR1_ICFI      0x00000002 // Instruction Cache Flash Invalidate
 #define   L1CSR1_ICE       0x00000001 // Instruction Cache Enable
-#define   L1CSR1_ICUL      0x00000400 // Instruction Cache Unable to Lock
+
+#define SPR_L1CSR2       606 // L1 Cache Control and Status Register 2
+
+#define SPR_L1CSR3       607 // L1 Cache Control and Status Register 3
+
+#define SPR_L2CSR0       1017 // L2 Cache Control and Status Register 0
+#define   L2CSR0_L2LFC     0x00000400 // L2 Cache Lock Flash Clear
+#define   L2CSR0_L2FCID    0x00000300 // L2 Cache Lock Flash Clear Instruction or Data
+#define   L2CSR0_L2SLC     0x00000040 // L2 Cache Snoop Lock Clear
+#define   L2CSR0_L2LO      0x00000020 // L2 Cache Lock Overflow
+
+#define SPR_L2CSR1       1018 // L2 Cache Control and Status Register 1
 
 #define SPR_MMUCSR0      1012 // MMU Control and Status Register 0
 #define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
