@@ -360,6 +360,32 @@
 
 #define SPR_L2CSR1       1018 // L2 Cache Control and Status Register 1
 
+#define SPR_L2ERRDIS     992 // L2 Cache Error Disable Register
+
+#define SPR_L2ERRDET     991 // L2 Cache Error Detect Register
+
+#define SPR_L2ERRINTEN   993 // L2 Cache  Error Interrupt Enbale Register
+
+#define SPR_L2ERRCTL     997 // L2 Cache Error Control Register
+
+#define SPR_L2ERRATTR    994 // L2 Cache Error Attribute Register
+
+#define SPR_L2ERRADDR    995 // L2 Cache Error Address Capture Register
+
+#define SPR_L2ERREADDR   996 // L2 Cache Error Extended Address Capture Register
+
+#define SPR_L2CAPTDATALO 989 // L2 Cache Error Capture Data Low Register
+
+#define SPR_L2CAPTDATAHI 988 // L2 Cache Error Capture Data High Register
+
+#define SPR_L2CAPTECC    990 // L2 Cache Error Capture ECC Syndrome Register
+
+#define SPR_L2ERRINJCTL  987 // L2 Cache Error Injection Control Register
+
+#define SPR_L2ERRINJLO   986 // L2 Cache Error Injection Mask Low Register
+
+#define SPR_L2ERRINJHI   985 // L2 Cache Error Injection Mask High Register
+
 #define SPR_MMUCSR0      1012 // MMU Control and Status Register 0
 #define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
 #define   MMUCSR_L2TLB1_FI 0x00000002 // Invalidate TLB1
