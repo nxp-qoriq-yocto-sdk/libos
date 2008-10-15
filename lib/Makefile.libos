@@ -1,3 +1,4 @@
+# LibOS Makefile
 #
 # Copyright (C) 2008 Freescale Semiconductor, Inc.
 #
@@ -22,7 +23,14 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# LibOS Makefile
+libos := $(src)libos/
+
+ifeq ($(V),)
+show = @echo $(1)
+V := @
+else
+override V :=
+endif
 
 libos-src-first-$(CONFIG_LIBOS_INIT) += head.S
 libos-src-$(CONFIG_LIBOS_FSL_BOOKE_TLB) += fsl-booke-tlb.c
@@ -40,50 +48,50 @@ libos-src-$(CONFIG_LIBOS_MALLOC) += malloc.c malloc-wrapper.c
 libos-src-$(CONFIG_LIBOS_PAMU) += pamu.c
 libos-src-y += printlog.c
 
-GENASSYM=$(LIBOS_DIR)/genassym.sh
+GENASSYM=$(libos)lib/genassym.sh
 
-ifeq ($(KCONFIG),y)
-KCONFIG_DEPS = $(LIBOS_DIR)/confdep "$(1)" "$$OBJ" >> "$(2)"
+.PRECIOUS: bin/%.d
 
-.PRECIOUS: $(LIBOS_BIN)/include/%.d
-$(LIBOS_BIN)/include/%.d : $(LIBOS_INC)/%.h
+hdr-libos = $(shell find $(libos)include* -name '*.h')
+hdrdep-libos = $(hdr-libos:$(libos)include%.h=bin/libos/include%.d)
+
+bin/libos/include%.d : $(libos)include%.h
 	@$(MKDIR) $(@D)
-	@$(LIBOS_DIR)/confdep "$<" "$<" > "$@"
+	$(call show,mkdep: $<)
+	$(V)$(libos)lib/confdep $< $< > $@
 
-LIBOS_HDRS := $(shell find $(LIBOS_INC) -name '*.h')
--include $(LIBOS_HDRS:$(LIBOS_INC)/%.h=$(LIBOS_BIN)/include/%.d)
-else
-KCONFIG_DEPS := "true"
-endif
+-include $(hdrdep-libos)
 
-.PRECIOUS: $(LIBOS_BIN)/%.d
-$(LIBOS_BIN)/%.d : $(LIBOS_DIR)/%.c
+define mkdep
 	@$(MKDIR) $(@D)
-	OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
-	$(CC) -M $(CC_OPTS) $(CC_OPTS_C) -MF "$@" -MT "$$OBJ" $< && \
-	$(call KCONFIG_DEPS,$<,$@)
+	$(call show,mkdep: $<)
+	$(V)OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
+	$($(1)) -M $(2) -MF "$@" -MT "$$OBJ" $< && \
+	$(libos)lib/confdep "$<" "$$OBJ" >> "$@"
+endef
 
-$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.c $(LIBOS_BIN)/%.d
-	$(CC) $(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_C)  -c -o $@ $<
+define build
+	$(call show,build: $<)
+	$(V)$($(1)) $(2) -c -o $@ $<
+endef
 
-$(LIBOS_BIN)/%.d : $(LIBOS_DIR)/%.S $(LIBOS_BIN)/assym.s
+bin/libos/%.d : $(libos)lib/%.c
+	$(call mkdep,CC,$(CC_OPTS) $(CC_OPTS_C))
+
+bin/libos/%.o : $(libos)lib/%.c bin/libos/%.d
+	$(call build,CC,$(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_C))
+
+bin/libos/%.d : $(libos)lib/%.S bin/libos/assym.s
+	$(call mkdep,CC,$(CC_OPTS) $(CC_OPTS_ASM))
+
+bin/libos/%.o : $(libos)lib/%.S bin/libos/%.d
+	$(call build,CC,$(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_ASM))
+
+# No $(CC_OPTS_C), as we want the symbols to go in common rather than BSS.
+bin/libos/libos_assym.o: $(libos)lib/libos_assym.c bin/libos/libos_assym.d
+	$(call build,CC,$(CC_OPTS_NODEP) $(CC_OPTS))
+
+bin/libos/assym.s: bin/libos/libos_assym.o
 	@$(MKDIR) $(@D)
-	OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
-	$(CC) -M $(CC_OPTS) $(CC_OPTS_ASM) -MF "$@" -MT "$$OBJ" $< && \
-	$(call KCONFIG_DEPS,$<,$@)
-
-$(LIBOS_BIN)/%.o : $(LIBOS_DIR)/%.S $(LIBOS_BIN)/%.d
-	$(CC) $(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_ASM) -c -o $@ $<
-
-$(LIBOS_BIN)/libos_assym.d: $(LIBOS_DIR)/libos_assym.c
-	@$(MKDIR) $(@D)
-	OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
-	$(CC) -M $(CC_OPTS) $(CC_OPTS_C) -MF "$@" -MT "$$OBJ" $< && \
-	$(call KCONFIG_DEPS,$<,$@)
-
-$(LIBOS_BIN)/libos_assym.o: $(LIBOS_DIR)/libos_assym.c $(LIBOS_BIN)/libos_assym.d
-	$(CC) $(CC_OPTS_NODEP) $(CC_OPTS) -c -o $@ $<
-
-$(LIBOS_BIN)/assym.s: $(LIBOS_BIN)/libos_assym.o
-	@$(MKDIR) $(@D)
-	$(GENASSYM) -o $@ $<
+	$(call show,genassym: $<)
+	$(V)$(GENASSYM) -o $@ $<
