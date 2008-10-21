@@ -39,5 +39,6 @@
 #define ERR_BADIMAGE         (-261) /**< Data image is invalid or broken */
 #define ERR_BADADDR          (-262) /**< Bad pointer or address */
 #define ERR_RANGE            (-263) /**< Value out of range */
+#define ERR_UNHANDLED        (-264) /**< operation not handled */
 
 #endif
