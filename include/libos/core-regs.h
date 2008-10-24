@@ -129,6 +129,21 @@
 #define SPR_PIR          286  // Processor ID Register
 #define SPR_PVR          287  // Processor Version Register
 
+#define SPR_DBSR         304  // Debug Status Register
+#define   DBSR_ICMP        0x08000000 // Instruction complete debug event
+#define   DBSR_BRT         0x04000000 // Branch taken debug event
+#define   DBSR_IRPT        0x02000000 // Interrupt taken debug event
+#define   DBSR_TRAP        0x01000000 // Trap instruction debug event
+#define   DBSR_IAC1        0x00800000 // IAC1 debug event
+#define   DBSR_IAC2        0x00400000 // IAC2 debug event
+#define   DBSR_IAC3        0x00200000 // IAC3 debug event -- reserved in e500mc
+#define   DBSR_IAC4        0x00100000 // IAC4 debug event -- reserved in e500mc
+#define   DBSR_DAC1R       0x00080000 // DAC1 read debug event
+#define   DBSR_DAC1W       0x00040000 // DAC1 write debug event
+#define   DBSR_DAC2R       0x00020000 // DAC2 read debug event
+#define   DBSR_DAC2W       0x00010000 // DAC2 write debug event
+#define   DBSR_RET         0x00008000 // Return debug event
+
 #define SPR_DBSRWR       306  // DBSR Write Register
 
 #define SPR_EHCSR        307  // Embedded Hypervisor Control/Status
@@ -141,21 +156,6 @@
 #define   EHCSR_DGTMI      0x00800000 // Disable guest TLB management insns
 #define   EHCSR_DMIUH      0x00400000 // Disable MAS int updates for hypervisor
 
-#define SPR_DBSR         304  // Debug Status Register
-#define   DBSR_ICMP        0x08000000 // Instruction complete debug event
-#define   DBSR_BRT         0x04000000 // Branch taken debug event
-#define   DBSR_IRPT        0x02000000 // Interrupt taken debug event
-#define   DBSR_TRAP        0x01000000 // Trap instruction debug event
-#define   DBSR_IAC1        0x00800000 // IAC1 debug event
-#define   DBSR_IAC2        0x00400000 // IAC2 debug event
-#define   DBSR_IAC3        0x00200000 // IAC3 debug event
-#define   DBSR_IAC4        0x00100000 // IAC4 debug event
-#define   DBSR_DAC1R       0x00080000 // DAC1 read debug event
-#define   DBSR_DAC1W       0x00040000 // DAC1 write debug event
-#define   DBSR_DAC2R       0x00020000 // DAC2 read debug event
-#define   DBSR_DAC2W       0x00010000 // DAC2 write debug event
-#define   DBSR_RET         0x00008000 // Return debug event
-
 #define SPR_DBCR0        308  // Debug control register 0
 #define   DBCR0_IDM        0x40000000 // Internal debug mode
 #define   DBCR0_RST        0x30000000 // Reset mask
@@ -165,18 +165,37 @@
 #define   DBCR0_TRAP       0x01000000 // Trap instruction debug event
 #define   DBCR0_IAC1       0x00800000 // IAC1 debug event
 #define   DBCR0_IAC2       0x00400000 // IAC2 debug event
-#define   DBCR0_IAC3       0x00200000 // IAC3 debug event
-#define   DBCR0_IAC4       0x00100000 // IAC4 debug event
+#define   DBCR0_IAC3       0x00200000 // IAC3 debug event -- reserved in e500mc
+#define   DBCR0_IAC4       0x00100000 // IAC4 debug event -- reserved in e500mc
 #define   DBCR0_DAC1R      0x00080000 // DAC1 read debug event
 #define   DBCR0_DAC1W      0x00040000 // DAC1 write debug event
 #define   DBCR0_DAC2R      0x00020000 // DAC2 read debug event
 #define   DBCR0_DAC2W      0x00010000 // DAC2 write debug event
 #define   DBCR0_RET        0x00008000 // Return debug event
 
+#define SPR_DBCR1        309  // Debug control register 1
+#define   DBCR1_IAC1ER_EAMSK 0x30000000 // IAC1 effective address mask
+#define   DBCR1_IAC1ER_RADDR 0x10000000 // IAC1 real addr unsupported
+#define   DBCR1_IAC2ER_EAMSK 0x03000000 // IAC2 effective address mask
+#define   DBCR1_IAC2ER_RADDR 0x10000000 // IAC2 real addr unsupported
+
+#define SPR_DBCR2        310  // Debug control register 2
+#define   DBCR2_DAC1US_MSK   0xc0000000 // DAC1 User/Supervisor mode mask
+#define   DBCR2_DAC1ER_EAMSK 0x30000000 // DAC1 effective address mask
+#define   DBCR2_DAC1ER_RADDR 0x10000000 // DAC1 real addr unsupported
+#define   DBCR2_DAC2US_MSK   0x0c000000 // DAC2 User/Supervisor mode mask
+#define   DBCR2_DAC2ER_EAMSK 0x03000000 // DAC2 effective address mask
+#define   DBCR2_DAC2ER_RADDR 0x01000000 // DAC2 real addr unsupported
+
 #define SPR_MSRP         311  // MSR Protect
 #define   MSRP_UCLEP     0x04000000 // Protect MSR[UCLE]
 #define   MSRP_DEP       0x00000200 // Protect MSR[DE]
 #define   MSRP_PMMP      0x00000040 // Protect MSR[PMM]
+
+#define SPR_IAC1         312  // Instruction address compare register 1
+#define SPR_IAC2         313  // Instruction address compare register 2
+#define SPR_DAC1         316  // Data address compare register 1
+#define SPR_DAC2         317  // Data address compare register 2
 
 #define SPR_TSR          336  //  Timer Status Register
 #define   TSR_ENW          0x80000000 // Watchdog enabled
@@ -256,6 +275,12 @@
 #define SPR_IVOR35       531  // Performance Monitor
 #define SPR_IVOR36       532  // Processor Doorbell
 #define SPR_IVOR37       533  // Processor Doorbell Critical
+
+#define SPR_DBCR4        563
+#define   DBCR4_DAC1XM     0x0000f000 // DAC1 extended mask control
+#define   DBCR4_DAC1XM_RNG 0x0000c000 // DAC1XM maximum supported range
+#define   DBCR4_DAC2XM     0x00000f00 // DAC2 extended mask control
+#define   DBCR4_DAC2XM_RNG 0x00000c00 // DAC2XM maximum supported range
 
 #define SPR_MCARU        569  // Machine Check Address Upper
 #define SPR_MCSRR0       570  // Machine Check SRR0
