@@ -57,21 +57,21 @@ hdrdep-libos = $(hdr-libos:$(libos)include%.h=bin/libos/include%.d)
 
 bin/libos/include%.d : $(libos)include%.h
 	@$(MKDIR) $(@D)
-	$(call show,mkdep: $<)
+	$(call show,mkdep: $(<:$(src)%=%))
 	$(V)$(libos)lib/confdep $< $< > $@
 
 -include $(hdrdep-libos)
 
 define mkdep
 	@$(MKDIR) $(@D)
-	$(call show,mkdep: $<)
+	$(call show,mkdep: $(<:$(src)%=%))
 	$(V)OBJ=`echo $@ | sed 's/\.d$$/\.o/'` && \
 	$($(1)) -M $(2) -MF "$@" -MT "$$OBJ" $< && \
 	$(libos)lib/confdep "$<" "$$OBJ" >> "$@"
 endef
 
 define build
-	$(call show,build: $<)
+	$(call show,build: $(<:$(src)%=%))
 	$(V)$($(1)) $(2) -c -o $@ $<
 endef
 
@@ -93,5 +93,5 @@ bin/libos/libos_assym.o: $(libos)lib/libos_assym.c bin/libos/libos_assym.d
 
 bin/libos/assym.s: bin/libos/libos_assym.o
 	@$(MKDIR) $(@D)
-	$(call show,genassym: $<)
+	$(call show,genassym: $(<:$(src)%=%))
 	$(V)$(GENASSYM) -o $@ $<
