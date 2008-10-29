@@ -28,6 +28,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <libos/io.h>
+
 #define NUM_LOGTYPES 256
 #define LIBOS_BASE_LOGTYPE  0
 #define CLIENT_BASE_LOGTYPE 64

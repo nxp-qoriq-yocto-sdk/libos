@@ -25,11 +25,8 @@
 #ifndef LIBOS_IO_H
 #define LIBOS_IO_H
 
-#include <stdint.h>
+#include <libos/types.h>
 #include <libos/core-regs.h>
-
-#include <libos/libos.h>
-#include <stdint.h>
 
 static inline void mtspr(int reg, register_t val)
 {

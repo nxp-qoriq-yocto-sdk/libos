@@ -32,4 +32,7 @@
 typedef long ssize_t;
 #endif
 
+typedef uint64_t phys_addr_t;
+typedef unsigned long register_t;
+
 #endif

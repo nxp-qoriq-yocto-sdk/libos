@@ -69,9 +69,6 @@ extern void set_crashing(void);
 
 #define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))  /* to any y */
 
-typedef uint64_t phys_addr_t;
-typedef unsigned long register_t;
-
 void *simple_alloc(size_t size, size_t align);
 void simple_alloc_init(void *start, size_t size);
 
