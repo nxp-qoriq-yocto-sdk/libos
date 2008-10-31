@@ -83,8 +83,10 @@ static inline void *alloc(unsigned long size, size_t align)
 		ret = mspace_malloc(libos_mspace, size);
 	else
 		ret = mspace_memalign(libos_mspace, align, size);
-#else
+#elif defined(CONFIG_LIBOS_SIMPLE_ALLOC)
 	ret = simple_alloc(size, align);
+#else
+	ret = memalign(align, size);
 #endif
 
 	if (likely(ret))
