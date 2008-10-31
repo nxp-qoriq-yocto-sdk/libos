@@ -31,8 +31,8 @@
 #include <libos/malloc.h>
 
 #define to_container(memberinstance, containertype, membername) ({ \
-	typeof(memberinstance) _ptr = memberinstance; \
-	(containertype *)(uintptr_t)_ptr - offsetof(containertype, membername); \
+	typeof(&((containertype *)0)->membername) _ptr = (memberinstance); \
+	(containertype *)(((uintptr_t)_ptr) - offsetof(containertype, membername)); \
 })
 
 #define stopsim() do { \
