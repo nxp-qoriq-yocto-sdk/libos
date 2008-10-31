@@ -234,6 +234,17 @@ char *strchr(const char *s, int c)
 	return NULL;
 }
 
+char *strdup(const char *s)
+{
+	size_t len = strlen(s) + 1;
+	char *ret = malloc(len);
+
+	if (ret)
+		memcpy(ret, s, len);
+
+	return ret;
+}
+
 void *memchr(const void *s, int c, size_t len)
 {
 	const char *cp = s;
