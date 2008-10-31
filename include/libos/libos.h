@@ -74,6 +74,32 @@ void simple_alloc_init(void *start, size_t size);
 
 extern mspace libos_mspace;
 
+#ifdef CONFIG_LIBOS_MALLOC
+static inline void *malloc(size_t size)
+{
+	return mspace_malloc(libos_mspace, size);
+}
+
+static inline void free(void *ptr)
+{
+	mspace_free(libos_mspace, ptr);
+}
+#elif defined(CONFIG_LIBOS_SIMPLE_ALLOC)
+static inline void *malloc(size_t size)
+{
+	return simple_alloc(size, 8);
+}
+
+static inline void *memalign(size_t align, size_t size)
+{
+	return simple_alloc(size, align);
+}
+
+static inline void free(void *ptr)
+{
+}
+#endif
+
 static inline void *alloc(unsigned long size, size_t align)
 {
 	void *ret;
@@ -83,8 +109,6 @@ static inline void *alloc(unsigned long size, size_t align)
 		ret = mspace_malloc(libos_mspace, size);
 	else
 		ret = mspace_memalign(libos_mspace, align, size);
-#elif defined(CONFIG_LIBOS_SIMPLE_ALLOC)
-	ret = simple_alloc(size, align);
 #else
 	ret = memalign(align, size);
 #endif
@@ -100,18 +124,6 @@ static inline void *alloc(unsigned long size, size_t align)
 
 void *valloc(unsigned long size, unsigned long align);
 void valloc_init(unsigned long start, unsigned long end);
-
-#ifdef CONFIG_LIBOS_MALLOC
-static inline void *malloc(size_t size)
-{
-	return mspace_malloc(libos_mspace, size);
-}
-
-static inline void free(void *ptr)
-{
-	mspace_free(libos_mspace, ptr);
-}
-#endif
 
 #ifndef HAVE_VIRT_TO_PHYS
 static inline phys_addr_t virt_to_phys(void *ptr)
