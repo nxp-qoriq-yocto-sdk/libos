@@ -219,7 +219,7 @@ fixup_mmu:
 	/* Switch to the above TLB1[BASE_TLB_ENTRY] mapping */
 	addis	%r20, %r19, PHYSBASE@h
 	addi	%r20, %r20, 6f - 1b	/* Increment to instr. after rfi  */
-	li	%r21, 0x200
+	li	%r21, 0
 	mtspr   SPR_SRR0, %r20
 	mtspr   SPR_SRR1, %r21
 	rfi
