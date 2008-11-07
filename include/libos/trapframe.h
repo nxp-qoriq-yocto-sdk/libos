@@ -28,7 +28,7 @@
 #include <libos/libos.h>
 #include <stdint.h>
 
-typedef struct {
+typedef struct trapframe {
 	register_t backchain, lrsave;
 	register_t gpregs[32];
 	register_t lr, ctr;
