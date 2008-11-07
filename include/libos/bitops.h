@@ -152,6 +152,7 @@ static inline unsigned long atomic_add(unsigned long *ptr, long val)
 	return ret;
 }
 
+// Returns LONG_BITS if val is zero
 static inline int count_msb_zeroes(unsigned long val)
 {
 	int ret;
@@ -161,9 +162,22 @@ static inline int count_msb_zeroes(unsigned long val)
 	return ret;
 }
 
+// Undefined if val is zero
 static inline int count_lsb_zeroes(unsigned long val)
 {
 	return LONG_BITS - 1 - count_msb_zeroes(val & ~(val - 1));
+}
+
+// Undefined if val is zero
+static inline int ilog2(unsigned long val)
+{
+	return LONG_BITS - 1 - count_msb_zeroes(val);
+}
+
+// Undefined if val is zero
+static inline int ilog2_roundup(unsigned long val)
+{
+	return LONG_BITS - count_msb_zeroes(val - 1);
 }
 
 #endif
