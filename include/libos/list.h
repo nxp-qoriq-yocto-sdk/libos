@@ -75,4 +75,6 @@ static inline int list_empty(list_t *list)
 	return list->next == list;
 }
 
+#define DECLARE_LIST(name) list_t name = { &name, &name }
+
 #endif
