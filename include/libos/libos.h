@@ -80,6 +80,11 @@ static inline void *malloc(size_t size)
 	return mspace_malloc(libos_mspace, size);
 }
 
+static inline void *memalign(size_t align, size_t size)
+{
+	return mspace_memalign(libos_mspace, size, align);
+}
+
 static inline void free(void *ptr)
 {
 	mspace_free(libos_mspace, ptr);
