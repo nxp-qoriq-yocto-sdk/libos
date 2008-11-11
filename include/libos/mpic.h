@@ -75,7 +75,7 @@ typedef struct mpic_hwirq {
 #define GCR_COREINT_DELIVERY_MODE	0x40000000
 #define GCR_MIXED_OPERATING_MODE	0x20000000
 
-void mpic_init(unsigned long devtree_ptr, int coreint);
+void mpic_init(int coreint);
 void mpic_irq_set_vector(interrupt_t *irq, uint32_t vector);
 uint16_t mpic_irq_get_vector(interrupt_t *irq);
 void mpic_irq_set_ctpr(uint8_t priority);

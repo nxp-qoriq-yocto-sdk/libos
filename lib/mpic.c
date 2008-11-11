@@ -349,7 +349,7 @@ interrupt_t *get_mpic_irq(const uint32_t *irqspec, int ncells)
 }
 
 /** Global MPIC initialization routine */
-void mpic_init(unsigned long devtree_ptr, int coreint)
+void mpic_init(int coreint)
 {
 	int i;
 	unsigned int gcr;
