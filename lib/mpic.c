@@ -61,6 +61,7 @@ uint16_t mpic_iack(void)
 	return mpic_read(MPIC_IACK);
 }
 
+/* Non-critical interrupts only */
 void mpic_irq_mask(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
@@ -70,6 +71,7 @@ void mpic_irq_mask(interrupt_t *irq)
 	spin_unlock_critsave(&mpic_lock, saved);
 }
 
+/* Non-critical interrupts only */
 void mpic_irq_unmask(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
@@ -242,6 +244,8 @@ static int mpic_register(interrupt_t *irq, int_handler_t handler,
 	irq->actions = action;
 	spin_unlock_critsave(&mpic_lock, saved);
 
+	/* FIXME: only topaz wants critints */
+	mpic_irq_set_delivery_type(irq, TYPE_CRIT);
 	mpic_irq_unmask(irq);
 	return 0;
 }
