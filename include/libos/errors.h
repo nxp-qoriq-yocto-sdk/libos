@@ -31,14 +31,15 @@
 #ifndef LIBOS_ERRORS_H
 #define LIBOS_ERRORS_H
 
-#define ERR_BADTREE          (-256) /**< Semantic error in device tree. */
-#define ERR_NOMEM            (-257) /**< Out of memory. */
-#define ERR_NOTRANS          (-258) /**< No translation possible. */
-#define ERR_BUSY             (-259) /**< Resource busy. */
-#define ERR_INVALID          (-260) /**< Invalid request or argument. */
+#define ERR_BADTREE          (-256) /**< Semantic error in device tree */
+#define ERR_NOMEM            (-257) /**< Out of memory */
+#define ERR_NOTRANS          (-258) /**< No translation possible */
+#define ERR_BUSY             (-259) /**< Resource busy */
+#define ERR_INVALID          (-260) /**< Invalid request or argument */
 #define ERR_BADIMAGE         (-261) /**< Data image is invalid or broken */
 #define ERR_BADADDR          (-262) /**< Bad pointer or address */
 #define ERR_RANGE            (-263) /**< Value out of range */
-#define ERR_UNHANDLED        (-264) /**< operation not handled */
+#define ERR_UNHANDLED        (-264) /**< Operation not handled */
+#define ERR_NOTFOUND         (-265) /**< Item not found */
 
 #endif
