@@ -234,6 +234,27 @@ char *strchr(const char *s, int c)
 	return NULL;
 }
 
+char *strstr(const char *s1, const char *s2)
+{
+	size_t pos = 0, len = strlen(s1), len2 = strlen(s2);
+
+	if (len2 == 0)
+		return (char *)s1;
+
+	while (1) {
+		while (pos < len && s1[pos] != s2[0])
+			pos++;
+
+		if (pos >= len || len - pos < len2)
+			return NULL;
+
+		if (!memcmp(&s1[pos], s2, len2))
+			return (char *)&s1[pos];
+
+		pos++;
+	}
+}
+
 char *strdup(const char *s)
 {
 	size_t len = strlen(s) + 1;

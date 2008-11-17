@@ -45,6 +45,7 @@ char *strdup(const char *src);
 int strcmp(const char *s1, const char *s2);
 int strncmp(const char *s1, const char *s2, int n);
 char *strchr(const char *s, int c);
+char *strstr(const char *s1, const char *s2);
 size_t sprintf(char *buf, const char *str, ...);
 size_t snprintf(char *buf, size_t size, const char *str, ...);
 size_t vsnprintf(char *buf, size_t size, const char *str, va_list args);
