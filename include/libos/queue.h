@@ -132,6 +132,13 @@ static inline ssize_t queue_writestr(queue_t *q, const char *str)
 
 #define DECLARE_QUEUE(Q, SIZE) \
 	static uint8_t _##Q##_array[SIZE]; \
+	queue_t Q = { \
+	.buf = _##Q##_array, \
+	.size = SIZE, \
+}
+
+#define DECLARE_STATIC_QUEUE(Q, SIZE) \
+	static uint8_t _##Q##_array[SIZE]; \
 	static queue_t Q = { \
 	.buf = _##Q##_array, \
 	.size = SIZE, \
