@@ -83,6 +83,15 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 	tlb1_write_entry(idx);
 }
 
+void tlb1_clear_entry(unsigned int idx)
+{
+	cpu->tlb1[idx].mas1 = 0;
+	cpu->tlb1[idx].mas2 = 0;
+	cpu->tlb1[idx].mas3 = 0;
+	cpu->tlb1[idx].mas7 = 0;
+	cpu->tlb1[idx].mas8 = 0;
+	tlb1_write_entry(idx);
+}
 
 void tlb1_write_entry(unsigned int idx)
 {
