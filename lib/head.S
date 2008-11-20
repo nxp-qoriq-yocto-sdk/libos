@@ -65,9 +65,12 @@ _start:
 /*
  * Use tlbsx to locate the TLB1 entry that maps kernel code
  */
-	bl	fixup_mmu
+ 	lis	%r16, 1f@h
+ 	ori	%r16, %r16, 1f@l
+ 	mtlr	%r16
+	b	fixup_mmu
 
-	lis	%r2, cpu0@ha
+1:	lis	%r2, cpu0@ha
 	addi	%r2, %r2, cpu0@l
 	mtsprg0	%r2
 
@@ -87,9 +90,12 @@ _start:
 	.global secondary_start
 secondary_start:
 
-	bl	fixup_mmu
+ 	lis	%r16, 1f@h
+ 	ori	%r16, %r16, 1f@l
+ 	mtlr	%r16
+	b	fixup_mmu
 
-	mr	%r2, %r3
+1:	mr	%r2, %r3
 	mtsprg0	%r3
 	LOAD	%r1, CPU_KSTACK(%r3)
 
@@ -202,23 +208,47 @@ fixup_mmu:
 	isync
 
 	/* Align mapping to size */
-	rlwinm	%r18, %r19, 0, ~((1 << ((PHYSMAPSIZE - 1) * 2 + 12)) - 1)
+	#define MAP_MASK ((1 << ((PHYSMAPSIZE - 1) * 2 + 12)) - 1)
 
-	addis	%r15, %r18, PHYSBASE@h
-	ori	%r15, %r15, 4
+#ifdef TOPAZ
+	/* In Topaz, we may have relocated away from address zero,
+	 * and want the secondaries to map PHYSBASE to whatever
+	 * 1MiB region they are running at (we know the hv will
+	 * be covered by the boot mapping).  In the general case,
+	 * though, the entry point may not be covered by an
+	 * initial mapping that starts at PHYSBASE.
+	 */
+	lis	%r15, PHYSBASE@h
+#else
+	rlwinm	%r15, %r19, 0, ~MAP_MASK
+	addis	%r15, %r15, PHYSBASE@h
+#endif
+	ori	%r15, %r15, MAS2_M
 	mtspr	SPR_MAS2, %r15		/* Set final EPN, **M** */
 	isync
 
-	ori	%r18, %r18, (MAS3_SX | MAS3_SW | MAS3_SR)@l
-	mtspr	SPR_MAS3, %r18		/* Set RPN and protection */
+#ifdef TOPAZ
+	/* r7 contains the size of the IMA as per ePAPR */
+	mfspr	%r17, SPR_MAS3
+	addi	%r16, %r7, -1
+	and	%r18, %r19, %r16 // extract IMA offset
+	andc	%r17, %r17, %r16 // extract IMA base
+	rlwinm	%r18, %r18, 0, ~MAP_MASK
+	rlwinm	%r17, %r17, 0, ~MAP_MASK
+	or	%r17, %r17, %r18
+	ori	%r17, %r17, (MAS3_SX | MAS3_SW | MAS3_SR)@l
+#else
+	li	%r17, (MAS3_SX | MAS3_SW | MAS3_SR)@l
+#endif
+	mtspr	SPR_MAS3, %r17		/* Set RPN and protection */
 	isync
 	tlbwe
 	isync
 	msync
 
 	/* Switch to the above TLB1[BASE_TLB_ENTRY] mapping */
-	addis	%r20, %r19, PHYSBASE@h
-	addi	%r20, %r20, 6f - 1b	/* Increment to instr. after rfi  */
+	lis	%r20, 6f@h
+	ori	%r20, %r20, 6f@l
 	li	%r21, 0
 	mtspr   SPR_SRR0, %r20
 	mtspr   SPR_SRR1, %r21
@@ -230,7 +260,6 @@ fixup_mmu:
 6:	mr	%r22, %r11
 	bl	tlb1_inval_entry
 
-	addis	%r23, %r23, PHYSBASE@h
 	mtlr	%r23
 	blr
 
