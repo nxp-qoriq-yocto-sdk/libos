@@ -210,24 +210,16 @@ fixup_mmu:
 	/* Align mapping to size */
 	#define MAP_MASK ((1 << ((PHYSMAPSIZE - 1) * 2 + 12)) - 1)
 
-#ifdef TOPAZ
-	/* In Topaz, we may have relocated away from address zero,
+	/* We may have relocated away from address zero,
 	 * and want the secondaries to map PHYSBASE to whatever
 	 * 1MiB region they are running at (we know the hv will
-	 * be covered by the boot mapping).  In the general case,
-	 * though, the entry point may not be covered by an
-	 * initial mapping that starts at PHYSBASE.
+	 * be covered by the boot mapping).
 	 */
 	lis	%r15, PHYSBASE@h
-#else
-	rlwinm	%r15, %r19, 0, ~MAP_MASK
-	addis	%r15, %r15, PHYSBASE@h
-#endif
 	ori	%r15, %r15, MAS2_M
 	mtspr	SPR_MAS2, %r15		/* Set final EPN, **M** */
 	isync
 
-#ifdef TOPAZ
 	/* r7 contains the size of the IMA as per ePAPR */
 	mfspr	%r17, SPR_MAS3
 	addi	%r16, %r7, -1
@@ -237,9 +229,6 @@ fixup_mmu:
 	rlwinm	%r17, %r17, 0, ~MAP_MASK
 	or	%r17, %r17, %r18
 	ori	%r17, %r17, (MAS3_SX | MAS3_SW | MAS3_SR)@l
-#else
-	li	%r17, (MAS3_SX | MAS3_SW | MAS3_SR)@l
-#endif
 	mtspr	SPR_MAS3, %r17		/* Set RPN and protection */
 	isync
 	tlbwe
