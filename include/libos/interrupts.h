@@ -52,6 +52,9 @@ typedef struct interrupt {
 } interrupt_t;
 
 typedef struct int_ops {
+	interrupt_t *(*get_irq)(device_t *dev,
+	                        const uint32_t *intspec,
+	                        int ncells);
 	int (*register_irq)(interrupt_t *irq, int_handler_t handler,
 	                    void *devid);
 	int (*unregister_irq)(interrupt_t *irq, void *devid);
@@ -68,8 +71,6 @@ typedef struct int_ops {
 	int (*get_config)(interrupt_t *irq);
 	uint32_t (*get_cpu_dest_mask)(interrupt_t *irq);
 	int (*is_active)(interrupt_t *irq);
-	int (*config_by_intspec)(interrupt_t *irq, const uint32_t *intspec,
-	                         int ncells);
 } int_ops_t;
 
 #endif

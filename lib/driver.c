@@ -1,6 +1,9 @@
+/** @file
+ * Driver model infrastructure
+ */
 /*
  * Copyright (C) 2008 Freescale Semiconductor, Inc.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -9,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
@@ -22,50 +25,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LIBOS_PRINTLOG
-#define LIBOS_PRINTLOG
+#include <libos/libos.h>
+#include <libos/errors.h>
+#include <string.h>
 
-#include <stdint.h>
-#include <stdio.h>
+extern driver_t driver_begin, driver_end;
 
-#include <libos/io.h>
+int libos_bind_driver(device_t *dev, const char *compat_strlist, size_t compat_len)
+{
+	const char *end_compat = compat_strlist + compat_len;
 
-#define NUM_LOGTYPES 256
-#define LIBOS_BASE_LOGTYPE  0
-#define CLIENT_BASE_LOGTYPE 64
+	/* Search for matches from the most-specific name to the least-specific name */
+	while (compat_strlist < end_compat) {
+		for (driver_t *drv = &driver_begin; drv < &driver_end; drv++) {
+			int ret;
 
-#define LOGTYPE_MISC      0
-#define LOGTYPE_MMU       1
-#define LOGTYPE_IRQ       2
-#define LOGTYPE_MP        3
-#define LOGTYPE_MALLOC    4
-#define LOGTYPE_DEV       5
+			if (strcmp(compat_strlist, drv->compatible))
+				continue;
 
-#define MAX_LOGLEVEL 15
-#define LOGLEVEL_ALWAYS   0
-#define LOGLEVEL_ERROR    2
-#define LOGLEVEL_NORMAL   4
-#define LOGLEVEL_DEBUG    8
-#define LOGLEVEL_VERBOSE 12
+			ret = drv->probe(drv, dev);
+			if (ret == ERR_UNHANDLED)
+				continue;
 
-extern uint8_t loglevels[NUM_LOGTYPES];
-extern void invalid_logtype(void);
+			return ret;
+		}
 
-/* Unfortunately, GCC will not inline a varargs function.
- *
- * The separate > and == comparisons are to shut up the
- * "comparison is always true" warning with LOGTYPE_ALWAYS.
- */
-#define printlog(logtype, loglevel, fmt, args...) do { \
-	/* Force a linker error if used improperly. */ \
-	if (logtype >= NUM_LOGTYPES || loglevel > MAX_LOGLEVEL) \
-		invalid_logtype(); \
-	\
-	if ((!__builtin_constant_p(loglevel) || \
-	     loglevel <= CONFIG_LIBOS_MAX_BUILD_LOGLEVEL) && \
-	    __builtin_expect(loglevels[logtype] == loglevel || \
-	                     loglevels[logtype] > loglevel, 0)) \
-		printf("[%ld] " fmt, mfspr(SPR_PIR), ##args); \
-} while (0)
+		compat_strlist = memchr(compat_strlist, 0, end_compat - compat_strlist);
 
-#endif
+		if (!compat_strlist)
+			break;
+
+		compat_strlist++;
+	}
+
+	return ERR_UNHANDLED;
+}

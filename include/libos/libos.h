@@ -137,4 +137,34 @@ static inline phys_addr_t virt_to_phys(void *ptr)
 }
 #endif
 
+typedef struct mem_resource {
+	phys_addr_t start, size;
+	void *virt;
+} mem_resource_t;
+
+struct driver;
+
+typedef struct device {
+	mem_resource_t *regs;
+	struct interrupt **irqs;
+	int num_regs;
+	int num_irqs;
+	struct driver *driver;
+	void *data;
+
+	/* Exposable interfaces */
+	struct int_ops *irqctrl;
+	struct chardev *chardev;
+} device_t;
+
+typedef struct driver {
+	const char *compatible;
+	int (*probe)(struct driver *driver, device_t *dev);
+} driver_t;
+
+#define __driver __attribute__((section(".libos.drivers"))) \
+	__attribute__((used))
+
+int libos_bind_driver(device_t *dev, const char *compat_strlist, size_t compat_len);
+
 #endif

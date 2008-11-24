@@ -111,4 +111,12 @@ config LIBOS_PAMU
 	help
 		Provides support for Peripheral Access Management Unit.
 
+config LIBOS_DRIVER_MODEL
+	bool
+	help
+		Enables libos_bind_driver().
+
+		If selected, the client must define driver_begin and driver_end
+		symbols around the .libos.drivers section in the linker script.
+
 endmenu
