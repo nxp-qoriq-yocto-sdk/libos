@@ -86,8 +86,9 @@ void mpic_reset_core(void);
 #define MPIC_EXTERNAL_BASE  0
 #define MPIC_INTERNAL_BASE  16
 
-interrupt_t *get_mpic_irq(const uint32_t *irqspec, int ncells);
 void do_mpic_critint(void);
 extern int mpic_coreint;
+
+extern int_ops_t mpic_ops;
 
 #endif

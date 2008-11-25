@@ -35,6 +35,7 @@
 typedef struct mpic_interrupt {
 	interrupt_t irq;
 	mpic_hwirq_t *hw;
+	int config;
 } mpic_interrupt_t;
 
 static mpic_interrupt_t mpic_irqs[MPIC_NUM_SRCS];
@@ -153,18 +154,21 @@ int mpic_irq_get_priority(interrupt_t *irq)
 	return vpr.priority;
 }
 
-void mpic_irq_set_config(interrupt_t *irq, int config)
+static void __mpic_irq_set_config(interrupt_t *irq, int config)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	vpr_t vpr;
-
-	register_t saved = spin_lock_critsave(&mpic_lock);
 
 	vpr.data = in32(&mirq->hw->vecpri);
 	vpr.polarity = !!(config & IRQ_HIGH);
 	vpr.sense = !!(config & IRQ_LEVEL);
 	out32(&mirq->hw->vecpri, vpr.data);
+}
 
+void mpic_irq_set_config(interrupt_t *irq, int config)
+{
+	register_t saved = spin_lock_critsave(&mpic_lock);
+	__mpic_irq_set_config(irq, config);
 	spin_unlock_critsave(&mpic_lock, saved);
 }
 
@@ -311,12 +315,17 @@ static int mpic_config_by_intspec(interrupt_t *irq,
 	
 	if (intspec[1] > 3)
 		return ERR_INVALID;
-	
-	mpic_irq_set_config(irq, mpic_intspec_to_config[intspec[1]]);
+
+	__mpic_irq_set_config(irq, mpic_intspec_to_config[intspec[1]]);
 	return 0;
-}                                  
+}
+
+static interrupt_t *get_mpic_irq(device_t *dev,
+                                 const uint32_t *irqspec,
+                                 int ncells);
 
 int_ops_t mpic_ops = {
+	.get_irq = get_mpic_irq,
 	.register_irq = mpic_register,
 	.eoi = mpic_eoi,
 	.enable = mpic_irq_unmask,
@@ -331,21 +340,41 @@ int_ops_t mpic_ops = {
 	.set_config = mpic_irq_set_config,
 	.get_config = mpic_irq_get_config,
 	.is_active = mpic_irq_get_activity,
-	.config_by_intspec = mpic_config_by_intspec,
 };
 
-interrupt_t *get_mpic_irq(const uint32_t *irqspec, int ncells)
+static interrupt_t *get_mpic_irq(device_t *dev,
+                                 const uint32_t *intspec,
+                                 int ncells)
 {
 	unsigned int irqnum;
+	mpic_interrupt_t *mirq;
+	int ret = 0;
+
+	assert(dev->irqctrl == &mpic_ops);
 	
 	if (ncells < 2)
 		return NULL;
 	
-	irqnum = irqspec[0];
+	irqnum = intspec[0];
 	if (irqnum > MPIC_NUM_SRCS)
 		return NULL;
-	
-	return &mpic_irqs[irqnum].irq;
+
+	mirq = &mpic_irqs[irqnum];
+
+	register_t saved = spin_lock_critsave(&mpic_lock);
+	if (!mirq->config) {
+		ret = mpic_config_by_intspec(&mirq->irq, intspec, ncells);
+
+		if (ret < 0) {
+			spin_unlock_critsave(&mpic_lock, saved);
+
+			printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR,
+			         "%s: bad intspec\n", __func__);
+			return NULL;
+		}
+	}
+	spin_unlock_critsave(&mpic_lock, saved);
+	return &mirq->irq;
 }
 
 /** Global MPIC initialization routine */
