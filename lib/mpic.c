@@ -307,19 +307,6 @@ static const uint8_t mpic_intspec_to_config[4] = {
 	IRQ_EDGE | IRQ_LOW
 };
 
-static int mpic_config_by_intspec(interrupt_t *irq,
-                                  const uint32_t *intspec, int ncells)
-{
-	if (ncells < 2)
-		return ERR_INVALID;
-	
-	if (intspec[1] > 3)
-		return ERR_INVALID;
-
-	__mpic_irq_set_config(irq, mpic_intspec_to_config[intspec[1]]);
-	return 0;
-}
-
 static interrupt_t *get_mpic_irq(device_t *dev,
                                  const uint32_t *irqspec,
                                  int ncells);
@@ -348,12 +335,20 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 {
 	unsigned int irqnum;
 	mpic_interrupt_t *mirq;
-	int ret = 0;
 
 	assert(dev->irqctrl == &mpic_ops);
 	
-	if (ncells < 2)
+	if (ncells < 2) {
+		printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR,
+		         "%s: bad intspec\n", __func__);
 		return NULL;
+	}
+
+	if (intspec[1] > 3) {
+		printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR,
+		         "%s: bad intspec\n", __func__);
+		return NULL;
+	}
 	
 	irqnum = intspec[0];
 	if (irqnum > MPIC_NUM_SRCS)
@@ -363,15 +358,8 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 
 	register_t saved = spin_lock_critsave(&mpic_lock);
 	if (!mirq->config) {
-		ret = mpic_config_by_intspec(&mirq->irq, intspec, ncells);
-
-		if (ret < 0) {
-			spin_unlock_critsave(&mpic_lock, saved);
-
-			printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR,
-			         "%s: bad intspec\n", __func__);
-			return NULL;
-		}
+		mirq->irq.config = mpic_intspec_to_config[intspec[1]];
+		__mpic_irq_set_config(&mirq->irq, mirq->irq.config);
 	}
 	spin_unlock_critsave(&mpic_lock, saved);
 	return &mirq->irq;

@@ -48,6 +48,7 @@ typedef struct irqaction {
 typedef struct interrupt {
 	struct int_ops *ops;
 	irqaction_t *actions;
+	int config;
 	void *priv;
 } interrupt_t;
 
