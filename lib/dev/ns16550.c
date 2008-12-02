@@ -204,6 +204,7 @@ static int ns16550_isr(void *arg)
 static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 {
 	ns16550 *priv = to_container(cd, ns16550, cd);
+	int ret = 0;
 
 	if (!priv->irq)
 		return ERR_INVALID;
@@ -211,6 +212,11 @@ static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 	unsigned long saved = spin_lock_critsave(&priv->lock);
 	
 	if (q) {
+		if (cd->tx) {
+			ret = ERR_BUSY;
+			goto out;
+		}
+	
 		cd->tx = q;
 		q->consumer = priv;
 		smp_mbar();
@@ -229,18 +235,26 @@ static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 		cd->tx = NULL;
 	}
 
+out:
 	spin_unlock_critsave(&priv->lock, saved);
-	return 0;
+	return ret;
 }
 
 static int ns16550_set_rx_queue(chardev_t *cd, queue_t *q)
 {
 	ns16550 *priv = to_container(cd, ns16550, cd);
+	int ret = 0;
 
 	if (!priv->irq)
 		return ERR_INVALID;
 
 	unsigned long saved = spin_lock_critsave(&priv->lock);
+
+	if (q && cd->rx) {
+		ret = ERR_BUSY;
+		goto out;
+	}
+
 	cd->rx = q;
 
 	if (q)
@@ -250,8 +264,9 @@ static int ns16550_set_rx_queue(chardev_t *cd, queue_t *q)
 		out8(&priv->reg[NS16550_IER],
 		     in8(&priv->reg[NS16550_IER]) & ~NS16550_IER_ERDAI);
 
+out:
 	spin_unlock_critsave(&priv->lock, saved);
-	return 0;
+	return ret;
 }
 #endif
 
