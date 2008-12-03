@@ -83,7 +83,7 @@ void traceback(trapframe_t *regs)
 	printf("Traceback: ");
 
 	for (int i = 1; sp != NULL; i++, sp = (unsigned long *)sp[0]) {
-		if ((i & 7) == 0)
+		if ((i % 7) == 0)
 			printf("\n");
 
 		printf("0x%08lx ", sp[1] - 4);
