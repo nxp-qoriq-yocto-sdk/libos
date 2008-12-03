@@ -49,7 +49,7 @@
 
 #define NS16550_IIR_NOIRQ  0x01
 #define NS16550_IIR_IID    0x0e
-#define NS16550_IIR_RXTIME 0x08 // rx time-out
+#define NS16550_IIR_RXTIME 0x0c // rx time-out
 #define NS16550_IIR_RLSI   0x06 // receiver line status
 #define NS16550_IIR_RDAI   0x04 // receiver data available
 #define NS16550_IIR_THREI  0x02 // transmitter holding register empty
