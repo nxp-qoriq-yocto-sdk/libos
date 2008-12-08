@@ -614,14 +614,14 @@ static inline unsigned int fh_vmpic_iack(unsigned int *vector)
 
 /**
  * Send a doorbell to another partition.
- * @param[in] partition partition ID
+ * @param[in] handle doorbell send handle
  *
  * @return 0 for success, or an error code.
  */
-static inline unsigned int fh_partition_send_dbell(unsigned int partition)
+static inline unsigned int fh_partition_send_dbell(unsigned int handle)
 {
 	register uintptr_t r11 __asm__("r11") = FH_PARTITION_SEND_DBELL;
-	register uintptr_t r3 __asm__("r3") = partition;
+	register uintptr_t r3 __asm__("r3") = handle;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
