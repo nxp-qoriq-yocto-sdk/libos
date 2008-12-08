@@ -137,18 +137,18 @@ typedef struct pfa1_t {
 #define PAACE_WSE_256K         0x11
 #define PAACE_WSE_512K         0x12
 #define PAACE_WSE_1M           0x13
-#define PAACE_WSE_2M           0x24
-#define PAACE_WSE_4M           0x25
-#define PAACE_WSE_8M           0x26
-#define PAACE_WSE_16M          0x27
-#define PAACE_WSE_32M          0x28
-#define PAACE_WSE_64M          0x29
-#define PAACE_WSE_128M         0x2A
-#define PAACE_WSE_256M         0x2B
-#define PAACE_WSE_512M         0x2C
-#define PAACE_WSE_1G           0x2D
-#define PAACE_WSE_2G           0x2E
-#define PAACE_WSE_4G           0x2F
+#define PAACE_WSE_2M           0x14
+#define PAACE_WSE_4M           0x15
+#define PAACE_WSE_8M           0x16
+#define PAACE_WSE_16M          0x17
+#define PAACE_WSE_32M          0x18
+#define PAACE_WSE_64M          0x19
+#define PAACE_WSE_128M         0x1A
+#define PAACE_WSE_256M         0x1B
+#define PAACE_WSE_512M         0x1C
+#define PAACE_WSE_1G           0x1D
+#define PAACE_WSE_2G           0x1E
+#define PAACE_WSE_4G           0x1F
 
 #define PAACE_DID_PCI_EXPRESS_1 0x00
 #define PAACE_DID_PCI_EXPRESS_2 0x01
@@ -162,11 +162,27 @@ typedef struct pfa1_t {
 #define PAACE_DID_MEM_4         0x13
 #define PAACE_DID_MEM_1_2       0x14
 #define PAACE_DID_MEM_3_4       0x15
-#define PAACE_DID_MEM_1_4       16
-#define PAACE_DID_BM_SW_PORTAL  18
+#define PAACE_DID_MEM_1_4       0x16
+#define PAACE_DID_BM_SW_PORTAL  0x18
 #define PAACE_DID_PAMU          0x1C
 #define PAACE_DID_CAAM          0x21
-#define PAACE_DID_QMAN_1        0x3C
+#define PAACE_DID_QM_SW_PORTAL  0x3C
+#define PAACE_DID_CORE0_INST    0x80
+#define PAACE_DID_CORE0_DATA    0x81
+#define PAACE_DID_CORE1_INST    0x82
+#define PAACE_DID_CORE1_DATA    0x83
+#define PAACE_DID_CORE2_INST    0x84
+#define PAACE_DID_CORE2_DATA    0x85
+#define PAACE_DID_CORE3_INST    0x86
+#define PAACE_DID_CORE3_DATA    0x87
+#define PAACE_DID_CORE4_INST    0x88
+#define PAACE_DID_CORE4_DATA    0x89
+#define PAACE_DID_CORE5_INST    0x8A
+#define PAACE_DID_CORE5_DATA    0x8B
+#define PAACE_DID_CORE6_INST    0x8C
+#define PAACE_DID_CORE6_DATA    0x8D
+#define PAACE_DID_CORE7_INST    0x8E
+#define PAACE_DID_CORE7_DATA    0x8F
 #define PAACE_DID_BROADCAST     0xFF
 
 #define PAACE_ATM_NO_XLATE      0x00
@@ -236,17 +252,23 @@ typedef struct ppaace_t {
 		} to_host;
 		struct {
 			/* Destination ID, see PAACE_DID_* defines */
+			uint8_t did;
+			unsigned int __reserved : 24;
 		} to_io;
 	} __attribute__ ((packed)) domain_attr;
 	/* Implementation attributes */
-	unsigned int impl_attr : 24;
+	struct {
+		unsigned int reserved1 : 8;
+		unsigned int cid : 8;
+		unsigned int reserved2 : 8;
+	} __attribute__ ((packed)) impl_attr;
 	/* Window Count; 2^(N+1) sub-windows; only valid for primary PAACE */
 	unsigned int wce : 4;
 	/* Address translation mode, see PAACE_ATM_* defines */
 	unsigned int atm : 2;
 	/* Operation translation mode, see PAACE_OTM_* defines */
 	unsigned int otm : 2;
-        
+
 	/* PAACE Offset 0x10 */
 	/* Translated window base address */
 	uint32_t twbah;
@@ -291,7 +313,7 @@ typedef struct ppaace_t {
 } __attribute__ ((packed)) ppaace_t;
 
 typedef struct spaace_t {
-	/* PAACE Offset 0x00 */
+	/* SPAACE Offset 0x00 */
 	uint32_t reserved1;
 	uint16_t liodn;
 	unsigned int reserved2 : 11;
@@ -299,12 +321,12 @@ typedef struct spaace_t {
 	unsigned int ap : 2;
 	/* Destination Domain, see PAACE_DD_* defines */
 	unsigned int dd : 1;
-	/* PAACE Type, see PAACE_PT_* defines */
+	/* SPAACE Type, see PAACE_PT_* defines */
 	unsigned int pt : 1;
 	
-	/* PAACE Valid, 0 is invalid */
+	/* SPAACE Valid, 0 is invalid */
 	unsigned int v : 1;
-	/* PAACE Offset 0x08 */
+	/* SPAACE Offset 0x08 */
 	/* Interpretation of first 32 bits dependent on DD above */
 	union {
 		struct {
@@ -323,23 +345,24 @@ typedef struct spaace_t {
 			unsigned int reserved : 24;
 		} to_io;
 	} __attribute__ ((packed)) domain_attr;
-	/* Implementation attributes */
+
+	/* Implementation attributes, from VSSA */
 	unsigned int impl_attr : 24;
 	unsigned int reserved3 : 4;
 	/* Address translation mode, see PAACE_ATM_* defines */
 	unsigned int atm : 2;
 	/* Operation translation mode, see PAACE_OTM_* defines */
 	unsigned int otm : 2;
-        
-	/* PAACE Offset 0x10 */
+
+	/* SPAACE Offset 0x10 */
 	/* Translated window base address */
 	uint32_t twbah;
 	unsigned int twbal : 20;
 	/* Subwindow size encoding; 2^(N+1), N > 10 */
 	unsigned int swse : 6;
 	unsigned int reserved4 : 6;
-            
-	/* PAACE Offset 0x18 */
+
+	/* SPAACE Offset 0x18 */
 	uint32_t reserved5;
 	union {
 		struct {
@@ -354,23 +377,23 @@ typedef struct spaace_t {
 		} index_ot;
 	} __attribute__ ((packed)) op_encode;
 
-	/* PAACE Offset 0x20 */
+	/* SPAACE Offset 0x20 */
 	uint32_t sbah;
 	unsigned int sbal : 20;
 	unsigned int sse : 6;
 	unsigned int reserved6 : 6;
 
-	/* PAACE Offset 0x28 */
+	/* SPAACE Offset 0x28 */
 	uint32_t tctbah;
 	unsigned int tctbal : 20;
 	unsigned int pse : 6;
 	unsigned int tcef : 1;
 	unsigned int reserved7 : 5;
 
-	/* PAACE Offset 0x30 */
+	/* SPAACE Offset 0x30 */
 	uint32_t reserved8[2];
 
-	/* PAACE Offset 0x38 */
+	/* SPAACE Offset 0x38 */
 	uint32_t reserved9[2];
 } spaace_t;
 
@@ -380,8 +403,57 @@ typedef struct ome_t {
 	uint8_t moe[NUM_MOE];
 } __attribute__((packed)) ome_t;
 
+#define IOE_READ        0x00
+#define IOE_READ_IDX    0x00
+#define IOE_WRITE       0x81
+#define IOE_WRITE_IDX   0x01
+#define IOE_EREAD0      0x82    /* Enhanced read type 0 */
+#define IOE_EREAD0_IDX  0x02    /* Enhanced read type 0 */
+#define IOE_EWRITE0     0x83    /* Enhanced write type 0 */
+#define IOE_EWRITE0_IDX 0x03    /* Enhanced write type 0 */
+#define IOE_DIRECT0     0x84    /* Directive type 0 */
+#define IOE_DIRECT0_IDX 0x04    /* Directive type 0 */
+#define IOE_EREAD1      0x85    /* Enhanced read type 1 */
+#define IOE_EREAD1_IDX  0x05    /* Enhanced read type 1 */
+#define IOE_EWRITE1     0x86    /* Enhanced write type 1 */
+#define IOE_EWRITE1_IDX 0x06    /* Enhanced write type 1 */
+#define IOE_DIRECT1     0x87    /* Directive type 1 */
+#define IOE_DIRECT1_IDX 0x07    /* Directive type 1 */
+#define IOE_RAC         0x8c    /* Read with Atomic clear */
+#define IOE_RAC_IDX     0x0c    /* Read with Atomic clear */
+#define IOE_RAS         0x8d    /* Read with Atomic set */
+#define IOE_RAS_IDX     0x0d    /* Read with Atomic set */
+#define IOE_RAD         0x8e    /* Read with Atomic decrement */
+#define IOE_RAD_IDX     0x0e    /* Read with Atomic decrement */
+#define IOE_RAI         0x8f    /* Read with Atomic increment */
+#define IOE_RAI_IDX     0x0f    /* Read with Atomic increment */
+
+#define EOE_READ        0x00
+#define EOE_WRITE       0x01
+#define EOE_RAC         0x0c    /* Read with Atomic clear */
+#define EOE_RAS         0x0d    /* Read with Atomic set */
+#define EOE_RAD         0x0e    /* Read with Atomic decrement */
+#define EOE_RAI         0x0f    /* Read with Atomic increment */
+#define EOE_LDEC        0x10    /* Load external cache */
+#define EOE_LDECL       0x11    /* Load external cache with stash lock */
+#define EOE_LDECPE      0x12    /* Load external cache with preferred exclusive */
+#define EOE_LDECPEL     0x13    /* Load external cache with preferred exclusive and lock */
+#define EOE_LDECFE      0x14    /* Load external cache with forced exclusive */
+#define EOE_LDECFEL     0x15    /* Load external cache with forced exclusive and lock */
+#define EOE_RSA         0x16    /* Read with stash allocate */
+#define EOE_RSAU        0x17    /* Read with stash allocate and unlock */
+#define EOE_READI       0x18    /* Read with invalidate */
+#define EOE_RWNITC      0x19    /* Read with no intention to cache */
+#define EOE_WCI         0x1a    /* Write cache inhibited */
+#define EOE_WWSA        0x1b    /* Write with stash allocate */
+#define EOE_WWSAL       0x1c    /* Write with stash allocate and lock */
+#define EOE_WWSAO       0x1d    /* Write with stash allocate only */
+#define EOE_WWSAOL      0x1e    /* Write with stash allocate only and lock */
+#define EOE_VALID       0x80
+
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size);
-ppaace_t *get_ppaace(uint32_t liodn);
+ppaace_t *pamu_get_ppaace(uint32_t liodn);
+ome_t *pamu_get_ome(uint8_t omi);
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);
 
 #endif  /* __PAMU_H */

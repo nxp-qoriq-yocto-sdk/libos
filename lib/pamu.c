@@ -100,12 +100,19 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 	return 0;
 }
 
-ppaace_t *get_ppaace(uint32_t liodn)
+ppaace_t *pamu_get_ppaace(uint32_t liodn)
 {
 	if (!ppaact)
 		return NULL;
 
 	return &ppaact[liodn];
+}
+
+ome_t *pamu_get_ome(uint8_t omi)
+{
+	if (omt)
+		return &omt[omi];
+	return NULL;
 }
 
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace)
