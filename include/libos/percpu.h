@@ -54,8 +54,8 @@ typedef struct {
 	int coreid, console_ok, crashing;
 	int traplevel; /**< Normally 0, 1 if in critical exception context */
 	int errno; /**< Used for C/POSIX funcitons that set errno */
-#ifdef LIBOS_RET_USER_HOOK
-	int ret_user_hook;
+#ifdef LIBOS_RET_HOOK
+	int ret_hook;
 #endif
 } cpu_t;
 

@@ -43,8 +43,8 @@ ASSYM(CPU_NORMSAVE, offsetof(cpu_t, normsave));
 ASSYM(CPU_CRITSAVE, offsetof(cpu_t, critsave));
 ASSYM(CPU_MACHKSAVE, offsetof(cpu_t, machksave));
 ASSYM(CPU_DBGSAVE, offsetof(cpu_t, dbgsave));
-#ifdef LIBOS_RET_USER_HOOK
-ASSYM(CPU_RETUSERHOOK, offsetof(cpu_t, ret_user_hook));
+#ifdef LIBOS_RET_HOOK
+ASSYM(CPU_RETHOOK, offsetof(cpu_t, ret_hook));
 #endif
 ASSYM(CPU_DEBUGSTACK, offsetof(cpu_t, debugstack));
 ASSYM(CPU_CRITSTACK, offsetof(cpu_t, critstack));

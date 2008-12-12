@@ -168,22 +168,13 @@
 	\disable %r10
 	mtmsr	%r10
 
-#ifdef LIBOS_RET_USER_HOOK
-	LOAD	%r10, FRAME_SRR1(%r1)
-#ifdef HYPERVISOR
-	andis.	%r11, %r10, MSR_GS@h
-	bne+	2f
-#endif
-
-	andi.	%r10, %r10, MSR_PR@l
-	beq-	1f
-	
-2:	lwz	%r10, CPU_RETUSERHOOK(%r2)
+#ifdef LIBOS_RET_HOOK
+2:	lwz	%r10, CPU_RETHOOK(%r2)
 	cmpwi	%r10, 0
 	beq+	1f
 	
 	mr	%r3, %r1
-	bl	LIBOS_RET_USER_HOOK
+	bl	LIBOS_RET_HOOK
 1:
 #endif
 
