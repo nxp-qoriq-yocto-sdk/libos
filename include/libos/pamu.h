@@ -101,6 +101,8 @@ peripheral access, 0 : may allow peripheral access */
 
 /* PAMU Interrupt control and Status Register */
 #define PAMU_PICS 0x0C1C
+#define PAMU_ACCESS_VIOLATION_STAT   0x8
+#define PAMU_ACCESS_VIOLATION_ENABLE 0x4
 
 /* PAMU Debug Registers */
 #define PAMU_PD1 0x0F00

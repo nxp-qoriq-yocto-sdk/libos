@@ -94,8 +94,11 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 	/*
 	 * set PAMU enable bit,
 	 * plus allow ppaact and spaact to be cached
+	 * & enable PAMU access violation interrupts.
 	 */
 
+	out32((uint32_t *)(pamu_offset + PAMU_PICS), 
+			PAMU_ACCESS_VIOLATION_ENABLE);
 	out32(pc, PAMU_PC_PE | PAMU_PC_SPCC | PAMU_PC_PPCC);
 	return 0;
 }
