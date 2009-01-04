@@ -172,6 +172,7 @@
 #define   DBCR0_DAC2R      0x00020000 // DAC2 read debug event
 #define   DBCR0_DAC2W      0x00010000 // DAC2 write debug event
 #define   DBCR0_RET        0x00008000 // Return debug event
+#define   DBCR0_FT         0x00000001 // Freeze timers on debug event
 
 #define SPR_DBCR1        309  // Debug control register 1
 #define   DBCR1_IAC1ER_EAMSK 0x30000000 // IAC1 effective address mask
