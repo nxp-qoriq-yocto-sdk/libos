@@ -60,3 +60,21 @@ int libos_bind_driver(device_t *dev, const char *compat_strlist, size_t compat_l
 
 	return ERR_UNHANDLED;
 }
+
+const char *strlist_iterate(const char *strlist, size_t len,
+                            size_t *pos)
+{
+	const char *next, *ret;
+
+	if (*pos >= len)
+		return NULL;
+
+	next = memchr(strlist + *pos, 0, len - *pos);
+	if (!next)
+		return NULL;
+
+	ret = strlist + *pos;
+	*pos = next - strlist + 1;
+
+	return ret;
+}
