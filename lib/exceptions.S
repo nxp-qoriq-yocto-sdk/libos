@@ -62,8 +62,8 @@
 #define STORE std
 #endif
 
-	.macro	exception, handler, exc, name, scratch, \
-	        srr0, srr1, stack, savearea, traplevel, ret, disable
+	.macro	exception, handler, type, exc, name, scratch, \
+	        srr0, srr1, stack, savearea, traplevel
 	.global \name
 	.align	4
 \name:
@@ -156,14 +156,15 @@
 	mtmsr	%r0
 	.endif
 #endif
-	
-	/* Terminate backchain */
-	li	%r0, 0
-	STORE	%r0, 0(%r1)
-	
+
 	mr	%r3, %r1
 	bl	\handler
+	b	ret_from_\type
+.endm
 
+	.macro	ret_from_exc_type, type, srr0, srr1, ret, disable
+.global ret_from_\type
+ret_from_\type:
 	mfmsr	%r10
 	\disable %r10
 	mtmsr	%r10
@@ -236,19 +237,25 @@
 2:
 	.endm
 
+	.macro	critdisable, reg
+	andis.	\reg, \reg, ~(MSR_CE|MSR_EE)@h
+	andi.	\reg, \reg, ~(MSR_CE|MSR_EE)@l
+	.endm
+
 	.macro	basedisable, reg
 	rlwinm	\reg, \reg, 0, ~MSR_EE
 	.endm
 
 	.macro	baseexception, exc, name, handler
-#ifdef TOPAZ
-	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          basestack CPU_NORMSAVE 0 rfi critdisable
-#else
-	exception \handler \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          basestack CPU_NORMSAVE 0 rfi basedisable
-#endif
+	exception \handler exception \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
+	          basestack CPU_NORMSAVE 0
 	.endm
+
+#ifdef TOPAZ
+	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi critdisable
+#else
+	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi basedisable
+#endif
 
 #ifdef TOPAZ
 	/* Topaz needs nestable critical interrupts */
@@ -272,15 +279,12 @@
 	.endm
 #endif
 
-	.macro	critdisable, reg
-	andis.	\reg, \reg, ~(MSR_CE|MSR_EE)@h
-	andi.	\reg, \reg, ~(MSR_CE|MSR_EE)@l
+	.macro	critexception, exc, name, handler
+	exception \handler crit \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
+	          critstack CPU_CRITSAVE 1
 	.endm
 
-	.macro	critexception, exc, name, handler
-	exception \handler \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
-	          critstack CPU_CRITSAVE 1 rfci critdisable
-	.endm
+	ret_from_exc_type crit SPR_CSRR0 SPR_CSRR1 rfci critdisable
 
 	.macro	mcheckstack
 	addi	%r1, %r2, CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN
@@ -292,9 +296,11 @@
 	.endm
 
 	.macro	machinecheck, exc, name, handler
-	exception \handler \exc \name SPR_SPRG8 SPR_MCSRR0 SPR_MCSRR1 \
-	          mcheckstack CPU_MACHKSAVE 2 rfmci mcdisable
+	exception \handler mcheck \exc \name SPR_SPRG8 SPR_MCSRR0 SPR_MCSRR1 \
+	          mcheckstack CPU_MACHKSAVE 2
 	.endm
+
+	ret_from_exc_type mcheck SPR_MCSRR0 SPR_MCSRR1 rfmci mcdisable
 
 	.macro	debugstack
 	addi	%r1, %r2, CPU_DEBUGSTACK + KSTACK_SIZE - FRAMELEN
@@ -306,9 +312,11 @@
 	.endm
 
 	.macro	debugexception, exc, name, handler
-	exception \handler \exc \name SPR_SPRG9 SPR_DSRR0 SPR_DSRR1 \
-	          debugstack CPU_DBGSAVE 3 rfdi debugdisable
+	exception \handler debug \exc \name SPR_SPRG9 SPR_DSRR0 SPR_DSRR1 \
+	          debugstack CPU_DBGSAVE 3
 	.endm
+
+	ret_from_exc_type debug SPR_DSRR0 SPR_DSRR1 rfdi debugdisable
 
 	.global interrupt_vector_base
 	.align 5

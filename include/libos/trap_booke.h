@@ -126,4 +126,11 @@
 #define EXC_EHPRIV_HANDLER unknown_exception
 #endif
 
+#ifndef _ASM
+extern void ret_from_exception(void);
+extern void ret_from_crit(void);
+extern void ret_from_mcheck(void);
+extern void ret_from_debug(void);
+#endif
+
 #endif
