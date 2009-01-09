@@ -436,4 +436,31 @@
 
 #define SPR_SVR          1023 // System Version Register
 
+#define PMR_UPMC0      0
+#define PMR_UPMC1      1
+#define PMR_UPMC2      2
+#define PMR_UPMC3      3
+#define PMR_PMC0       16
+#define PMR_PMC1       17
+#define PMR_PMC2       18
+#define PMR_PMC3       19
+#define PMR_UPMLCA0    128
+#define PMR_UPMLCA1    129
+#define PMR_UPMLCA2    130
+#define PMR_UPMLCA3    131
+#define PMR_PMLCA0     144
+#define PMR_PMLCA1     145
+#define PMR_PMLCA2     146
+#define PMR_PMLCA3     147
+#define PMR_UPMLCB0    256
+#define PMR_UPMLCB1    257
+#define PMR_UPMLCB2    258
+#define PMR_UPMLCB3    259
+#define PMR_PMLCB0     272
+#define PMR_PMLCB1     273
+#define PMR_PMLCB2     274
+#define PMR_PMLCB3     275
+#define PMR_UPMGC0     384
+#define PMR_PMGC0      400
+
 #endif

@@ -48,6 +48,18 @@ static inline register_t mfspr_nonvolatile(int reg)
 	return ret;
 }
 
+static inline void mtpmr(int reg, register_t val)
+{
+	asm volatile("mtpmr %0, %1" : : "i" (reg), "r" (val) : "memory");
+}
+
+static inline register_t mfpmr(int reg)
+{
+	register_t ret;
+	asm volatile("mfpmr %0, %1" : "=r" (ret) : "i" (reg) : "memory");
+	return ret;
+}
+
 static inline void mtmsr(register_t val)
 {
 	asm volatile("mtmsr %0" : : "r" (val) : "memory");
