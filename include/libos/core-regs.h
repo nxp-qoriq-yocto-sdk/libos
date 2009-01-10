@@ -146,15 +146,15 @@
 
 #define SPR_DBSRWR       306  // DBSR Write Register
 
-#define SPR_EHCSR        307  // Embedded Hypervisor Control/Status
-#define   EHCSR_EXTGS      0x80000000 // Guest gets external ints
-#define   EHCSR_DTLBGS     0x40000000 // Guest gets DTLB errors
-#define   EHCSR_ITLBGS     0x20000000 // Guest gets ITLB errors
-#define   EHCSR_DSIGS      0x10000000 // Guest gets DSIs
-#define   EHCSR_ISIGS      0x08000000 // Guest gets ISIs
-#define   EHCSR_DUVD       0x04000000 // Disable Embedded HV Debug
-#define   EHCSR_DGTMI      0x00800000 // Disable guest TLB management insns
-#define   EHCSR_DMIUH      0x00400000 // Disable MAS int updates for hypervisor
+#define SPR_EPCR        307  // Embedded Processor Control Register
+#define   EPCR_EXTGS      0x80000000 // Guest gets external ints
+#define   EPCR_DTLBGS     0x40000000 // Guest gets DTLB errors
+#define   EPCR_ITLBGS     0x20000000 // Guest gets ITLB errors
+#define   EPCR_DSIGS      0x10000000 // Guest gets DSIs
+#define   EPCR_ISIGS      0x08000000 // Guest gets ISIs
+#define   EPCR_DUVD       0x04000000 // Disable Embedded HV Debug
+#define   EPCR_DGTMI      0x00800000 // Disable guest TLB management insns
+#define   EPCR_DMIUH      0x00400000 // Disable MAS int updates for hypervisor
 
 #define SPR_DBCR0        308  // Debug control register 0
 #define   DBCR0_IDM        0x40000000 // Internal debug mode
