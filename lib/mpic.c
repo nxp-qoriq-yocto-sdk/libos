@@ -67,9 +67,9 @@ void mpic_irq_mask(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	
-	register_t saved = spin_lock_critsave(&mpic_lock);
+	register_t saved = spin_lock_intsave(&mpic_lock);
 	out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) | MPIC_IVPR_MASK);
-	spin_unlock_critsave(&mpic_lock, saved);
+	spin_unlock_intsave(&mpic_lock, saved);
 }
 
 /* Non-critical interrupts only */
@@ -77,9 +77,9 @@ void mpic_irq_unmask(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 
-	register_t saved = spin_lock_critsave(&mpic_lock);
+	register_t saved = spin_lock_intsave(&mpic_lock);
 	out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) & ~MPIC_IVPR_MASK);
-	spin_unlock_critsave(&mpic_lock, saved);
+	spin_unlock_intsave(&mpic_lock, saved);
 }
 
 int mpic_irq_get_mask(interrupt_t *irq)
@@ -93,11 +93,11 @@ void mpic_irq_set_vector(interrupt_t *irq, uint32_t vector)
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	vpr_t vpr;
 
-	register_t saved = spin_lock_critsave(&mpic_lock);
+	register_t saved = spin_lock_intsave(&mpic_lock);
 	vpr.data = in32(&mirq->hw->vecpri);
 	vpr.vector = vector;
 	out32(&mirq->hw->vecpri, vpr.data);
-	spin_unlock_critsave(&mpic_lock, saved);
+	spin_unlock_intsave(&mpic_lock, saved);
 }
 
 uint16_t mpic_irq_get_vector(interrupt_t *irq)
@@ -136,13 +136,13 @@ void mpic_irq_set_priority(interrupt_t *irq, int priority)
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	vpr_t vpr;
 
-	register_t saved = spin_lock_critsave(&mpic_lock);
+	register_t saved = spin_lock_intsave(&mpic_lock);
 
 	vpr.data = in32(&mirq->hw->vecpri);
 	vpr.priority = priority;
 	out32(&mirq->hw->vecpri, vpr.data);
 
-	spin_unlock_critsave(&mpic_lock, saved);
+	spin_unlock_intsave(&mpic_lock, saved);
 }
 
 int mpic_irq_get_priority(interrupt_t *irq)
@@ -167,9 +167,9 @@ static void __mpic_irq_set_config(interrupt_t *irq, int config)
 
 void mpic_irq_set_config(interrupt_t *irq, int config)
 {
-	register_t saved = spin_lock_critsave(&mpic_lock);
+	register_t saved = spin_lock_intsave(&mpic_lock);
 	__mpic_irq_set_config(irq, config);
-	spin_unlock_critsave(&mpic_lock, saved);
+	spin_unlock_intsave(&mpic_lock, saved);
 }
 
 int mpic_irq_get_config(interrupt_t *irq)
@@ -243,10 +243,10 @@ static int mpic_register(interrupt_t *irq, int_handler_t handler,
 	action->handler = handler;
 	action->devid = devid;
 	
-	register_t saved = spin_lock_critsave(&mpic_lock);
+	register_t saved = spin_lock_intsave(&mpic_lock);
 	action->next = irq->actions;
 	irq->actions = action;
-	spin_unlock_critsave(&mpic_lock, saved);
+	spin_unlock_intsave(&mpic_lock, saved);
 
 	/* FIXME: only topaz wants critints */
 	mpic_irq_set_delivery_type(irq, TYPE_CRIT);
@@ -356,12 +356,12 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 
 	mirq = &mpic_irqs[irqnum];
 
-	register_t saved = spin_lock_critsave(&mpic_lock);
+	register_t saved = spin_lock_intsave(&mpic_lock);
 	if (!mirq->config) {
 		mirq->irq.config = mpic_intspec_to_config[intspec[1]];
 		__mpic_irq_set_config(&mirq->irq, mirq->irq.config);
 	}
-	spin_unlock_critsave(&mpic_lock, saved);
+	spin_unlock_intsave(&mpic_lock, saved);
 	return &mirq->irq;
 }
 

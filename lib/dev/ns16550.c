@@ -101,7 +101,7 @@ void ns16550_tx_callback(queue_t *q)
 	assert(q == priv->cd.tx);
 	int lock = !unlikely(cpu->crashing);
 
-	register_t saved = disable_critint_save();
+	register_t saved = disable_int_save();
 
 	if (lock)
 		spin_lock(&priv->lock);
@@ -111,7 +111,7 @@ void ns16550_tx_callback(queue_t *q)
 	if (lock)
 		spin_unlock(&priv->lock);
 
-	restore_critint(saved);
+	restore_int(saved);
 }
 
 /*!
@@ -209,7 +209,7 @@ static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 	if (!priv->irq)
 		return ERR_INVALID;
 
-	unsigned long saved = spin_lock_critsave(&priv->lock);
+	unsigned long saved = spin_lock_intsave(&priv->lock);
 	
 	if (q) {
 		if (cd->tx) {
@@ -236,7 +236,7 @@ static int ns16550_set_tx_queue(chardev_t *cd, queue_t *q)
 	}
 
 out:
-	spin_unlock_critsave(&priv->lock, saved);
+	spin_unlock_intsave(&priv->lock, saved);
 	return ret;
 }
 
@@ -248,7 +248,7 @@ static int ns16550_set_rx_queue(chardev_t *cd, queue_t *q)
 	if (!priv->irq)
 		return ERR_INVALID;
 
-	unsigned long saved = spin_lock_critsave(&priv->lock);
+	unsigned long saved = spin_lock_intsave(&priv->lock);
 
 	if (q && cd->rx) {
 		ret = ERR_BUSY;
@@ -265,7 +265,7 @@ static int ns16550_set_rx_queue(chardev_t *cd, queue_t *q)
 		     in8(&priv->reg[NS16550_IER]) & ~NS16550_IER_ERDAI);
 
 out:
-	spin_unlock_critsave(&priv->lock, saved);
+	spin_unlock_intsave(&priv->lock, saved);
 	return ret;
 }
 #endif
@@ -281,10 +281,10 @@ ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf, size_t count, int flags)
 			if (!(flags & CHARDEV_BLOCKING))
 				return ret;
 
-		unsigned long saved = spin_lock_critsave(&priv->lock);
+		unsigned long saved = spin_lock_intsave(&priv->lock);
 
 		if (!(in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE)) {
-			spin_unlock_critsave(&priv->lock, saved);
+			spin_unlock_intsave(&priv->lock, saved);
 			continue;
 		}
 
@@ -293,7 +293,7 @@ ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf, size_t count, int flags)
 			out8(&priv->reg[NS16550_THR], buf[ret++]);
 		}
 
-		spin_unlock_critsave(&priv->lock, saved);
+		spin_unlock_intsave(&priv->lock, saved);
 	} while (ret < count);
 
 	return ret;

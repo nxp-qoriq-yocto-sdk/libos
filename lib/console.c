@@ -133,7 +133,7 @@ int putchar(int c)
 		lock = 0;
 	}
 
-	register_t saved = disable_critint_save();
+	register_t saved = disable_int_save();
 
 	if (lock)
 		spin_lock(&console_lock);
@@ -145,7 +145,7 @@ int putchar(int c)
 	else
 		cpu->crashing--;
 
-	restore_critint(saved);
+	restore_int(saved);
 	return 0;
 }
 
@@ -161,7 +161,7 @@ int puts(const char *s)
 		lock = 0;
 	}
 
-	register_t saved = disable_critint_save();
+	register_t saved = disable_int_save();
 
 	if (lock)
 		spin_lock(&console_lock);
@@ -174,7 +174,7 @@ int puts(const char *s)
 	else
 		cpu->crashing--;
 
-	restore_critint(saved);
+	restore_int(saved);
 	return 0;
 }
 
@@ -195,7 +195,7 @@ size_t vprintf(const char *str, va_list args)
 		lock = 0;
 	}
 
-	register_t saved = disable_critint_save();
+	register_t saved = disable_int_save();
 
 	if (lock)
 		spin_lock(&console_lock);
@@ -211,7 +211,7 @@ size_t vprintf(const char *str, va_list args)
 	else
 		cpu->crashing--;
 
-	restore_critint(saved);
+	restore_int(saved);
 	return ret;
 }
 

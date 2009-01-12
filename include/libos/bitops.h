@@ -104,6 +104,19 @@ static inline void spin_unlock_critsave(uint32_t *ptr, register_t saved)
 	restore_critint(saved);
 }
 
+static inline register_t spin_lock_intsave(uint32_t *ptr)
+{
+	register_t ret = disable_int_save();
+	spin_lock(ptr);
+	return ret;
+}
+
+static inline void spin_unlock_intsave(uint32_t *ptr, register_t saved)
+{
+	spin_unlock(ptr);
+	restore_int(saved);
+}
+
 static inline unsigned long atomic_or(unsigned long *ptr, unsigned long val)
 {
 	unsigned long ret;

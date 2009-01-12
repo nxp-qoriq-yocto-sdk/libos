@@ -37,12 +37,14 @@
 #include <libos/assym.h>
 #include <libos/percpu.h>
 #include <libos/trapframe.h>
+#include <libos/thread.h>
 
 ASSYM(CPU_SIZE, sizeof(cpu_t));
 ASSYM(CPU_NORMSAVE, offsetof(cpu_t, normsave));
 ASSYM(CPU_CRITSAVE, offsetof(cpu_t, critsave));
 ASSYM(CPU_MACHKSAVE, offsetof(cpu_t, machksave));
 ASSYM(CPU_DBGSAVE, offsetof(cpu_t, dbgsave));
+ASSYM(CPU_THREAD, offsetof(cpu_t, thread));
 #ifdef LIBOS_RET_HOOK
 ASSYM(CPU_RETHOOK, offsetof(cpu_t, ret_hook));
 #endif
@@ -66,3 +68,6 @@ ASSYM(FRAME_EPLC, offsetof(trapframe_t, eplc));
 ASSYM(FRAME_EPSC, offsetof(trapframe_t, epsc));
 ASSYM(FRAME_EXC, offsetof(trapframe_t, exc));
 ASSYM(FRAME_TRAPLEVEL, offsetof(trapframe_t, traplevel));
+
+ASSYM(THREAD_STACK, offsetof(thread_t, stack));
+ASSYM(THREAD_PC, offsetof(thread_t, pc));

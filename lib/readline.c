@@ -520,11 +520,11 @@ no_normal:
 
 static void readline_rx_callback(queue_t *q)
 {
-	register_t saved = spin_lock_critsave(&rl_lock);
+	register_t saved = spin_lock_intsave(&rl_lock);
 	readline_t *rl = q->consumer;
 
 	if (!rl) {
-		spin_unlock_critsave(&rl_lock, saved);
+		spin_unlock_intsave(&rl_lock, saved);
 		return;
 	}
 
@@ -534,7 +534,7 @@ static void readline_rx_callback(queue_t *q)
 	if (!rl->suspended)
 		readline_rx(rl);
 
-	spin_unlock_critsave(&rl->lock, saved);
+	spin_unlock_intsave(&rl->lock, saved);
 }
 
 readline_t *readline_init(queue_t *in, queue_t *out,
@@ -577,7 +577,7 @@ void readline_suspend(readline_t *rl)
  	if (spin_lock_held(&rl->lock))
 		return;
 	
-	saved = spin_lock_critsave(&rl->lock);
+	saved = spin_lock_intsave(&rl->lock);
 	
 	if (!rl->suspended && rl->state != st_action) {
 		if (rl->width)
@@ -588,7 +588,7 @@ void readline_suspend(readline_t *rl)
 		rl->suspended = 1;
 	}
 
-	spin_unlock_critsave(&rl->lock, saved);
+	spin_unlock_intsave(&rl->lock, saved);
 }
 
 /** Redisplay command line after readline_suspend().
@@ -600,7 +600,7 @@ void readline_resume(readline_t *rl)
  	if (spin_lock_held(&rl->lock))
 		return;
 	
-	saved = spin_lock_critsave(&rl->lock);
+	saved = spin_lock_intsave(&rl->lock);
 	
 	if (rl->state != st_action) {
 		unhide_line(rl);
@@ -611,5 +611,5 @@ void readline_resume(readline_t *rl)
 		readline_rx(rl);
 	}
 
-	spin_unlock_critsave(&rl->lock, saved);
+	spin_unlock_intsave(&rl->lock, saved);
 }

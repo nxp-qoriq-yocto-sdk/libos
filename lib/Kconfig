@@ -119,4 +119,17 @@ config LIBOS_DRIVER_MODEL
 		If selected, the client must define driver_begin and driver_end
 		symbols around the .libos.drivers section in the linker script.
 
+config LIBOS_THREADS
+	bool
+	help
+		Provides switch_thread().  Callers are responsible
+		for scheduling.
+
+config LIBOS_CRITICAL_INTS
+	bool
+	help
+		Indicates that critical interrupts are used as normal
+		interrupts, and enable/disable int operations also
+		operate on critical interrupts.
+
 endmenu

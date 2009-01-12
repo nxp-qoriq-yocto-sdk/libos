@@ -44,7 +44,7 @@ static uint32_t alloc_lock;
 
 static void *__alloc(allocator *a, size_t size, size_t align)
 {
-	register_t saved = spin_lock_critsave(&alloc_lock);
+	register_t saved = spin_lock_intsave(&alloc_lock);
 
 	uintptr_t new_start = (a->start + align - 1) & ~(align - 1);
 	void *ret = (void *)new_start;
@@ -55,7 +55,7 @@ static void *__alloc(allocator *a, size_t size, size_t align)
 	else
 		a->start = new_start;
 
-	spin_unlock_critsave(&alloc_lock, saved);
+	spin_unlock_intsave(&alloc_lock, saved);
 	return ret;
 }
 

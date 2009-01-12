@@ -42,7 +42,9 @@
 #ifndef _ASM
 typedef uint8_t kstack_t[KSTACK_SIZE] __attribute__((aligned(16)));
 
-typedef struct {
+struct thread;
+
+typedef struct cpu {
 	client_cpu_t client;
 	register_t normsave[CPUSAVE_LEN];
 	register_t critsave[CPUSAVE_LEN];
@@ -50,6 +52,7 @@ typedef struct {
 	register_t dbgsave[CPUSAVE_LEN];
 	tlb_entry_t tlb1[TLB1_SIZE];
 	uint8_t *kstack; // Set to stack[KSTACK_SIZE - FRAMELEN];
+	struct thread *thread;
 	kstack_t debugstack, critstack, mcheckstack;
 	int coreid, console_ok, crashing;
 	int traplevel; /**< Normally 0, 1 if in critical exception context */

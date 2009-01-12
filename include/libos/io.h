@@ -132,10 +132,8 @@ static inline void tlb_inv_lpid(void)
 
 static inline register_t disable_critint_save(void)
 {
-	register_t ret, tmp;
-	asm volatile("mfmsr %0; and %1, %0, %2; mtmsr %1" :
-	             "=&r" (ret), "=&r" (tmp) : "r" (~(MSR_CE | MSR_EE)) :
-	             "memory");
+	register_t ret = mfmsr();
+	mtmsr(ret & ~(MSR_CE | MSR_EE));
 	return ret;
 }
 
@@ -143,6 +141,50 @@ static inline void restore_critint(register_t saved)
 {
 	mtmsr(saved);
 }
+
+#ifdef CONFIG_LIBOS_CRITICAL_INTS
+static inline register_t disable_int_save(void)
+{
+	return disable_critint_save();
+}
+
+static inline void restore_int(register_t saved)
+{
+	restore_critint(saved);
+}
+
+static inline void disable_int(void)
+{
+	mtmsr(mfmsr() & ~(MSR_CE | MSR_EE));
+}
+
+static inline void enable_int(void)
+{
+	mtmsr(mfmsr() | MSR_CE | MSR_EE);
+}
+#else
+static inline register_t disable_int_save(void)
+{
+	register_t ret;
+	asm volatile("mfmsr %0; wrteei 0" : "=r" (ret) : : "memory");
+	return ret;
+}
+
+static inline void restore_int(register_t saved)
+{
+	asm volatile("wrtee %0" : : "r" (saved) : "memory");
+}
+
+static inline void disable_int(void)
+{
+	asm volatile("wrteei 0" : : : "memory");
+}
+
+static inline void enable_int(void)
+{
+	asm volatile("wrteei 1" : : : "memory");
+}
+#endif
 
 /* Note: unlike disable_critint_save, does *not* disable MSR[EE]. */
 static inline void disable_critint(void)
@@ -155,15 +197,11 @@ static inline void enable_critint(void)
 	mtmsr(mfmsr() | MSR_CE);
 }
 
-static inline void disable_extint(void)
-{
-	asm volatile("wrteei 0" : : : "memory");
-}
-
-static inline void enable_extint(void)
-{
-	asm volatile("wrteei 1" : : : "memory");
-}
+/* Deprecated legacy names -- "external" is a bad name,
+ * regardless of what the architecture calls it.
+ */
+#define disable_extint disable_int
+#define enable_extint enable_int
 
 static inline uint8_t raw_in8(const uint8_t *ptr)
 {

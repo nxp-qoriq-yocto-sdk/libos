@@ -168,7 +168,7 @@ size_t qprintf(queue_t *q, const char *str, ...)
 	static uint32_t lock;
 	size_t i;
 
-	register_t saved = spin_lock_critsave(&lock);
+	register_t saved = spin_lock_intsave(&lock);
 
 	va_list args;
 	va_start(args, str);
@@ -188,6 +188,6 @@ size_t qprintf(queue_t *q, const char *str, ...)
 		queue_writechar(q, buffer[i]);
 	}
 
-	spin_unlock_critsave(&lock, saved);
+	spin_unlock_intsave(&lock, saved);
 	return ret;
 }

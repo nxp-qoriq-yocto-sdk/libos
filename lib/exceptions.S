@@ -114,7 +114,7 @@
 	
 #ifdef HYPERVISOR
 	andis.	%r0, %r10, MSR_GS@h
-	beq	1f
+	beq-	2f
 	
 	mfspr	%r3, SPR_EPLC
 	mfspr	%r4, SPR_EPSC
@@ -123,12 +123,15 @@
 	
 	stw	%r3, FRAME_EPLC(%r1)
 	stw	%r4, FRAME_EPSC(%r1)
-	
+
+#ifdef TOPAZ	
 	/* Set the PID, LPIDR, guest/hypervisor, and user/kernel state for
 	 * external PID access.  We don't set AS0/AS1 in EPLC, as it
 	 * depends on whether it's a data or instruction access which MSR
 	 * bit we copy from.  However, we shouldn't be storing to
 	 * instruction addresses, so EPSC assumes data.
+	 *
+	 * FIXME: don't do this here; EPSC/EPLC writes are expensive.
 	 */
 	
 	rlwimi	%r3, %r5, EPC_EPID_SHIFT, EPC_EPID
@@ -148,13 +151,19 @@
 	mtspr	SPR_EPLC, %r3
 	mtspr	SPR_EPSC, %r4
 	isync
+#endif
 
-1:
-	.if	\savearea == CPU_NORMSAVE
+	/* Don't let the guest's clearing of CE or ME affect the hypervisor */
+	.if	\savearea != CPU_MACHKSAVE
 	mfmsr	%r0
+	.if	\savearea == CPU_NORMSAVE
 	oris	%r0, %r0, MSR_CE@h
+	.endif
+	ori	%r0, %r0, MSR_ME@l
 	mtmsr	%r0
 	.endif
+2:	
+
 #endif
 
 	mr	%r3, %r1
@@ -170,7 +179,7 @@ ret_from_\type:
 	mtmsr	%r10
 
 #ifdef LIBOS_RET_HOOK
-2:	lwz	%r10, CPU_RETHOOK(%r2)
+	lwz	%r10, CPU_RETHOOK(%r2)
 	cmpwi	%r10, 0
 	beq+	1f
 	
@@ -181,9 +190,9 @@ ret_from_\type:
 
 	LOAD	%r10, FRAME_SRR1(%r1)
 
-#ifdef HYPERVISOR
+#ifdef TOPAZ
 	andis.	%r0, %r10, MSR_GS@h
-	beq	2f
+	beq+	2f
 
 	lwz	%r3, FRAME_EPLC(%r1)
 	lwz	%r4, FRAME_EPSC(%r1)
@@ -251,33 +260,11 @@ ret_from_\type:
 	          basestack CPU_NORMSAVE 0
 	.endm
 
-#ifdef TOPAZ
-	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi critdisable
-#else
 	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi basedisable
-#endif
 
-#ifdef TOPAZ
-	/* Topaz needs nestable critical interrupts */
-	.macro	critstack
-	lwz	%r1, CPU_TRAPLEVEL(%r2)
-	cmpwi	%r1, 0
-	bne-	1f
-	
-	.subsection 1
-1:	LOAD	%r1, LONGBYTES*1 + CPU_CRITSAVE(%r2)
-	stwu	%r1, -FRAMELEN(%r1)
-	b	2f
-	.subsection 0
-
-	addi	%r1, %r2, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
-2:
-	.endm
-#else
 	.macro	critstack
 	addi	%r1, %r2, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
-#endif
 
 	.macro	critexception, exc, name, handler
 	exception \handler crit \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
