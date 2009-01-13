@@ -159,6 +159,7 @@
 #include <libos/bitops.h>
 
 typedef struct tlb_entry {
+	register_t mas0;
 	register_t mas1;
 	register_t mas2;
 	register_t mas3;
