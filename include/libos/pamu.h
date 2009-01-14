@@ -212,7 +212,10 @@ typedef struct pfa1_t {
 #define PAACE_TCEF_FORMAT1_RSVD 0x01
 
 #define PAACE_NUMBER_ENTRIES    0xFF
-#define SPAACE_NUMBER_ENTRIES   0x14
+/*
+ * SPAACT table size assumption : 8 devices * 8 partitions * 16 subwindows
+ */
+#define SPAACE_NUMBER_ENTRIES   0x400
 #define	OME_NUMBER_ENTRIES      0xFF
 
 /* PAMU Data Structures */
@@ -347,9 +350,12 @@ typedef struct spaace_t {
 			unsigned int reserved : 24;
 		} to_io;
 	} __attribute__ ((packed)) domain_attr;
-
 	/* Implementation attributes, from VSSA */
-	unsigned int impl_attr : 24;
+	struct {
+		unsigned int reserved1 : 8;
+		unsigned int cid : 8;
+		unsigned int reserved2 : 8;
+	} __attribute__ ((packed)) impl_attr;
 	unsigned int reserved3 : 4;
 	/* Address translation mode, see PAACE_ATM_* defines */
 	unsigned int atm : 2;
@@ -457,5 +463,8 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size);
 ppaace_t *pamu_get_ppaace(uint32_t liodn);
 ome_t *pamu_get_ome(uint8_t omi);
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);
+spaace_t *pamu_get_spaace(unsigned long fspi_index, uint32_t wnum);
+unsigned long get_fspi_and_increment(uint32_t subwindow_cnt);
+void setup_default_xfer_to_host_spaace(spaace_t *spaace);
 
 #endif  /* __PAMU_H */

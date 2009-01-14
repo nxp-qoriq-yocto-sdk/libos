@@ -26,12 +26,16 @@
 #include <libos/pamu.h>
 #include <libos/printlog.h>
 #include <libos/io.h>
+#include <libos/bitops.h>
+
+#include <limits.h>
 
 static pamu_mmap_regs_t *pamu_regs;
 
 static ppaace_t *ppaact;
 static spaace_t *spaact;
 static ome_t *omt;
+static unsigned long fspi;
 
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 {
@@ -128,11 +132,45 @@ void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace)
 	ppaace->atm = PAACE_ATM_NO_XLATE;
 	ppaace->otm = PAACE_OTM_NO_XLATE;
 
-	/* this is a guess - interleaved memory complex 1-4 */
-	ppaace->domain_attr.to_host.did = PAACE_DID_MEM_1_4;
-
-	/* Aquila platform does not support PID */
+	/* P4080 platform does not support PID & DID */
 	ppaace->domain_attr.to_host.pid = PAACE_PID_0;
 
 	ppaace->domain_attr.to_host.coherency_required = PAACE_M_COHERENCE_REQ;
+}
+
+void setup_default_xfer_to_host_spaace(spaace_t *spaace)
+{
+	spaace->ap = PAACE_AP_PERMS_ALL;
+	spaace->dd = PAACE_DD_TO_HOST;
+	spaace->pt = PAACE_PT_SECONDARY;
+	spaace->v  = PAACE_V_VALID;
+	spaace->atm = PAACE_ATM_NO_XLATE;
+	spaace->otm = PAACE_OTM_NO_XLATE;
+
+	/* P4080 platform does not support PID & DID */
+	spaace->domain_attr.to_host.pid = PAACE_PID_0;
+
+	spaace->domain_attr.to_host.coherency_required = PAACE_M_COHERENCE_REQ;
+}
+
+spaace_t *pamu_get_spaace(unsigned long fspi_index, uint32_t wnum)
+{
+	return &spaact[fspi_index + wnum];
+}
+
+unsigned long get_fspi_and_increment(uint32_t subwindow_cnt)
+{
+	unsigned long tmp;
+
+	do {
+		tmp = fspi;
+		/*
+		 * This check should be MP-safe as atomic compare_and_swap()
+		 * will ensure that we re-iterate here if "fspi" gets updated.
+		 */
+		if ((tmp + subwindow_cnt) > SPAACE_NUMBER_ENTRIES)
+			return ULONG_MAX;
+	} while (!compare_and_swap(&fspi, tmp, tmp + subwindow_cnt));
+
+	return tmp;
 }
