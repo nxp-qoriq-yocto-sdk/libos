@@ -114,6 +114,9 @@
 #define SPR_USPRG6       262
 #define SPR_USPRG7       263
 
+#define SPR_UTBL         268
+#define SPR_UTBU         269
+
 #define SPR_SPRG0        272
 #define SPR_SPRG1        273
 #define SPR_SPRG2        274
@@ -267,6 +270,13 @@
 #define SPR_GIVOR14      445  // Guest ITLB Error
 #define SPR_GIVPR        447  // Guest IVPR
 
+#define SPR_L1CFG0       515
+#define SPR_L1CFG1       516
+
+#define SPR_NPIDR        517 // Nexus Processor ID Register
+
+#define SPR_L2CFG0       519 // L2 Cache Configuration Register 0
+
 #define SPR_ATBL         526  // Alternate Time Base Lower
 #define SPR_ATBU         527  // Alternate Time Base Upper
 
@@ -294,7 +304,6 @@
 #define   MCSR_IF          0x00010000 // Instruction Fetch
 #define   MCSR_LD          0x00008000 // Load
 #define   MCSR_ST          0x00002000 // Store
-
 #define SPR_MCAR         573  // Machine check Address
 
 #define SPR_DSRR0        574  // Debug SRR0
@@ -304,6 +313,9 @@
 // SPR General Registers
 #define SPR_SPRG8        604
 #define SPR_SPRG9        605
+
+#define SPR_L1CSR2       606 // L1 Cache Control and Status Register 2
+#define SPR_L1CSR3       607 // L1 Cache Control and Status Register 3
 
 #define SPR_PID1         633  // Process ID Register 1 (e500v1, e500v2)
 #define SPR_PID2         634  // Process ID Register 2 (e500v1, e500v2)
@@ -328,6 +340,13 @@
 
 #define SPR_EPR          702  // External Proxy Register
 
+#define SPR_L2ERRINTEN   720 // L2 Cache  Error Interrupt Enable Register
+#define SPR_L2ERRATTR    721 // L2 Cache Error Attribute Register
+#define SPR_L2ERRADDR    722 // L2 Cache Error Address Capture Register
+#define SPR_L2ERREADDR   723 // L2 Cache Error Extended Address Capture Register
+#define SPR_L2ERRCTL     724 // L2 Cache Error Control Register
+#define SPR_L2ERRDIS     725 // L2 Cache Error Disable Register
+
 #define SPR_EPLC         947  // External PID Load Context
 #define SPR_EPSC         948  // External PID Store Context
 #define   EPC_EPR          0x80000000 // 1 = user, 0 = kernel
@@ -340,6 +359,27 @@
 #define   EPC_ELPID_SHIFT  16
 #define   EPC_EPID         0x00003fff
 #define   EPC_EPID_SHIFT   0
+
+#define SPR_DEVENT       975  // Debug Event Select Register
+
+#define SPR_HDBCR0       976 // Hardware Debug Control Register 0
+#define SPR_HDBCR1       977 // Hardware Debug Control Register 1
+#define SPR_HDBCR2       978 // Hardware Debug Control Register 2
+#define SPR_HDBCR3       979 // Hardware Debug Control Register 3
+#define SPR_HDBCR4       980 // Hardware Debug Control Register 4
+#define SPR_HDBCR5       981 // Hardware Debug Control Register 5
+#define SPR_HDBCR6       982 // Hardware Debug Control Register 6
+
+#define SPR_NSPD         983 // Nexus SPR Access Data Register
+#define SPR_NSPC         984 // Nexus SPR Access Configuration Register
+
+#define SPR_L2ERRINJHI   985 // L2 Cache Error Injection Mask High Register
+#define SPR_L2ERRINJLO   986 // L2 Cache Error Injection Mask Low Register
+#define SPR_L2ERRINJCTL  987 // L2 Cache Error Injection Control Register
+#define SPR_L2CAPTDATAHI 988 // L2 Cache Error Capture Data High Register
+#define SPR_L2CAPTDATALO 989 // L2 Cache Error Capture Data Low Register
+#define SPR_L2CAPTECC    990 // L2 Cache Error Capture ECC Syndrome Register
+#define SPR_L2ERRDET     991 // L2 Cache Error Detect Register
 
 #define SPR_HID0         1008 // Hardware Implementation Dependent 0
 #define   HID0_EMCP        0x80000000 // Enable Machine Check Pin
@@ -375,10 +415,6 @@
 #define   L1CSR1_ICFI      0x00000002 // Instruction Cache Flash Invalidate
 #define   L1CSR1_ICE       0x00000001 // Instruction Cache Enable
 
-#define SPR_L1CSR2       606 // L1 Cache Control and Status Register 2
-
-#define SPR_L1CSR3       607 // L1 Cache Control and Status Register 3
-
 #define SPR_L2CSR0       1017 // L2 Cache Control and Status Register 0
 #define   L2CSR0_L2LFC     0x00000400 // L2 Cache Lock Flash Clear
 #define   L2CSR0_L2FCID    0x00000300 // L2 Cache Lock Flash Clear Instruction or Data
@@ -386,32 +422,6 @@
 #define   L2CSR0_L2LO      0x00000020 // L2 Cache Lock Overflow
 
 #define SPR_L2CSR1       1018 // L2 Cache Control and Status Register 1
-
-#define SPR_L2ERRDIS     992 // L2 Cache Error Disable Register
-
-#define SPR_L2ERRDET     991 // L2 Cache Error Detect Register
-
-#define SPR_L2ERRINTEN   993 // L2 Cache  Error Interrupt Enbale Register
-
-#define SPR_L2ERRCTL     997 // L2 Cache Error Control Register
-
-#define SPR_L2ERRATTR    994 // L2 Cache Error Attribute Register
-
-#define SPR_L2ERRADDR    995 // L2 Cache Error Address Capture Register
-
-#define SPR_L2ERREADDR   996 // L2 Cache Error Extended Address Capture Register
-
-#define SPR_L2CAPTDATALO 989 // L2 Cache Error Capture Data Low Register
-
-#define SPR_L2CAPTDATAHI 988 // L2 Cache Error Capture Data High Register
-
-#define SPR_L2CAPTECC    990 // L2 Cache Error Capture ECC Syndrome Register
-
-#define SPR_L2ERRINJCTL  987 // L2 Cache Error Injection Control Register
-
-#define SPR_L2ERRINJLO   986 // L2 Cache Error Injection Mask Low Register
-
-#define SPR_L2ERRINJHI   985 // L2 Cache Error Injection Mask High Register
 
 #define SPR_MMUCSR0      1012 // MMU Control and Status Register 0
 #define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
