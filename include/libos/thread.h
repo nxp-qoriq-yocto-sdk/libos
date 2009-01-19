@@ -5,16 +5,16 @@
 #ifndef LIBOS_THREAD_H
 #define LIBOS_THREAD_H
 
-typedef struct thread {
+typedef struct libos_thread {
 	void *stack;
 	void *pc;
-} thread_t;
+} libos_thread_t;
 
 /** Switch threads.
  *
  * @param[in] new_thread thread to switch to
  * @return thread that was switched from
  */
-thread_t *switch_thread(thread_t *new_thread);
+libos_thread_t *switch_thread(libos_thread_t *new_thread);
 
 #endif
