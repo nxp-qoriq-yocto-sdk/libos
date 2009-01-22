@@ -17,4 +17,8 @@ typedef struct libos_thread {
  */
 libos_thread_t *switch_thread(libos_thread_t *new_thread);
 
+void libos_prepare_to_block(void);
+void libos_block(void);
+void libos_unblock(libos_thread_t *thread);
+
 #endif

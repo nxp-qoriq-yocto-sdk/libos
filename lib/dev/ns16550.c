@@ -74,7 +74,7 @@ static void __ns16550_tx_callback(ns16550 *priv)
 		}
 
 		for (i = 0; i < priv->txfifo; i++) {
-			int c = queue_readchar(priv->cd.tx);
+			int c = queue_readchar(priv->cd.tx, 0);
 			if (c < 0) {
 				out8(&priv->reg[NS16550_IER],
 				     in8(&priv->reg[NS16550_IER]) & ~NS16550_IER_ETHREI);

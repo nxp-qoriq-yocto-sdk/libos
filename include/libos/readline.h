@@ -32,12 +32,8 @@
 typedef int (*rl_action_t)(void *ctx, char *buf);
 typedef struct readline readline_t;
 
-readline_t *readline_init(queue_t *in, queue_t *out,
-                          const char *prompt, rl_action_t action,
-                          void *user_ctx);
-void readline_suspend(readline_t *rl);
-void readline_resume(readline_t *rl);
-
-extern readline_t *rl_console;
+int readline_init(queue_t *in, queue_t *out,
+                  const char *prompt, rl_action_t action,
+                  void *user_ctx, int console);
 
 #endif

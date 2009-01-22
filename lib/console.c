@@ -1,5 +1,5 @@
-
-
+/** @file printf, etc.
+ */
 /*
  * Copyright (C) 2008 Freescale Semiconductor, Inc.
  *
@@ -35,26 +35,31 @@
 
 static chardev_t *console;
 #ifdef CONFIG_LIBOS_QUEUE
-DECLARE_QUEUE(early_console, 4096);
-static queue_t *qconsole = &early_console;
+DECLARE_QUEUE(consolebuf, 4096);
+static queue_t *qconsole;
 #endif
 static uint32_t console_lock;
 
-#ifdef CONFIG_LIBOS_READLINE
-readline_t *rl_console;
+#ifdef CONFIG_LIBOS_QUEUE
+static void drain_consolebuf_cd(queue_t *q)
+{
+	queue_to_chardev(q->consumer, q, q->size, 0, CHARDEV_BLOCKING);
+}
+
+static void drain_consolebuf_queue(queue_t *q)
+{
+	queue_to_queue(q->consumer, q, q->size, 0, 0);
+	queue_notify_consumer(q->consumer);
+}
 #endif
 
 void console_init(chardev_t *cd)
 {
 #ifdef CONFIG_LIBOS_QUEUE
-	if (qconsole == &early_console) {
-		assert(early_console.head == 0);
-		
-		cd->ops->tx(cd, early_console.buf,
-		            early_console.tail, CHARDEV_BLOCKING);
-
-		qconsole = NULL;
-	}
+	assert(!consolebuf.consumer);
+	consolebuf.consumer = cd;
+	smp_lwsync();
+	consolebuf.data_avail = drain_consolebuf_cd;
 #endif
 
 	console = cd;
@@ -63,11 +68,10 @@ void console_init(chardev_t *cd)
 #ifdef CONFIG_LIBOS_QUEUE
 void qconsole_init(queue_t *q)
 {
-	if (qconsole == &early_console) {
-		assert(early_console.head == 0);
-		queue_write(q, early_console.buf, early_console.tail);
-		queue_notify_consumer(q);
-	}
+	assert(!consolebuf.consumer);
+	consolebuf.consumer = q;
+	smp_lwsync();
+	consolebuf.data_avail = drain_consolebuf_queue;
 
 	qconsole = q;
 }
@@ -76,6 +80,20 @@ void qconsole_init(queue_t *q)
 static int __putchar(int c)
 {
 	uint8_t ch = c;
+
+
+#ifdef CONFIG_LIBOS_QUEUE
+	/* If we're crashing and we have a direct console device,
+	 * go ahead and use it, and don't worry about screwing up
+	 * the readline output.
+	 */
+	if (!(unlikely(cpu->crashing) && console)) {
+		if (c == '\n')
+			queue_writechar(&consolebuf, '\r');
+
+		queue_writechar(&consolebuf, ch);
+	} else
+#endif
 	if (console) {
 		if (c == '\n')
 			console->ops->tx(console, (uint8_t *)"\r", 1, CHARDEV_BLOCKING);
@@ -83,40 +101,16 @@ static int __putchar(int c)
 		console->ops->tx(console, &ch, 1, CHARDEV_BLOCKING);
 	}
 
-#ifdef CONFIG_LIBOS_QUEUE
-	if (qconsole) {
-		if (c == '\n')
-			queue_writechar(qconsole, '\r');
-
-		queue_writechar(qconsole, ch);
-	}
-#endif
-
 	return c;
 }
 
 static void __puts_len(const char *s, size_t len)
 {
-	int last = '\n';
-
-#ifdef CONFIG_LIBOS_READLINE
-	if (rl_console && !cpu->crashing)
-		readline_suspend(rl_console);
-#endif
-
-	while (*s && len--) {
-		last = *s;
+	while (*s && len--)
 		__putchar(*s++);
-	}
 
 #ifdef CONFIG_LIBOS_QUEUE
-	if (qconsole)
-		queue_notify_consumer(qconsole);
-#endif
-
-#ifdef CONFIG_LIBOS_READLINE
-	if (rl_console && !cpu->crashing && last == '\n')
-		readline_resume(rl_console);
+	queue_notify_consumer(&consolebuf);
 #endif
 }
 

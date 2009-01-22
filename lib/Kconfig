@@ -62,6 +62,8 @@ config LIBOS_QUEUE
 	bool
 
 config LIBOS_READLINE
+	depends on LIBOS_SCHED_API
+	select LIBOS_QUEUE
 	bool
 
 config LIBOS_DEFAULT_LOGLEVEL
@@ -124,6 +126,14 @@ config LIBOS_THREADS
 	help
 		Provides switch_thread().  Callers are responsible
 		for scheduling.
+
+config LIBOS_SCHED_API
+	bool
+	select LIBOS_THREADS
+	help
+		Enables functionality that depends on thread scheduling.
+		The client must provide libos_prepare_to_block(),
+		libos_block(), and libos_unblock().
 
 config LIBOS_CRITICAL_INTS
 	bool

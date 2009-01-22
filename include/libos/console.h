@@ -35,4 +35,6 @@ int puts(const char *s);
 size_t printf(const char *str, ...);
 size_t vprintf(const char *str, va_list args);
 
+extern queue_t consolebuf;
+
 #endif

@@ -32,6 +32,9 @@
 #include <libos/errors.h>
 #include <libos/libos.h>
 #include <libos/bitops.h>
+#include <libos/console.h>
+#include <libos/thread.h>
+#include <libos/percpu.h>
 
 #define HISTORY   256
 #define LINE_SIZE 256
@@ -48,7 +51,9 @@ struct readline {
 	queue_t *in, *out;
 	line_t *oldest_line, *newest_line, *line;
 	void *user_ctx;
+	libos_thread_t *thread;
 	uint32_t lock;
+	int console;
 
 	enum {
 		st_normal, st_escape, st_bracket, st_num, st_action
@@ -57,8 +62,6 @@ struct readline {
 	int num[2], num_idx, width, suspended;
 	char action_buf[LINE_SIZE];
 };
-
-static uint32_t rl_lock;
 
 static int line_at(readline_t *rl, int pos)
 {
@@ -70,7 +73,7 @@ static int column_at(readline_t *rl, int pos)
 	return (pos + strlen(rl->prompt)) % rl->width;
 }
 
-static void __set_cursor(readline_t *rl, int pos)
+static void set_cursor_temp(readline_t *rl, int pos)
 {
 	int virt, horiz, back = 0;
 	char buf[16];
@@ -100,7 +103,7 @@ static void __set_cursor(readline_t *rl, int pos)
 
 static void set_cursor(readline_t *rl, int pos)
 {
-	__set_cursor(rl, pos);
+	set_cursor_temp(rl, pos);
 	rl->line->pos = pos;
 }
 
@@ -120,7 +123,7 @@ static void display_to_end(readline_t *rl)
 			queue_writestr(rl->out, " \b");
 		
 		rl->line->pos = rl->line->end;
-		__set_cursor(rl, pos);
+		set_cursor_temp(rl, pos);
 		rl->line->pos = pos;
 	}
 }
@@ -128,7 +131,7 @@ static void display_to_end(readline_t *rl)
 static void hide_line(readline_t *rl)
 {
 	int i;
-	__set_cursor(rl, rl->line->end);
+	set_cursor_temp(rl, rl->line->end);
 
 	queue_writestr(rl->out, "\r\033[2K");
 
@@ -264,11 +267,89 @@ static void backspace(readline_t *rl)
 	rl->line->end--;
 }
 
+/** Hide command line to allow for other output.
+ */
+static void readline_suspend(readline_t *rl)
+{
+	if (rl->state != st_action) {
+		if (rl->width)
+			hide_line(rl);
+		
+		queue_writechar(rl->out, '\r');
+		queue_notify_consumer(rl->out);
+	}
+
+	rl->suspended = 1;
+}
+
+/** Redisplay command line after readline_suspend().
+ */
+static void readline_resume(readline_t *rl)
+{
+	if (rl->state != st_action) {
+		unhide_line(rl);
+		queue_notify_consumer(rl->out);
+	}
+
+	rl->suspended = 0;
+
+	/* Handle any input that occurred while suspended. */
+	libos_unblock(rl->thread);
+}
+
+static int need_to_drain(readline_t *rl)
+{
+	return rl->console && !queue_empty(&consolebuf);
+}
+
+static void do_drain(readline_t *rl)
+{
+	if (!rl->suspended)
+		readline_suspend(rl);
+
+	ssize_t num = queue_to_queue(rl->out, &consolebuf, consolebuf.size, 0, 0);
+
+	/* Don't resume the console in the middle of a line */
+	if (num == 0 ||
+	    consolebuf.buf[queue_wrap(&consolebuf, consolebuf.head - 1)] == '\n')
+		readline_resume(rl);
+}
+
 static void readline_rx(readline_t *rl)
 {
 	int ch;
 
-	while ((ch = queue_readchar(rl->in)) >= 0) {
+	/* Print the initial prompt. */
+	readline_resume(rl);
+
+	while (1) {
+		queue_notify_consumer(rl->out);
+
+		libos_prepare_to_block();
+
+		if (rl->suspended ||
+		    (queue_empty(rl->in) && !need_to_drain(rl)))
+			libos_block();
+		else
+			libos_unblock(rl->thread);
+
+		if (need_to_drain(rl)) {
+			spin_lock_int(&rl->lock);
+			do_drain(rl);
+			spin_unlock_int(&rl->lock);
+		}
+
+		ch = queue_readchar(rl->in, 0);
+		if (ch < 0)
+			continue;
+
+		/* Now that we're using a thread, we don't need the state
+		 * machine -- however, I'll leave it this way in case
+		 * non-threaded support is desired in the future, to
+		 * simplify console draining, and to avoid unnecessary
+		 * code churn.
+		 */
+
 		switch (rl->state) {
 		case st_normal:
 			switch (ch) {
@@ -282,9 +363,10 @@ static void readline_rx(readline_t *rl)
 			case '\r': {
 				line_t *newline = get_newline(rl);
 				line_t *oldline = rl->line;
+				int suspended;
 	
 				if (rl->line->pos != rl->line->end)
-					__set_cursor(rl, rl->line->end);
+					set_cursor_temp(rl, rl->line->end);
 
 				queue_writestr(rl->out, "\r\n");
 				queue_notify_consumer(rl->out);
@@ -311,19 +393,33 @@ static void readline_rx(readline_t *rl)
 					rl->newest_line = rl->line = newline;
 				}
 				
-				rl->state = st_action;
-				
 				memcpy(rl->action_buf, oldline->buf, oldline->end);
 				rl->action_buf[oldline->end] = 0;
-				
+
+				rl->line->pos = 0;
+				rl->line->end = 0;
+
+				spin_lock_int(&rl->lock);
+				rl->state = st_action;
+				spin_unlock_int(&rl->lock);
+
 				if (rl->action(rl->user_ctx, rl->action_buf))
 					return;
 
+				/* We may have been suspended, if there was console
+				 * output during the action.
+				 */
+
+				spin_lock_int(&rl->lock);
+
+				suspended = rl->suspended;
 				rl->state = st_normal;
-				rl->line->pos = 0;
-				rl->line->end = 0;
+
+				spin_unlock_int(&rl->lock);
 				
-				queue_writestr(rl->out, rl->prompt);
+				if (!suspended)
+					queue_writestr(rl->out, rl->prompt);
+
 				break;
 			}
 			
@@ -511,43 +607,52 @@ no_normal:
 			break;
 
 		case st_action:
+			BUG();
 			break;
 		}
 	}
-
-	queue_notify_consumer(rl->out);
 }
 
-static void readline_rx_callback(queue_t *q)
+static void drain_callback(queue_t *q)
 {
-	register_t saved = spin_lock_intsave(&rl_lock);
 	readline_t *rl = q->consumer;
+	register_t saved;
 
-	if (!rl) {
-		spin_unlock_intsave(&rl_lock, saved);
+	if (spin_lock_held(&rl->lock))
 		return;
-	}
 
-	spin_lock(&rl->lock);
-	spin_unlock(&rl_lock);
+	saved = spin_lock_intsave(&rl->lock);
 
-	if (!rl->suspended)
-		readline_rx(rl);
+	if (rl->state == st_action)
+		do_drain(rl);
+	else
+		libos_unblock(rl->thread);
 
 	spin_unlock_intsave(&rl->lock, saved);
 }
 
-readline_t *readline_init(queue_t *in, queue_t *out,
-                          const char *prompt, rl_action_t action,
-                          void *user_ctx)
+static void rx_callback(queue_t *q)
+{
+	readline_t *rl = q->consumer;
+	libos_unblock(rl->thread);
+}
+
+static void tx_callback(queue_t *q)
+{
+	readline_t *rl = q->producer;
+	libos_unblock(rl->thread);
+}
+
+int readline_init(queue_t *in, queue_t *out,
+                  const char *prompt, rl_action_t action,
+                  void *user_ctx, int console)
 {
 	readline_t *rl = alloc_type(readline_t);
 	if (!rl)
-		return NULL;
+		return ERR_NOMEM;
 
 	rl->in = in;
 	in->consumer = rl;
-	in->data_avail = readline_rx_callback;
 
 	rl->out = out;
 	out->producer = rl;
@@ -555,61 +660,36 @@ readline_t *readline_init(queue_t *in, queue_t *out,
 	rl->prompt = prompt;
 	rl->action = action;
 	rl->user_ctx = user_ctx;
-	rl->suspended = 1;
+	rl->thread = cpu->thread;
 	
 	rl->line = rl->newest_line = rl->oldest_line = alloc_type(line_t);
-	if (!rl->line)
-		return NULL;
+	if (!rl->line) {
+		in->consumer = out->producer = NULL;
+		free(rl);
+		return ERR_NOMEM;
+	}
 
 	/* Request terminal status, to see if we have an ANSI-capable terminal */
 	queue_writestr(out, "\033[5n");
 	queue_notify_consumer(rl->out);
 
-	return rl;
-}
+	smp_lwsync();
+	in->data_avail = rx_callback;
+	out->space_avail = tx_callback;
 
-/** Hide command line to allow for other output.
- */
-void readline_suspend(readline_t *rl)
-{
-	register_t saved;
+#ifdef CONFIG_LIBOS_CONSOLE
+	if (console) {
+		rl->console = 1;
 	
- 	if (spin_lock_held(&rl->lock))
-		return;
-	
-	saved = spin_lock_intsave(&rl->lock);
-	
-	if (!rl->suspended && rl->state != st_action) {
-		if (rl->width)
-			hide_line(rl);
-		
-		queue_writechar(rl->out, '\r');
-		queue_notify_consumer(rl->out);
-		rl->suspended = 1;
+		/* FIXME: better sync when withdrawing a callback */
+		consolebuf.data_avail = NULL;
+		smp_lwsync();
+		consolebuf.consumer = rl;
+		smp_lwsync();
+		consolebuf.data_avail = drain_callback;
 	}
+#endif
 
-	spin_unlock_intsave(&rl->lock, saved);
-}
-
-/** Redisplay command line after readline_suspend().
- */
-void readline_resume(readline_t *rl)
-{
-	register_t saved;
-
- 	if (spin_lock_held(&rl->lock))
-		return;
-	
-	saved = spin_lock_intsave(&rl->lock);
-	
-	if (rl->state != st_action) {
-		unhide_line(rl);
-		queue_notify_consumer(rl->out);
-		rl->suspended = 0;
-		
-		/* Handle any input that occurred while suspended. */
-		readline_rx(rl);
-	}
-
-	spin_unlock_intsave(&rl->lock, saved);
+	readline_rx(rl);
+	return 0;
 }
