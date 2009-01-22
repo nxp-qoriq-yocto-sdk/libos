@@ -334,6 +334,8 @@ chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
 	out8(&priv->reg[NS16550_FCR],
 	     NS16550_FCR_FEN | NS16550_FCR_RFR | NS16550_FCR_TFR);
 
+	in8(&priv->reg[NS16550_RBR]);  /* dummy read to clear any pending interrupts */
+
 	out8(&priv->reg[NS16550_MCR],
 	     in8(&priv->reg[NS16550_MCR]) | NS16550_MCR_RTS);
 
