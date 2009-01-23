@@ -43,13 +43,16 @@ static uint32_t console_lock;
 #ifdef CONFIG_LIBOS_QUEUE
 static void drain_consolebuf_cd(queue_t *q)
 {
-	queue_to_chardev(q->consumer, q, q->size, 0, CHARDEV_BLOCKING);
+	if (cpu->console_ok)
+		queue_to_chardev(q->consumer, q, q->size, 0, CHARDEV_BLOCKING);
 }
 
 static void drain_consolebuf_queue(queue_t *q)
 {
-	queue_to_queue(q->consumer, q, q->size, 0, 0);
-	queue_notify_consumer(q->consumer);
+	if (cpu->console_ok) {
+		queue_to_queue(q->consumer, q, q->size, 0, 0);
+		queue_notify_consumer(q->consumer);
+	}
 }
 #endif
 
@@ -87,14 +90,14 @@ static int __putchar(int c)
 	 * go ahead and use it, and don't worry about screwing up
 	 * the readline output.
 	 */
-	if (!(unlikely(cpu->crashing) && console)) {
+	if (!(unlikely(cpu->crashing) && console && cpu->console_ok)) {
 		if (c == '\n')
 			queue_writechar(&consolebuf, '\r');
 
 		queue_writechar(&consolebuf, ch);
 	} else
 #endif
-	if (console) {
+	if (console && cpu->console_ok) {
 		if (c == '\n')
 			console->ops->tx(console, (uint8_t *)"\r", 1, CHARDEV_BLOCKING);
 

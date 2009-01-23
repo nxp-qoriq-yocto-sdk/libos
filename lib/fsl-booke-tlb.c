@@ -54,13 +54,6 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 {
 	register_t ts, tid;
 
-	if (cpu->console_ok)
-		printlog(LOGTYPE_MMU, LOGLEVEL_DEBUG,
-		         "__tlb1_set_entry: idx = %d va = %#lx pa = %#llx "
-		         "tsize = %#lx mas2flags = %#lx mas3flags = %#lx "
-		         "_tid = %d _ts = %d mas8 = %#lx\n",
-		         idx, va, pa, tsize, mas2flags, mas3flags, _tid, _ts, mas8);
-
 	tid = (_tid <<  MAS1_TID_SHIFT) & MAS1_TID_MASK;
 	ts = (_ts) ? MAS1_TS : 0;
 	cpu->tlb1[idx].mas1 = MAS1_VALID | MAS1_IPROT | ts | tid;
@@ -73,12 +66,6 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 
 	cpu->tlb1[idx].mas7 = pa >> 32;
 	cpu->tlb1[idx].mas8 = mas8;
-
-	if (cpu->console_ok)
-		printlog(LOGTYPE_MMU, LOGLEVEL_DEBUG,
-		         "__tlb1_set_entry: mas1 = %#lx mas2 = %#lx mas3 = 0x%#lx mas7 = 0x%#lx\n",
-		         cpu->tlb1[idx].mas1, cpu->tlb1[idx].mas2, cpu->tlb1[idx].mas3,
-		         cpu->tlb1[idx].mas7);
 
 	tlb1_write_entry(idx);
 }
