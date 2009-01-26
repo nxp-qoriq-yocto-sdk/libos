@@ -76,6 +76,13 @@ _start:
 
 	bl	clear_bss
 
+	mfspr	%r16, SPR_L1CFG0
+	li	%r17, 32
+	lis	%r18, cache_block_size@ha
+	rlwinm	%r16, %r16, 9, 3
+	slw	%r17, %r17, %r16
+	stw	%r17, cache_block_size@l(%r18)
+
 	lis	%r1, (init_stack_top - 16)@ha
 	addi	%r1, %r1, (init_stack_top - 16)@l
 
@@ -343,3 +350,6 @@ clear_bss:
 	.space 4096
 	.global init_stack_top
 init_stack_top:
+	.global cache_block_size
+cache_block_size:
+	.space 4

@@ -115,6 +115,7 @@ int memcmp(const void *b1, const void *b2, size_t len)
 	return 0;
 }
 
+#undef memset
 void *memset(void *b, int ch, size_t len)
 {
 	char *c = b;

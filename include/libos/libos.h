@@ -169,4 +169,7 @@ int libos_bind_driver(device_t *dev, const char *compat_strlist, size_t compat_l
 
 const char *strlist_iterate(const char *strlist, size_t len,
                             size_t *pos);
+
+extern const int cache_block_size;
+
 #endif
