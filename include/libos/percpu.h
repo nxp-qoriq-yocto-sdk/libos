@@ -35,7 +35,6 @@
 #endif
 
 #define CPUSAVE_LEN 2
-#define KSTACK_SIZE 2048
 
 #define TLB1_SIZE 64
 
