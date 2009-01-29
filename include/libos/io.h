@@ -60,26 +60,6 @@ static inline register_t mfpmr(int reg)
 	return ret;
 }
 
-static inline void mtfsf(uint64_t val)
-{
-	/* FIXME: This may not be working as expected. */
-	// asm volatile("mtfsf %0, %1" : : "i" (0xff), "r" (val) : "memory");
-	// Cannot use uint64_t - has to be float.
-}
-
-static inline uint64_t mffs(void)
-{
-	uint64_t ret = 0;
-	// FIXME: ret has to be a float - but that causes some problem with
-	//        libgcc linking.
-	// FIX: What you'll need to do is turn on MSR[FP], save a floating
-	//      point register to memory, do mffs on that fp register, save
-	//      the result to "ret", restore the fp register, and restore
-	//      MSR[FP]. GCC will see only integer operations.
-	// asm volatile("mffs %0" : "=r" (ret) : : "memory");
-	return ret;
-}
-
 static inline void mtmsr(register_t val)
 {
 	asm volatile("mtmsr %0" : : "r" (val) : "memory");
@@ -89,6 +69,34 @@ static inline register_t mfmsr(void)
 {
 	register_t ret;
 	asm volatile("mfmsr %0" : "=r" (ret) :  : "memory");
+	return ret;
+}
+
+static inline void mtfsf(uint64_t val)
+{
+	register_t msr;
+	uint64_t f = 0;
+	msr = mfmsr();
+	mtmsr(msr | MSR_FP);
+	asm volatile("stfd 0, %[f];"
+	             "lfd 0, %[val];"
+	             "mtfsf 0xff, 0;"
+	             "lfd 0, %[f];" : [f] "+m" (f) : [val] "m" (val));
+	mtmsr(msr);
+}
+
+static inline uint64_t mffs(void)
+{
+	uint64_t ret = 0;
+	register_t msr;
+	uint64_t f = 0;
+	msr = mfmsr();
+	mtmsr(msr | MSR_FP);
+	asm volatile("stfd 0, %[f];"
+	             "mffs 0;"
+	             "stfd 0, %[ret];"
+	             "lfd 0, %[f];" : [f] "+m" (f), [ret] "=m" (ret));
+	mtmsr(msr);
 	return ret;
 }
 
