@@ -29,25 +29,34 @@
 /* FIXME 64-bit */
 .global switch_thread
 switch_thread:
+	/* Save old thread's state */
 	stwu	%r1, -96(%r1)
 	stmw	%r14, 24(%r1)
+	mr	%r5, %r3
 	mflr	%r4
 	
-	lwz	%r5, CPU_THREAD(%r2)
+	lwz	%r3, CPU_THREAD(%r2)
 	bl	1f
-1:	stw	%r3, CPU_THREAD(%r2)
+1:	stw	%r5, CPU_THREAD(%r2)
 	mflr	%r7
-	stw	%r1, THREAD_STACK(%r5)
+	stw	%r1, THREAD_STACK(%r3)
 	addi	%r7, %r7, 2f - 1b
 	mfcr	%r8
-	stw	%r7, THREAD_PC(%r5)
-	lwz	%r6, THREAD_PC(%r3)
+	stw	%r7, THREAD_PC(%r3)
+	lwz	%r6, THREAD_PC(%r5)
 	stw	%r4, 100(%r1)
 	stw	%r8, 20(%r1)
-	lwz	%r1, THREAD_STACK(%r3)
+	lwz	%r1, THREAD_STACK(%r5)
+
+	/* New threads will branch to their entry point; existing
+	 * threads will fall through to 2:
+	 */
 	mtlr	%r6
 	blr	
 
+	/* Restore new thread's state, returning the
+	 * switched-from thread in r3.
+	 */
 2:	lwz	%r4, 100(%r1)
 	lwz	%r8, 20(%r1)
 	lmw	%r14, 24(%r1)
