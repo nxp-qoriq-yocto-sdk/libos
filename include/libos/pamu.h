@@ -216,7 +216,7 @@ typedef struct pfa1_t {
  * SPAACT table size assumption : 8 devices * 8 partitions * 16 subwindows
  */
 #define SPAACE_NUMBER_ENTRIES   0x400
-#define	OME_NUMBER_ENTRIES      0xFF
+#define	OME_NUMBER_ENTRIES      16   /* based on P4080 2.0 silicon plan */
 
 /* PAMU Data Structures */
 
