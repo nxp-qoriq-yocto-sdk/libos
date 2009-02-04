@@ -6,8 +6,9 @@
 #define LIBOS_THREAD_H
 
 typedef struct libos_thread {
-	void *stack;
-	void *pc;
+	void *stack; /* Saved stack pointer */
+	void *kstack; /* Kernel (or HV) stack entry pointer */
+	void *pc; /* Saved program counter */
 } libos_thread_t;
 
 /** Switch threads.

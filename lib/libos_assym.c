@@ -70,4 +70,5 @@ ASSYM(FRAME_EXC, offsetof(trapframe_t, exc));
 ASSYM(FRAME_TRAPLEVEL, offsetof(trapframe_t, traplevel));
 
 ASSYM(THREAD_STACK, offsetof(libos_thread_t, stack));
+ASSYM(THREAD_KSTACK, offsetof(libos_thread_t, kstack));
 ASSYM(THREAD_PC, offsetof(libos_thread_t, pc));

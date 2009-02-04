@@ -36,11 +36,13 @@ switch_thread:
 	mflr	%r4
 	
 	lwz	%r3, CPU_THREAD(%r2)
+	lwz	%r9, THREAD_KSTACK(%r5)
 	bl	1f
 1:	stw	%r5, CPU_THREAD(%r2)
 	mflr	%r7
 	stw	%r1, THREAD_STACK(%r3)
 	addi	%r7, %r7, 2f - 1b
+	stw	%r9, CPU_KSTACK(%r2)
 	mfcr	%r8
 	stw	%r7, THREAD_PC(%r3)
 	lwz	%r6, THREAD_PC(%r5)
