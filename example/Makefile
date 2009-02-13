@@ -1,4 +1,3 @@
-
 #
 # Copyright (C) 2008 Freescale Semiconductor, Inc.
 #
@@ -23,7 +22,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-LIBFDT_DIR := ../../dtc/libfdt
+LIBFDT_DIR := ../../../dtc/libfdt
 LIBOS_DIR := ../lib
 LIBOS_INC := ../include
 LIBOS_BIN := bin/libos
@@ -100,7 +99,7 @@ bin/libfdt/%.o : $(LIBFDT_DIR)/%.c
 -include $(OBJS:.o=.d)
 
 bin/example.map: bin/example
-	nm -n bin/example > $@	
- 
+	nm -n bin/example > $@
+
 clean:
 	rm -rf bin
