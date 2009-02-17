@@ -28,6 +28,7 @@
 #include <libos/trapframe.h>
 #include <libos/printlog.h>
 #include <libos/core-regs.h>
+#include <libos/bitops.h>
 #include <libos/io.h>
 
 struct powerpc_exception {
@@ -94,6 +95,14 @@ void traceback(trapframe_t *regs)
 
 void dump_regs(trapframe_t *regs)
 {
+	static uint32_t dump_lock;
+	int lock = 0;
+
+	if (!spin_lock_held(&dump_lock)) {
+		lock = 1;
+		spin_lock(&dump_lock);
+	}
+
 	printf("%s\n", trapname(regs->exc));
 
 	printf("NIP 0x%08lx MSR 0x%08lx LR 0x%08lx ESR 0x%08lx EXC %d\n"
@@ -112,6 +121,9 @@ void dump_regs(trapframe_t *regs)
 
 	if (!(regs->srr1 & MSR_GS))
 		traceback(regs);
+
+	if (lock)
+		spin_unlock(&dump_lock);
 }
 
 void unknown_exception(trapframe_t *regs)
