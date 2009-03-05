@@ -76,10 +76,6 @@
 #define SPR_MAS3         627  // MMU Assist Register 3
 #define   MAS3_RPN           0xFFFFF000
 #define   MAS3_RPN_SHIFT     12
-#define   MAS3_U0            0x00000200
-#define   MAS3_U1            0x00000100
-#define   MAS3_U2            0x00000080
-#define   MAS3_U3            0x00000040
 #define   MAS3_USER          0x000003c0
 #define   MAS3_U0            0x00000200
 #define   MAS3_U1            0x00000100
