@@ -103,7 +103,7 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
 
 	out32((uint32_t *)(pamu_offset + PAMU_PICS), 
 			PAMU_ACCESS_VIOLATION_ENABLE);
-	out32(pc, PAMU_PC_PE | PAMU_PC_SPCC | PAMU_PC_PPCC);
+	out32(pc, PAMU_PC_PE | PAMU_PC_OCE | PAMU_PC_SPCC | PAMU_PC_PPCC);
 	return 0;
 }
 

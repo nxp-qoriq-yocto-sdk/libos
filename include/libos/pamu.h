@@ -95,6 +95,7 @@ peripheral access, 0 : may allow peripheral access */
 #define PAMU_PC_PE   0x40000000 /* 0 = PAMU disabled, 1 = PAMU enabled */   
 #define PAMU_PC_SPCC 0x00000010 /* sPAACE cache enable */
 #define PAMU_PC_PPCC 0x00000001 /* pPAACE cache enable */
+#define PAMU_PC_OCE  0x00001000 /* OMT cache enable */
 
 #define PAMU_PFA1 0x0C14
 #define PAMU_PFA2 0x0C18
