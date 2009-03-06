@@ -84,8 +84,8 @@ ssize_t queue_write_blocking(queue_t *q, const uint8_t *buf, size_t len);
 int queue_readchar(queue_t *q, int peek);
 int queue_writechar(queue_t *q, uint8_t c);
 int queue_writechar_blocking(queue_t *q, uint8_t c);
-size_t qprintf(queue_t *q, const char *str, ...)
-	__attribute__((format(printf, 2, 3)));
+size_t qprintf(queue_t *q, int blocking, const char *str, ...)
+	__attribute__((format(printf, 3, 4)));
 
 static inline void queue_notify_consumer(queue_t *q)
 {

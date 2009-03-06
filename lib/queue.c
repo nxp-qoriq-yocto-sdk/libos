@@ -214,7 +214,7 @@ int queue_writechar_blocking(queue_t *q, uint8_t c)
 	}
 }
 
-size_t qprintf(queue_t *q, const char *str, ...)
+size_t qprintf(queue_t *q, int blocking, const char *str, ...)
 {
 	enum {
 		buffer_size = 4096,
@@ -239,10 +239,17 @@ size_t qprintf(queue_t *q, const char *str, ...)
 		 * Is it safe for all destinations?
 		 */
 
-		if (buffer[i] == '\n')	
-			queue_writechar_blocking(q, '\r');
+		if (blocking) {
+			if (buffer[i] == '\n')	
+				queue_writechar_blocking(q, '\r');
 			
-		queue_writechar_blocking(q, buffer[i]);
+			queue_writechar_blocking(q, buffer[i]);
+		} else {
+			if (buffer[i] == '\n')	
+				queue_writechar(q, '\r');
+			
+			queue_writechar(q, buffer[i]);
+		}
 	}
 
 	spin_unlock_intsave(&lock, saved);
