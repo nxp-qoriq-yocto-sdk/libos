@@ -230,9 +230,10 @@ ret_from_\type:
 	.macro	basestack
 	mfspr	%r1, SPR_SRR1
 #ifdef HYPERVISOR
-	andis.	%r1, %r1, (MSR_GS | MSR_PR)@h
+	rlwinm	%r1, %r1, 3, ~0
+	andis.	%r1, %r1, ((MSR_GS | MSR_PR) << 3)@h
 #else
-	andis.	%r1, %r1, MSR_PR@h
+	andi.	%r1, %r1, MSR_PR@l
 #endif
 	beq-	1f
 	
