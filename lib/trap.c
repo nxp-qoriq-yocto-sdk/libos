@@ -119,7 +119,11 @@ void dump_regs(trapframe_t *regs)
 			printf("\n");
 	}
 
-	if (!(regs->srr1 & MSR_GS))
+#ifdef HYPERVISOR
+	if (!(regs->srr1 & (MSR_GS | MSR_PR)))
+#else
+	if (!(regs->srr1 & MSR_PR))
+#endif
 		traceback(regs);
 
 	if (lock)
