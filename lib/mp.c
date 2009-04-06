@@ -34,14 +34,17 @@ extern int secondary_start;
 int start_secondary_spin_table(struct boot_spin_table *table, int num,
                                cpu_t *cpu)
 {
+	phys_addr_t entry = virt_to_phys(&secondary_start);
+
 	printlog(LOGTYPE_MP, LOGLEVEL_DEBUG,
-	         "table %p addr %lx pir %lx\n", table, table->addr_lo, table->pir);
+	         "table %p addr %lx pir %lx entry %llx\n",
+	         table, table->addr_lo, table->pir, entry);
 
 	table->r3_lo = (unsigned long)cpu;
 	table->pir = num;
 
-	// FIXME 64-bit
-	out32((uint32_t *)&table->addr_lo, virt_to_phys(&secondary_start));
+	out32((uint32_t *)&table->addr_hi, entry >> 32);
+	out32((uint32_t *)&table->addr_lo, (uint32_t)entry);
 
 	return 0;
 }
