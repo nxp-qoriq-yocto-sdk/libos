@@ -66,6 +66,7 @@
 #define FH_BYTE_CHANNEL_RECEIVE         19
 #define FH_BYTE_CHANNEL_POLL            20
 #define FH_VMPIC_IACK                   21
+#define FH_SEND_NMI                     22
 #define FH_PARTITION_SEND_DBELL         32
 
 /* Posix return codes */
@@ -153,6 +154,25 @@ static inline unsigned int fh_cpu_whoami(unsigned int *cpu_index)
 	);
 
 	*cpu_index = r4;
+
+	return r3;
+}
+
+/**
+ * Send NMI to virtual cpu.
+ * @param[in] vcpu_mask send NMI to virtual cpus specified by this mask.
+ *
+ * @return 0 for sucess, or EINVAL for invalid vcpu_mask.
+ */
+static inline unsigned int fh_send_nmi(unsigned int vcpu_mask)
+{
+	register uintptr_t r11 __asm__("r11") = FH_SEND_NMI;
+	register uintptr_t r3 __asm__("r3") = vcpu_mask;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3)
+		: : HCALL_CLOBBERS1
+	);
 
 	return r3;
 }
