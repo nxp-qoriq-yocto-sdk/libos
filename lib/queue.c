@@ -171,7 +171,7 @@ ssize_t queue_write_blocking(queue_t *q, const uint8_t *buf, size_t len)
 		if (ret < 0)
 			return ret;
 
-		if (ret < len) {
+		if ((size_t)ret < len) {
 			queue_notify_consumer(q);
 			libos_block();
 		}
@@ -338,7 +338,7 @@ ssize_t queue_to_queue(queue_t *dest, queue_t *src,
 			raw_out32(&src->head, head);
 		}
 
-		if (ret < chunk)
+		if ((size_t)ret < chunk)
 			return ret;
 	}
 

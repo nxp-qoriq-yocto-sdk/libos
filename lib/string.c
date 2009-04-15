@@ -52,7 +52,7 @@ void *memcpy(void *dest, const void *src, size_t len)
 	const long *ls;
 	long *ld;
 	size_t i;
-	const int lowbits = sizeof(long) - 1;
+	const unsigned int lowbits = sizeof(long) - 1;
 
 	if (__builtin_expect((((uintptr_t)dest) & lowbits) !=
 	                     (((uintptr_t)src) & lowbits), 0)) {

@@ -32,6 +32,27 @@ else
 override V :=
 endif
 
+export REAL_CC := $(CC) -Wall
+
+# This is a bit different than Linux -- C=1 requests
+# sparse warnings, but the result is still intended to
+# be a clean build.  C=2 removes -Werror, but adds
+# warnings that are sometimes informative but are
+# unlikely to ever result in a clean build even with
+# perfectly reasonable code.
+
+ifeq ($(C),2)
+CHECKCC := cgcc -Wtypesign -Wptr-subtraction-blows -Wcast-to-as $(CRAZYWARNINGS)
+endif
+ifeq ($(C),1)
+CHECKCC := cgcc -Wtypesign -Wcast-to-as $(EXTRAWARNINGS)
+endif
+ifeq ($(C),)
+CHECKCC := $(REAL_CC) $(EXTRAWARNINGS)
+endif
+
+CC_OPTS_NODEP += -fno-builtin-malloc
+
 libos-src-first-$(CONFIG_LIBOS_INIT) += head.S
 libos-src-$(CONFIG_LIBOS_FSL_BOOKE_TLB) += fsl-booke-tlb.c
 libos-src-early-$(CONFIG_LIBOS_EXCEPTION) += exceptions.S
@@ -73,25 +94,26 @@ define mkdep
 endef
 
 define build
+	@$(MKDIR) $(@D)
 	$(call show,build: $(<:$(src)%=%))
 	$(V)$($(1)) $(2) -c -o $@ $<
 endef
 
 bin/libos/%.d : $(libos)lib/%.c
-	$(call mkdep,CC,$(CC_OPTS) $(CC_OPTS_C))
+	$(call mkdep,REAL_CC,$(CC_OPTS) $(CC_OPTS_C))
 
 bin/libos/%.o : $(libos)lib/%.c bin/libos/%.d
-	$(call build,CC,$(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_C))
+	$(call build,CHECKCC,$(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_C))
 
 bin/libos/%.d : $(libos)lib/%.S bin/libos/assym.s
-	$(call mkdep,CC,$(CC_OPTS) $(CC_OPTS_ASM))
+	$(call mkdep,REAL_CC,$(CC_OPTS) $(CC_OPTS_ASM))
 
 bin/libos/%.o : $(libos)lib/%.S bin/libos/%.d
-	$(call build,CC,$(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_ASM))
+	$(call build,CHECKCC,$(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_ASM))
 
 # No $(CC_OPTS_C), as we want the symbols to go in common rather than BSS.
 bin/libos/libos_assym.o: $(libos)lib/libos_assym.c bin/libos/libos_assym.d
-	$(call build,CC,$(CC_OPTS_NODEP) $(CC_OPTS))
+	$(call build,CHECKCC,$(CC_OPTS_NODEP) $(CC_OPTS))
 
 bin/libos/assym.s: bin/libos/libos_assym.o
 	@$(MKDIR) $(@D)

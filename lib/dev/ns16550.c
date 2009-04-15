@@ -95,7 +95,7 @@ static void __ns16550_tx_callback(ns16550 *priv)
 	}
 }
 
-void ns16550_tx_callback(queue_t *q)
+static void ns16550_tx_callback(queue_t *q)
 {
 	ns16550 *priv = q->consumer;
 	assert(q == priv->cd.tx);
@@ -270,7 +270,8 @@ out:
 }
 #endif
 
-ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf, size_t count, int flags)
+static ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf,
+                          size_t count, int flags)
 {
 	ns16550 *priv = to_container(cd, ns16550, cd);
 	size_t ret = 0;
@@ -351,9 +352,9 @@ chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
 }
 
 // FIXME
+#if 0
 void ns16550_config(uart_param_t param)
 {
-#if 0
 	int divisor;
 	uint8_t tmp;
 
@@ -412,5 +413,5 @@ void ns16550_config(uart_param_t param)
 	tmp |= ((param->stop_bits - 1) << 2);
 
 	out8(&priv->reg[NS16550_LCR], tmp);
-#endif
 }
+#endif

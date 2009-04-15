@@ -72,7 +72,7 @@ static void printf_string(char *buf, size_t *opos, size_t limit,
 }
 
 static void printf_fill(char *buf, size_t *opos, size_t limit,
-                        char ch, int len)
+                        char ch, unsigned int len)
 {
 	if (*opos < limit) {
 		size_t olen = *opos + len <= limit ? len : limit - *opos;

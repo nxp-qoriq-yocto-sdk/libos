@@ -53,8 +53,9 @@ typedef struct cpu {
 	uint8_t *kstack; // Set to stack[KSTACK_SIZE - FRAMELEN];
 	struct libos_thread *thread;
 	kstack_t debugstack, critstack, mcheckstack;
-	int coreid, console_ok, crashing;
-	int traplevel; /**< Normally 0, 1 if in critical exception context */
+	unsigned int coreid;
+	int console_ok, crashing;
+	unsigned int traplevel; /**< Normally 0, 1 if in critical exception context */
 	int errno; /**< Used for C/POSIX funcitons that set errno */
 #ifdef LIBOS_RET_HOOK
 	int ret_hook;
@@ -62,6 +63,7 @@ typedef struct cpu {
 } cpu_t;
 
 register cpu_t *cpu asm("r2");
+extern cpu_t cpu0;
 
 // Returns 0 on success, -1 on error (e.g. PIR mismatch in table)
 

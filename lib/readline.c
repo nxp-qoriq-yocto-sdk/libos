@@ -59,7 +59,7 @@ struct readline {
 		st_normal, st_escape, st_bracket, st_num, st_action
 	} state;
 
-	int num[2], num_idx, width, suspended;
+	unsigned int num[2], num_idx, width, suspended;
 	char action_buf[LINE_SIZE];
 };
 

@@ -63,7 +63,7 @@ uint16_t mpic_iack(void)
 }
 
 /* Non-critical interrupts only */
-void mpic_irq_mask(interrupt_t *irq)
+static void mpic_irq_mask(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	
@@ -73,7 +73,7 @@ void mpic_irq_mask(interrupt_t *irq)
 }
 
 /* Non-critical interrupts only */
-void mpic_irq_unmask(interrupt_t *irq)
+static void mpic_irq_unmask(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 
@@ -82,7 +82,7 @@ void mpic_irq_unmask(interrupt_t *irq)
 	spin_unlock_intsave(&mpic_lock, saved);
 }
 
-int mpic_irq_get_mask(interrupt_t *irq)
+static int mpic_irq_get_mask(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	return !!(in32(&mirq->hw->vecpri) & MPIC_IVPR_MASK);
@@ -109,13 +109,7 @@ uint16_t mpic_irq_get_vector(interrupt_t *irq)
 	return vpr.vector;
 }
 
-int mpic_irq_get_enabled(interrupt_t *irq)
-{
-	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
-	return !!(in32(&mirq->hw->vecpri) & MPIC_IVPR_MASK);
-}
-
-int mpic_irq_get_activity(interrupt_t *irq)
+static int mpic_irq_get_activity(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	return !!(in32(&mirq->hw->vecpri) & MPIC_IVPR_ACTIVE);
@@ -131,7 +125,7 @@ int32_t mpic_irq_get_ctpr(void)
 	 return mpic_read(MPIC_CTPR);
 }
 
-void mpic_irq_set_priority(interrupt_t *irq, int priority)
+static void mpic_irq_set_priority(interrupt_t *irq, int priority)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	vpr_t vpr;
@@ -145,7 +139,7 @@ void mpic_irq_set_priority(interrupt_t *irq, int priority)
 	spin_unlock_intsave(&mpic_lock, saved);
 }
 
-int mpic_irq_get_priority(interrupt_t *irq)
+static int mpic_irq_get_priority(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	vpr_t vpr;
@@ -165,26 +159,26 @@ static void __mpic_irq_set_config(interrupt_t *irq, int config)
 	out32(&mirq->hw->vecpri, vpr.data);
 }
 
-void mpic_irq_set_config(interrupt_t *irq, int config)
+static void mpic_irq_set_config(interrupt_t *irq, int config)
 {
 	register_t saved = spin_lock_intsave(&mpic_lock);
 	__mpic_irq_set_config(irq, config);
 	spin_unlock_intsave(&mpic_lock, saved);
 }
 
-int mpic_irq_get_config(interrupt_t *irq)
+static int mpic_irq_get_config(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	return (in32(&mirq->hw->vecpri) >> MPIC_IVPR_CONFIG_SHIFT) & 3;
 }
 
-void mpic_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
+static void mpic_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	out32(&mirq->hw->destcpu, destcpu);
 }
 
-uint32_t mpic_irq_get_destcpu(interrupt_t *irq)
+static uint32_t mpic_irq_get_destcpu(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	return in32(&mirq->hw->destcpu);
@@ -200,13 +194,13 @@ uint32_t mpic_irq_get_destcpu(interrupt_t *irq)
  *
  */
 
-void mpic_irq_set_delivery_type(interrupt_t *irq, int inttype)
+static void mpic_irq_set_delivery_type(interrupt_t *irq, int inttype)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	out32(&mirq->hw->intlevel, inttype);
 }
 
-int mpic_irq_get_delivery_type(interrupt_t *irq)
+static int mpic_irq_get_delivery_type(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	return in32(&mirq->hw->intlevel);

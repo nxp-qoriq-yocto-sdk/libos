@@ -28,6 +28,7 @@
 #include <libos/io.h>
 #include <libos/malloc.h>
 #include <libos/printlog.h>
+#include <libos/libos.h>
 
 mspace libos_mspace;
 

@@ -33,7 +33,7 @@
 
 struct powerpc_exception {
 	int vector;
-	char *name;
+	const char *name;
 };
 
 static const struct powerpc_exception powerpc_exceptions[] = {
@@ -75,7 +75,7 @@ static const char *trapname(int vector)
 	return "unknown";
 }
 
-void traceback(trapframe_t *regs)
+static void traceback(trapframe_t *regs)
 {
 	unsigned long *sp = ((unsigned long *)regs->gpregs[1]);
 	printf("sp %p %lx %lx %lx %lx\n", sp, sp[0], sp[1], sp[2], sp[3]);

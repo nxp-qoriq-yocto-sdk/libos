@@ -87,7 +87,7 @@ _start:
 	addi	%r1, %r1, (init_stack_top - 16)@l
 
 	bl	ivor_setup
-	bl	start
+	bl	libos_client_entry
 
 1:	lis	%r3, 0xffff
 	mtctr	%r3

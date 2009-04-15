@@ -99,7 +99,7 @@ static int __putchar(int c)
 #endif
 	if (console && cpu->console_ok) {
 		if (c == '\n')
-			console->ops->tx(console, (uint8_t *)"\r", 1, CHARDEV_BLOCKING);
+			console->ops->tx(console, (const uint8_t *)"\r", 1, CHARDEV_BLOCKING);
 
 		console->ops->tx(console, &ch, 1, CHARDEV_BLOCKING);
 	}

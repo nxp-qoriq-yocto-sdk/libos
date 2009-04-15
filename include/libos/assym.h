@@ -35,6 +35,11 @@
 #define	ASSYM_ABS(value)	((value) < 0 ? -((value) + 1) + 1ULL : (value))
 
 #define	ASSYM(name, value)						      \
+extern char name ## sign[];						      \
+extern char name ## w0[];						      \
+extern char name ## w1[];						      \
+extern char name ## w2[];						      \
+extern char name ## w3[];						      \
 char name ## sign[((value) < 0 ? 1 : 0) + ASSYM_BIAS];			      \
 char name ## w0[(ASSYM_ABS(value) & 0xFFFFU) + ASSYM_BIAS];		      \
 char name ## w1[((ASSYM_ABS(value) & 0xFFFF0000UL) >> 16) + ASSYM_BIAS];      \

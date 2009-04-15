@@ -32,7 +32,7 @@
 extern int secondary_start;
 
 int start_secondary_spin_table(struct boot_spin_table *table, int num,
-                               cpu_t *cpu)
+                               cpu_t *newcpu)
 {
 	phys_addr_t entry = virt_to_phys(&secondary_start);
 
@@ -40,7 +40,7 @@ int start_secondary_spin_table(struct boot_spin_table *table, int num,
 	         "table %p addr %lx pir %lx entry %llx\n",
 	         table, table->addr_lo, table->pir, entry);
 
-	table->r3_lo = (unsigned long)cpu;
+	table->r3_lo = (unsigned long)newcpu;
 	table->pir = num;
 
 	out32((uint32_t *)&table->addr_hi, entry >> 32);

@@ -75,7 +75,7 @@ void simple_alloc_init(void *start, size_t size);
 extern mspace libos_mspace;
 
 #ifdef CONFIG_LIBOS_MALLOC
-static inline void *malloc(size_t size)
+__attribute__((malloc)) static inline void *malloc(size_t size)
 {
 	return mspace_malloc(libos_mspace, size);
 }
@@ -171,5 +171,9 @@ const char *strlist_iterate(const char *strlist, size_t len,
                             size_t *pos);
 
 extern const int cache_block_size;
+
+void return_hook(struct trapframe *regs);
+void secondary_init(void);
+void libos_client_entry(unsigned long devtree_ptr);
 
 #endif

@@ -35,7 +35,7 @@ typedef struct trapframe {
 	uint32_t cr, xer;
 	register_t srr0, srr1, dear, esr;
 	uint32_t eplc, epsc;
-	int exc, traplevel;
+	unsigned int exc, traplevel;
 	uint32_t pad[4];
 } trapframe_t;
 
@@ -43,6 +43,6 @@ typedef struct trapframe {
 #define FRAMELEN roundup(sizeof(trapframe_t), 16)
 
 void dump_regs(trapframe_t *regs);
-void reflect_trap(trapframe_t *regs);
+void unknown_exception(trapframe_t *regs);
 
 #endif
