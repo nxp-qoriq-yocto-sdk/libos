@@ -176,4 +176,12 @@ void return_hook(struct trapframe *regs);
 void secondary_init(void);
 void libos_client_entry(unsigned long devtree_ptr);
 
+#ifdef __CHECKER__
+#define __force __attribute__((force))
+#define __bitwise __attribute__((bitwise))
+#else
+#define __force
+#define __bitwise
+#endif
+
 #endif

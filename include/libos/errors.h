@@ -42,5 +42,6 @@
 #define ERR_UNHANDLED        (-264) /**< Operation not handled */
 #define ERR_NOTFOUND         (-265) /**< Item not found */
 #define ERR_WOULDBLOCK       (-266) /**< Operation would block; try again */
+#define ERR_UNKNOWN          (-267) /**< Unknown failure */
 
 #endif

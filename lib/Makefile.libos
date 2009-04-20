@@ -41,11 +41,13 @@ export REAL_CC := $(CC) -Wall
 # unlikely to ever result in a clean build even with
 # perfectly reasonable code.
 
+SPARSEWARNS := -Wtypesign -Wcast-to-as -Wbitwise
+
 ifeq ($(C),2)
-CHECKCC := cgcc -Wtypesign -Wptr-subtraction-blows -Wcast-to-as $(CRAZYWARNINGS)
+CHECKCC := cgcc $(SPARSEWARNS) -Wptr-subtraction-blows $(CRAZYWARNINGS)
 endif
 ifeq ($(C),1)
-CHECKCC := cgcc -Wtypesign -Wcast-to-as $(EXTRAWARNINGS)
+CHECKCC := cgcc $(SPARSEWARNS) $(EXTRAWARNINGS)
 endif
 ifeq ($(C),)
 CHECKCC := $(REAL_CC) $(EXTRAWARNINGS)
