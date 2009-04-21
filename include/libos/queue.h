@@ -36,10 +36,10 @@
 /// Lockless single-producer, single-consumer queue.
 typedef struct queue {
 	uint8_t *buf;
-	size_t head, tail;
+	uint32_t head, tail;
 	
 	/// Size of queue, must be a power of two.
-	size_t size;
+	uint32_t size;
 
 	/** Consumer callback to indicate data available.
 	 *
