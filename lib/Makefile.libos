@@ -53,7 +53,7 @@ ifeq ($(C),)
 CHECKCC := $(REAL_CC) $(EXTRAWARNINGS)
 endif
 
-CC_OPTS_NODEP += -fno-builtin-malloc
+CC_OPTS_NODEP += -fno-builtin-malloc -fno-builtin-free
 
 libos-src-first-$(CONFIG_LIBOS_INIT) += head.S
 libos-src-$(CONFIG_LIBOS_FSL_BOOKE_TLB) += fsl-booke-tlb.c
