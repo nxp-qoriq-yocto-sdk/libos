@@ -49,7 +49,7 @@ void malloc_add_segment(void *start, void *end)
 		nextseg++;
 	} else {
 		printlog(LOGTYPE_MALLOC, LOGLEVEL_ERROR,
-		         "malloc_add_segment: discarded %d bytes at 0x%p\n",
+		         "malloc_add_segment: discarded %zd bytes at 0x%p\n",
 		         end - start + 1, start);
 	}
 }
