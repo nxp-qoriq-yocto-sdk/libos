@@ -170,8 +170,7 @@ static void printf_num(char *obuf, size_t *opos, size_t limit,
 		printf_fill(obuf, opos, limit, ' ', fieldwidth - len);
 }
 
-size_t vsnprintf(char *buf, size_t size,
-                 const char *str, va_list args)
+int vsnprintf(char *buf, size_t size, const char *str, va_list args)
 {
 	size_t opos = 0; /* position in the output string */
 	unsigned int flags = 0;
@@ -443,7 +442,7 @@ size_t vsnprintf(char *buf, size_t size,
 	return opos;
 }
 
-size_t snprintf(char *buf, size_t size, const char *str, ...)
+int snprintf(char *buf, size_t size, const char *str, ...)
 {
 	va_list args;
 	va_start(args, str);
@@ -452,7 +451,7 @@ size_t snprintf(char *buf, size_t size, const char *str, ...)
 	return ret;
 }
 
-size_t sprintf(char *buf, const char *str, ...)
+int sprintf(char *buf, const char *str, ...)
 {
 	va_list args;
 	va_start(args, str);

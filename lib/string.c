@@ -211,7 +211,7 @@ int strcmp(const char *s1, const char *s2)
 	return *s2 - *s1;
 }
 
-int strncmp(const char *s1, const char *s2, int n)
+int strncmp(const char *s1, const char *s2, size_t n)
 {
 	int i = 0;
 

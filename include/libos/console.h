@@ -32,8 +32,8 @@ void console_init(chardev_t *cd);
 void qconsole_init(queue_t *q);
 int putchar(int c);
 int puts(const char *s);
-size_t printf(const char *str, ...);
-size_t vprintf(const char *str, va_list args);
+int printf(const char *str, ...);
+int vprintf(const char *str, va_list args);
 
 extern queue_t consolebuf;
 

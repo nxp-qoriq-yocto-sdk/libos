@@ -175,7 +175,7 @@ int puts(const char *s)
 	return 0;
 }
 
-size_t vprintf(const char *str, va_list args)
+int vprintf(const char *str, va_list args)
 {
 	enum {
 		buffer_size = 4096,
@@ -197,7 +197,7 @@ size_t vprintf(const char *str, va_list args)
 	if (lock)
 		spin_lock(&console_lock);
 		
-	size_t ret = vsnprintf(buffer, buffer_size, str, args);
+	int ret = vsnprintf(buffer, buffer_size, str, args);
 	if (ret > buffer_size)
 		ret = buffer_size;
 	
@@ -212,9 +212,9 @@ size_t vprintf(const char *str, va_list args)
 	return ret;
 }
 
-size_t printf(const char *str, ...)
+int printf(const char *str, ...)
 {
-	size_t ret;
+	int ret;
 	va_list args;
 
 	va_start(args, str);

@@ -59,12 +59,12 @@ char *strcat(char *dest, const char *src);
 char *strncat(char *dest, const char *src, size_t len);
 char *strdup(const char *src);
 int strcmp(const char *s1, const char *s2);
-int strncmp(const char *s1, const char *s2, int n);
+int strncmp(const char *s1, const char *s2, size_t n);
 char *strchr(const char *s, int c);
 char *strstr(const char *s1, const char *s2);
-size_t sprintf(char *buf, const char *str, ...);
-size_t snprintf(char *buf, size_t size, const char *str, ...);
-size_t vsnprintf(char *buf, size_t size, const char *str, va_list args);
+int sprintf(char *buf, const char *str, ...);
+int snprintf(char *buf, size_t size, const char *str, ...);
+int vsnprintf(char *buf, size_t size, const char *str, va_list args);
 unsigned long long strtoull(const char *restrict str, char **restrict endptr,
                             int base);
 long long strtoll(const char *restrict str, char **restrict endptr, int base);
