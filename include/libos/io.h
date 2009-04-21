@@ -145,17 +145,29 @@ static inline void smp_sync(void)
 
 static inline void tlb_inv_addr(register_t vaddr)
 {
+#ifdef CONFIG_LIBOS_OLD_TLBILX_OPCODE
+	asm volatile(".long 0x7c600626 | (%0 << 11)" : : "r" (vaddr));
+#else
 	asm volatile("tlbilxva 0, %0" : : "r" (vaddr));
+#endif
 }
 
 static inline void tlb_inv_pid(void)
 {
+#ifdef CONFIG_LIBOS_OLD_TLBILX_OPCODE
+	asm volatile(".long 0x7c200626");
+#else
 	asm volatile("tlbilxpid");
+#endif
 }
 
 static inline void tlb_inv_lpid(void)
 {
+#ifdef CONFIG_LIBOS_OLD_TLBILX_OPCODE
+	asm volatile(".long 0x7c000626");
+#else
 	asm volatile("tlbilxlpid");
+#endif
 }
 
 static inline register_t disable_critint_save(void)
