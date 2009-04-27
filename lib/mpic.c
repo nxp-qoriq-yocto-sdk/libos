@@ -228,7 +228,7 @@ void mpic_reset_core(void)
 }
 
 static int mpic_register(interrupt_t *irq, int_handler_t handler,
-                         void *devid)
+                         void *devid, int flags)
 {
 	irqaction_t *action = alloc_type(irqaction_t);
 	if (!action)
@@ -243,27 +243,48 @@ static int mpic_register(interrupt_t *irq, int_handler_t handler,
 	spin_unlock_intsave(&mpic_lock, saved);
 
 	/* FIXME: only topaz wants critints */
-	mpic_irq_set_delivery_type(irq, TYPE_CRIT);
+	mpic_irq_set_delivery_type(irq, flags);
 	mpic_irq_unmask(irq);
 	return 0;
 }
 
-static int __mpic_get_critint(void)
+static void call_irq_handler(interrupt_t *irq)
 {
-	uint32_t summary = mpic_read(MPIC_EXT_CRIT_SUMMARY);
-	int i;
-	
-	if (summary)
-		return count_msb_zeroes(summary);
-	
-	for (i = 0; i < MPIC_NUM_INT_SRCS / 32; i++) {
-		summary = mpic_read(MPIC_INT_CRIT_SUMMARY + i * 16);
+	irqaction_t *action = irq->actions;
+
+	while (action) {
+		action->handler(action->devid);
+		action = action->next;
+	}
+}
+
+static int get_internal_int(uint32_t reg)
+{
+	for (int i = 0; i < MPIC_NUM_INT_SRCS / 32; i++) {
+		uint32_t summary = mpic_read(reg + i * 16);
 		
 		if (summary)
 			return count_msb_zeroes(summary) + i * 32 + 16;
 	}
 	
 	return -1;
+}
+
+static inline int get_ext_int(uint32_t reg)
+{
+	uint32_t summary = mpic_read(reg);
+
+	return summary ? count_msb_zeroes(summary) : -1;
+}
+
+static int __mpic_get_critint(void)
+{
+	int ret = get_ext_int(MPIC_EXT_CRIT_SUMMARY);
+
+	if (ret >= 0)
+		return ret;
+
+	return get_internal_int(MPIC_INT_CRIT_SUMMARY );
 }
 
 static interrupt_t *mpic_get_critint(void)
@@ -284,13 +305,39 @@ void do_mpic_critint(void)
 		/* FIXME: race against unregistration without holding
 		 * a global IRQ lock.
 		 */
+		call_irq_handler(irq);
+	}
+}
 
-		irqaction_t *action = irq->actions;
-		
-		while (action) {
-			action->handler(action->devid);
-			action = action->next;
-		}
+static int __mpic_get_mcheckint(void)
+{
+	int ret = get_ext_int(MPIC_EXT_MCHECK_SUMMARY);
+
+	if (ret >= 0)
+		return ret;
+
+	return  get_internal_int(MPIC_INT_MCHECK_SUMMARY);
+}
+
+static interrupt_t *mpic_get_mcheckint(void)
+{
+	int irqnum = __mpic_get_mcheckint();
+
+	if (irqnum >= 0)
+		return &mpic_irqs[irqnum].irq;
+
+	return NULL;
+}
+
+void do_mpic_mcheck(void)
+{
+	interrupt_t *irq;
+
+	while ((irq = mpic_get_mcheckint())) {
+		/* FIXME: race against unregistration without holding
+		 * a global IRQ lock.
+		 */
+		call_irq_handler(irq);
 	}
 }
 

@@ -36,6 +36,9 @@
 #define MPIC_EXT_CRIT_SUMMARY 0x3b00
 #define MPIC_INT_CRIT_SUMMARY 0x3b40
 
+#define MPIC_EXT_MCHECK_SUMMARY 0x3c00
+#define MPIC_INT_MCHECK_SUMMARY 0x3c40
+
 #define MPIC_IRQ_BASE 0x10000
 
 #define MPIC_IVPR_MASK     0x80000000
@@ -87,6 +90,7 @@ void mpic_reset_core(void);
 #define MPIC_INTERNAL_BASE  16
 
 void do_mpic_critint(void);
+void do_mpic_mcheck(void);
 extern int mpic_coreint;
 
 extern int_ops_t mpic_ops;

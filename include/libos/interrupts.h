@@ -57,7 +57,7 @@ typedef struct int_ops {
 	                        const uint32_t *intspec,
 	                        int ncells);
 	int (*register_irq)(interrupt_t *irq, int_handler_t handler,
-	                    void *devid);
+	                    void *devid, int flags);
 	int (*unregister_irq)(interrupt_t *irq, void *devid);
 	void (*eoi)(interrupt_t *irq);
 	void (*enable)(interrupt_t *irq);

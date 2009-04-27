@@ -344,7 +344,7 @@ chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
 
 #if defined(INTERRUPTS) && defined(CONFIG_LIBOS_QUEUE)
 	if (irq && irq->ops->register_irq &&
-		 irq->ops->register_irq(irq, ns16550_isr, priv) == 0)
+		 irq->ops->register_irq(irq, ns16550_isr, priv, TYPE_CRIT) == 0)
 		priv->irq = irq;
 #endif
 

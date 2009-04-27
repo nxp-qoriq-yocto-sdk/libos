@@ -195,12 +195,12 @@ static inline void restore_int(register_t saved)
 
 static inline void disable_int(void)
 {
-	mtmsr(mfmsr() & ~(MSR_CE | MSR_EE));
+	mtmsr(mfmsr() & ~(MSR_CE | MSR_EE | MSR_ME));
 }
 
 static inline void enable_int(void)
 {
-	mtmsr(mfmsr() | MSR_CE | MSR_EE);
+	mtmsr(mfmsr() | MSR_CE | MSR_EE | MSR_ME);
 }
 #else
 static inline register_t disable_int_save(void)
