@@ -40,7 +40,11 @@
 	for(;;); \
 } while (0)
 
+#ifdef CONFIG_LIBOS_CONSOLE
 extern void set_crashing(void);
+#else
+#define set_crashing()
+#endif
 
 #define BUG() do { \
 	set_crashing(); \
