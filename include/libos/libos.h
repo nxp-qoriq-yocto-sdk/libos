@@ -176,6 +176,7 @@ const char *strlist_iterate(const char *strlist, size_t len,
 
 extern const int cache_block_size;
 
+struct trapframe;
 void return_hook(struct trapframe *regs);
 void secondary_init(void);
 void libos_client_entry(unsigned long devtree_ptr);
