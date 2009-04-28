@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008 - 2009 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,9 +26,9 @@
 #define LIBOS_H
 
 #include <stddef.h>
+
 #include <libos/types.h>
 #include <libos/printlog.h>
-#include <libos/malloc.h>
 
 #define to_container(memberinstance, containertype, membername) ({ \
 	typeof(&((containertype *)0)->membername) _ptr = (memberinstance); \
@@ -72,67 +72,6 @@ extern void set_crashing(void);
 })
 
 #define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))  /* to any y */
-
-void *simple_alloc(size_t size, size_t align);
-void simple_alloc_init(void *start, size_t size);
-
-extern mspace libos_mspace;
-
-#ifdef CONFIG_LIBOS_MALLOC
-__attribute__((malloc)) static inline void *malloc(size_t size)
-{
-	return mspace_malloc(libos_mspace, size);
-}
-
-static inline void *memalign(size_t align, size_t size)
-{
-	return mspace_memalign(libos_mspace, size, align);
-}
-
-static inline void free(void *ptr)
-{
-	mspace_free(libos_mspace, ptr);
-}
-#elif defined(CONFIG_LIBOS_SIMPLE_ALLOC)
-static inline void *malloc(size_t size)
-{
-	return simple_alloc(size, 8);
-}
-
-static inline void *memalign(size_t align, size_t size)
-{
-	return simple_alloc(size, align);
-}
-
-static inline void free(void *ptr)
-{
-}
-#endif
-
-static inline void *alloc(unsigned long size, size_t align)
-{
-	void *ret;
-
-#ifdef CONFIG_LIBOS_MALLOC
-	if (__builtin_constant_p(align) && align <= 8)
-		ret = mspace_malloc(libos_mspace, size);
-	else
-		ret = mspace_memalign(libos_mspace, align, size);
-#else
-	ret = memalign(align, size);
-#endif
-
-	if (likely(ret))
-	 	memset(ret, 0, size);
-
-	return ret;
-}
-
-#define alloc_type(T) alloc(sizeof(T), __alignof__(T))
-#define alloc_type_num(T, n) alloc(sizeof(T) * (n), __alignof__(T))
-
-void *valloc(unsigned long size, unsigned long align);
-void valloc_init(unsigned long start, unsigned long end);
 
 #ifndef HAVE_VIRT_TO_PHYS
 static inline phys_addr_t virt_to_phys(void *ptr)

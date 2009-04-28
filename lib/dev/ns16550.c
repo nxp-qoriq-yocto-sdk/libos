@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008 - 2009 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@
 #include <libos/interrupts.h>
 #include <libos/errors.h>
 #include <libos/percpu.h>
+#include <libos/alloc.h>
 
 // FIXME -- get clock from device tree
 #define get_system_clock() 266

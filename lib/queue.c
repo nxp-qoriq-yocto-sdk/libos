@@ -2,7 +2,7 @@
  * Lockless single-producer, single-consumer queues.
  */
 /*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008 - 2009 Freescale Semiconductor, Inc.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,16 +25,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libos/libos.h>
+#include <string.h>
+
 #include <libos/queue.h>
+#include <libos/alloc.h>
 #include <libos/io.h>
 #include <libos/errors.h>
 #include <libos/bitops.h>
 #include <libos/chardev.h>
 #include <libos/percpu.h>
-
-#include <string.h>
-
 
 int queue_init(queue_t *q, size_t size)
 {

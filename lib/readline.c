@@ -4,7 +4,8 @@
  * Note: This does not gracefully handle commands that are longer than
  * the screen height.
  */
-/* Copyright (C) 2008 Freescale Semiconductor, Inc.
+
+/* Copyright (C) 2008 - 2009 Freescale Semiconductor, Inc.
  * Author: Scott Wood <scottwood@freescale.com>
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +31,7 @@
 
 #include <libos/readline.h>
 #include <libos/errors.h>
-#include <libos/libos.h>
+#include <libos/alloc.h>
 #include <libos/bitops.h>
 #include <libos/console.h>
 #include <libos/thread.h>

@@ -440,10 +440,11 @@ DEFAULT_MMAP_THRESHOLD       default: 256K
 
 */
 
-/* libos settings */
 #include <stdint.h>
+
+/* libos settings */
 #include <libos/printlog.h>
-#include <libos/libos.h>
+#include <libos/malloc.h>
 #include <libos/bitops.h>
 
 #define MALLOC_FAILURE_ACTION do {} while (0)

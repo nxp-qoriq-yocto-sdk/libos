@@ -1,8 +1,9 @@
 /** @file
  * MPIC interrupt controller driver
  */
+
 /*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008 - 2009 Freescale Semiconductor, Inc.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +30,7 @@
 #include <libos/mpic.h>
 #include <libos/io.h>
 #include <libos/core-regs.h>
-#include <libos/mpic.h>
+#include <libos/alloc.h>
 #include <libos/errors.h>
 
 typedef struct mpic_interrupt {

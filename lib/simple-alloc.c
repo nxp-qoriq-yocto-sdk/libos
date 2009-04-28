@@ -4,7 +4,8 @@
  * This is used for "remote heap" functionality such as valloc(),
  * even when dlmalloc is used.
  */
-/* Copyright (C) 2008 Freescale Semiconductor, Inc.
+
+/* Copyright (C) 2008 - 2009 Freescale Semiconductor, Inc.
  * Author: Scott Wood <scottwood@freescale.com>
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string.h>
+#include <libos/alloc.h>
 #include <libos/bitops.h>
 
 typedef struct {	
@@ -70,7 +71,7 @@ void simple_alloc_init(void *start, size_t size)
 	heap.start = (uintptr_t)start;
 	heap.end = heap.start + size - 1;
 }
-#endif
+#endif	/* CONFIG_LIBOS_SIMPLE_ALLOC */
 
 #ifdef CONFIG_LIBOS_VIRT_ALLOC
 void *valloc(unsigned long size, unsigned long align)
