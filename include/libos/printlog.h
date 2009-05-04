@@ -42,10 +42,51 @@
 #define LOGTYPE_DEV       5
 
 #define MAX_LOGLEVEL 15
+
+/** Mandatory output.
+ * Use for unrecoverable hardware failures, crashes, etc.
+ */
 #define LOGLEVEL_ALWAYS   0
+
+/** Critical error.  Use for more urgent errors and recoverable
+ * hardware failures.
+ */
+#define LOGLEVEL_CRIT     1
+
+/** Error.  Use when the configuration or guest has done something which
+ * is prohibited.
+ */
 #define LOGLEVEL_ERROR    2
+
+/** Warning.  
+ * Use for things that are valid, but questionable (overlapping PMAs,
+ * missing properties that have a default but we want to discourage
+ * relying on the default, etc.
+ */
+#define LOGLEVEL_WARN     3
+
+/** Normal log message.
+ * Use for informational output, progress indicators, etc.
+ */
 #define LOGLEVEL_NORMAL   4
+
+/** Debug log message.
+ * Use for output that is useful in debugging, but would be distracting,
+ * confusing, or excessive for normal users.  Additional levels up to
+ * LOGLEVEL_DEBUG+3 may be used for more obscure messages, which are not
+ * quite verbose enough to be considered LOGLEVEL_VERBOSE.
+ */
 #define LOGLEVEL_DEBUG    8
+
+/** Verbose debug log message.
+ * Use for output that is useful in some debugging, but is sufficiently
+ * voluminous or performance-impacting that it should have to be specially
+ * enabled.  Additional levels up to LOGLEVEL_VERBOSE+3 may be used for
+ * even more severe output.
+ *
+ * Note that this output may be too verbose to leave enabled for more than
+ * short periods of time, without making things unacceptably slow.
+ */
 #define LOGLEVEL_VERBOSE 12
 
 extern uint8_t loglevels[NUM_LOGTYPES];
