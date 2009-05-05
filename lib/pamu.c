@@ -124,32 +124,13 @@ ome_t *pamu_get_ome(uint8_t omi)
 
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace)
 {
-	ppaace->wbah = 0;
-	ppaace->ap = PAACE_AP_PERMS_ALL;
-	ppaace->dd = PAACE_DD_TO_HOST;
 	ppaace->pt = PAACE_PT_PRIMARY;
-	ppaace->v  = PAACE_V_VALID;
-	ppaace->atm = PAACE_ATM_NO_XLATE;
-	ppaace->otm = PAACE_OTM_NO_XLATE;
-
-	/* P4080 platform does not support PID & DID */
-	ppaace->domain_attr.to_host.pid = PAACE_PID_0;
-
 	ppaace->domain_attr.to_host.coherency_required = PAACE_M_COHERENCE_REQ;
 }
 
 void setup_default_xfer_to_host_spaace(spaace_t *spaace)
 {
-	spaace->ap = PAACE_AP_PERMS_ALL;
-	spaace->dd = PAACE_DD_TO_HOST;
 	spaace->pt = PAACE_PT_SECONDARY;
-	spaace->v  = PAACE_V_VALID;
-	spaace->atm = PAACE_ATM_NO_XLATE;
-	spaace->otm = PAACE_OTM_NO_XLATE;
-
-	/* P4080 platform does not support PID & DID */
-	spaace->domain_attr.to_host.pid = PAACE_PID_0;
-
 	spaace->domain_attr.to_host.coherency_required = PAACE_M_COHERENCE_REQ;
 }
 
