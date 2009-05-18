@@ -187,12 +187,12 @@ static inline void restore_int(register_t saved)
 
 static inline void disable_int(void)
 {
-	mtmsr(mfmsr() & ~(MSR_CE | MSR_EE | MSR_ME));
+	mtmsr(mfmsr() & ~(MSR_CE | MSR_EE));
 }
 
 static inline void enable_int(void)
 {
-	mtmsr(mfmsr() | MSR_CE | MSR_EE | MSR_ME);
+	mtmsr(mfmsr() | MSR_CE | MSR_EE);
 }
 #else
 static inline register_t disable_int_save(void)
@@ -227,6 +227,16 @@ static inline void disable_critint(void)
 static inline void enable_critint(void)
 {
 	mtmsr(mfmsr() | MSR_CE);
+}
+
+static inline void disable_mcheck(void)
+{
+	mtmsr(mfmsr() & ~MSR_ME);
+}
+
+static inline void enable_mcheck(void)
+{
+	mtmsr(mfmsr() | MSR_ME);
 }
 
 /* Deprecated legacy names -- "external" is a bad name,

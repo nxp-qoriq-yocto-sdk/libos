@@ -60,6 +60,17 @@ typedef struct pamu_mmap_regs {
 #define PAMU_POEAH 0x0048
 #define PAMU_POEAL 0x004C
 #define PAMU_AVS1  0x0050
+#define PAMU_AVS1_AV    0x1
+#define PAMU_AVS1_OTV   0x6
+#define PAMU_AVS1_APV   0x78
+#define PAMU_AVS1_WAV   0x380
+#define PAMU_AVS1_LAV   0x1c00
+#define PAMU_AVS1_GCV   0x2000
+#define PAMU_AVS1_PDV   0x4000
+#define PAMU_AV_MASK    (PAMU_AVS1_AV | PAMU_AVS1_OTV | PAMU_AVS1_APV | PAMU_AVS1_WAV \
+			| PAMU_AVS1_LAV | PAMU_AVS1_GCV | PAMU_AVS1_PDV)
+#define PAMU_AVS1_LIODN_SHIFT 16
+
 #define PAMU_AVS2  0x0054
 #define PAMU_AVAH  0x0058
 #define PAMU_AVAL  0x005C
