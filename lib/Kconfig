@@ -117,15 +117,6 @@ config LIBOS_PHYS_64BIT
 
 menu "Platform Support"
 
-config LIBOS_OLD_TLBILX_OPCODE
-	bool "tlbilx has old opcode (p4080 rev 1)"
-	help
-		Rev 1 of p4080 has an incorrect opcode for tlbilx.
-
-		Say "Y" to use that opcode rather than the architected
-		one.  This will break on chips that do not have this
-		defect.
-
 endmenu
 
 menu "Device Drivers"
