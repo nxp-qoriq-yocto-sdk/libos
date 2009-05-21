@@ -86,8 +86,10 @@ static int next_usable_segment(int next, ssize_t *size)
 		if (*size >= 1024) {
 			printlog(LOGTYPE_MALLOC, LOGLEVEL_NORMAL,
 			         "malloc_init: using %ld %ciB at 0x%p - 0x%p\n",
-			         *size >= 1024 * 1024 ? *size / (1024 * 1024) : *size / 1024,
-			         *size >= 1024 * 1024 ? 'M' : 'K',
+			         *size >= 16 * 1024 * 1024 ?
+			            (*size + 512 * 1024) / (1024 * 1024) :
+			            (*size + 512) / 1024,
+			         *size >= 16 * 1024 * 1024 ? 'M' : 'K',
 			         segments[next].start, segments[next].end);
 
 			return next;
