@@ -177,20 +177,16 @@ static inline unsigned long atomic_add(unsigned long *ptr, long val)
 	return ret;
 }
 
-// Returns LONG_BITS if val is zero
+// Undefined if val is zero
 static inline int count_msb_zeroes(unsigned long val)
 {
-	int ret;
-
-	// FIXME 64-bit
-	asm("cntlzw %0, %1" : "=r" (ret) : "r" (val));
-	return ret;
+	return __builtin_clz(val);
 }
 
 // Undefined if val is zero
 static inline int count_lsb_zeroes(unsigned long val)
 {
-	return LONG_BITS - 1 - count_msb_zeroes(val & ~(val - 1));
+	return __builtin_ctz(val);
 }
 
 // Undefined if val is zero
