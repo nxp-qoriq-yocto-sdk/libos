@@ -180,13 +180,13 @@ static inline unsigned long atomic_add(unsigned long *ptr, long val)
 // Undefined if val is zero
 static inline int count_msb_zeroes(unsigned long val)
 {
-	return __builtin_clz(val);
+	return __builtin_clzl(val);
 }
 
 // Undefined if val is zero
 static inline int count_lsb_zeroes(unsigned long val)
 {
-	return __builtin_ctz(val);
+	return __builtin_ctzl(val);
 }
 
 // Undefined if val is zero
