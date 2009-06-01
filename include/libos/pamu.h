@@ -423,6 +423,10 @@ typedef struct ome_t {
 	uint8_t moe[NUM_MOE];
 } __attribute__((packed)) ome_t;
 
+#define PAACT_SIZE              (sizeof(ppaace_t) * PAACE_NUMBER_ENTRIES)
+#define SPAACT_SIZE             (sizeof(spaace_t) * SPAACE_NUMBER_ENTRIES)
+#define OMT_SIZE                (sizeof(ome_t) * OME_NUMBER_ENTRIES)
+
 #define IOE_READ        0x00
 #define IOE_READ_IDX    0x00
 #define IOE_WRITE       0x81
@@ -471,7 +475,8 @@ typedef struct ome_t {
 #define EOE_WWSAOL      0x1e    /* Write with stash allocate only and lock */
 #define EOE_VALID       0x80
 
-int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size);
+int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
+			void *mem, unsigned long memsize);
 ppaace_t *pamu_get_ppaace(uint32_t liodn);
 ome_t *pamu_get_ome(uint8_t omi);
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);

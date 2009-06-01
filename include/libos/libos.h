@@ -73,6 +73,8 @@ extern void set_crashing(void);
 
 #define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))  /* to any y */
 
+#define align(x, y) (((x) + (y) - 1) & ~((y) - 1))
+
 #ifndef HAVE_VIRT_TO_PHYS
 static inline phys_addr_t virt_to_phys(void *ptr)
 {

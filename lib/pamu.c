@@ -27,6 +27,7 @@
 #include <libos/printlog.h>
 #include <libos/io.h>
 #include <libos/bitops.h>
+#include <libos/errors.h>
 
 #include <limits.h>
 
@@ -37,34 +38,27 @@ static spaace_t *spaact;
 static ome_t *omt;
 static unsigned long fspi;
 
-int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size)
+int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
+			void  *mem, unsigned long memsize)
 {
 	uintptr_t pamu_offset;
 	uint32_t *pc;
 	phys_addr_t phys;
+	void *ptr = mem;
 
 	printlog(LOGTYPE_MISC, LOGLEVEL_DEBUG, "Starting PAMU init\n");
 
 	if (!ppaact) {
-		ppaact = alloc(sizeof(ppaace_t) * PAACE_NUMBER_ENTRIES,
-		               PAMU_TABLE_ALIGNMENT);
-		if (!ppaact) {
-			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU ppaact.\n");
-			return -1;
-		}
+		ppaact = ptr;
+		ptr += align(PAACT_SIZE + 1, PAMU_TABLE_ALIGNMENT);
+		spaact = ptr;
+		ptr += align(SPAACT_SIZE + 1, PAMU_TABLE_ALIGNMENT);
+		omt = ptr;
 
-		spaact = alloc(sizeof(spaace_t) * SPAACE_NUMBER_ENTRIES,
-		               PAMU_TABLE_ALIGNMENT);
-		if (!spaact) {
-			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU spaact.\n");
-			return -1;
-		}
-
-		omt = alloc(sizeof(ome_t) * OME_NUMBER_ENTRIES,
-		            PAMU_TABLE_ALIGNMENT);
-		if (!omt) {
-			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR, "Unable to allocate space for PAMU omt.\n");
-			return -1;
+		if (ptr + OMT_SIZE > mem + memsize) {
+			printlog(LOGTYPE_PAMU, LOGLEVEL_ERROR,
+					"PAMU tables don't fit in the allocted memory\n");
+			return ERR_RANGE;
 		}
 	}
 
