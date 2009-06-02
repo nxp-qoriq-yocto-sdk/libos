@@ -74,6 +74,7 @@ typedef struct int_ops {
 	int (*get_config)(interrupt_t *irq);
 	uint32_t (*get_cpu_dest_mask)(interrupt_t *irq);
 	int (*is_active)(interrupt_t *irq);
+	uint32_t (*get_msir)(interrupt_t *irq);
 } int_ops_t;
 
 #endif

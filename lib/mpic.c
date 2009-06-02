@@ -36,6 +36,8 @@
 typedef struct mpic_interrupt {
 	interrupt_t irq;
 	mpic_hwirq_t *hw;
+	msi_hwirq_t *msi;
+	uint32_t msi_reg;
 	int config;
 } mpic_interrupt_t;
 
@@ -207,6 +209,12 @@ static int mpic_irq_get_delivery_type(interrupt_t *irq)
 	return in32(&mirq->hw->intlevel);
 }
 
+static uint32_t mpic_msi_get_msir(interrupt_t *irq)
+{
+	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
+	return in32(&mirq->msi->msir[mirq->msi_reg].msira);
+}
+
 /** Reset active interrupts on core.
  * Call this with all interrupts masked to clear any in-service interrupts.
  */
@@ -371,6 +379,23 @@ int_ops_t mpic_ops = {
 	.is_active = mpic_irq_get_activity,
 };
 
+int_ops_t mpic_msi_ops = {
+	.get_irq = get_mpic_irq,
+	.register_irq = mpic_register,
+	.eoi = mpic_eoi,
+	.enable = mpic_irq_unmask,
+	.disable = mpic_irq_mask,
+	.is_disabled = mpic_irq_get_mask,
+	.set_cpu_dest_mask = mpic_irq_set_destcpu,
+	.get_cpu_dest_mask = mpic_irq_get_destcpu,
+	.set_priority = mpic_irq_set_priority,
+	.get_priority = mpic_irq_get_priority,
+	.set_config = mpic_irq_set_config,
+	.get_config = mpic_irq_get_config,
+	.is_active = mpic_irq_get_activity,
+	.get_msir = mpic_msi_get_msir,
+};
+
 static interrupt_t *get_mpic_irq(device_t *dev,
                                  const uint32_t *intspec,
                                  int ncells)
@@ -410,7 +435,7 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 /** Global MPIC initialization routine */
 void mpic_init(int coreint)
 {
-	int i;
+	int i, j;
 	unsigned int gcr;
 	vpr_t vpr;
 	mpic_interrupt_t *mirq;
@@ -428,7 +453,8 @@ void mpic_init(int coreint)
 	gcr |= GCR_MIXED_OPERATING_MODE;
 	mpic_write(MPIC_GCR, gcr);
 	
-	for (i = 0; i < MPIC_NUM_SRCS; i++) {
+	/* First, init all external and internal interrupt sources */
+	for (i = 0; i < MPIC_NUM_EXTINT_SRCS; i++) {
 		mirq = &mpic_irqs[i];
 		mirq->hw = (mpic_hwirq_t *)(CCSRBAR_VA + MPIC + MPIC_IRQ_BASE);
 		mirq->hw += i;
@@ -444,6 +470,27 @@ void mpic_init(int coreint)
 		if (i < MPIC_NUM_EXT_SRCS)
 			vpr.sense = 1;	/* Level Sensitive */
 
+		vpr.priority = 0;
+
+		out32(&mirq->hw->vecpri, vpr.data);
+	}
+
+	/* Next, init MSI interrupt sources */
+	for (i = 0, j = MPIC_MSI_SRCS_START_OFFSET;
+		i < MPIC_NUM_MSI_SRCS; i++, j++) {
+		mirq = &mpic_irqs[j];
+		mirq->hw = (mpic_hwirq_t *)(CCSRBAR_VA + MPIC + MPIC_IRQ_BASE);
+		mirq->hw += j;
+		mirq->msi = (msi_hwirq_t *)(CCSRBAR_VA + MPIC + MSI_INT_BASE);
+		mirq->msi += (i / MPIC_NUM_REGS_MSI_BANK);
+		mirq->msi_reg = (i % MPIC_NUM_REGS_MSI_BANK);
+		mirq->irq.ops = &mpic_msi_ops;
+
+		mpic_irq_set_destcpu(&mirq->irq, 1);
+
+		vpr.data = 0;
+		vpr.vector = j;
+		vpr.msk = 1;
 		vpr.priority = 0;
 
 		out32(&mirq->hw->vecpri, vpr.data);
