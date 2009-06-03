@@ -201,4 +201,16 @@ static inline int ilog2_roundup(unsigned long val)
 	return LONG_BITS - count_msb_zeroes(val - 1);
 }
 
+/* function to synchronize a cache block when modifying
+ * instructions.  This follows the recommended sequence
+ * in the EREF for self modifying code.
+ */
+static inline void icache_block_sync(char *ptr)
+{
+	asm volatile ("dcbf %y0;"
+	    "msync;"
+	    "icbi %y0;"
+	    "msync;"
+	    "isync;" : : "Z" (*ptr) : "memory");
+}
 #endif
