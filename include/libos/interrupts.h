@@ -39,6 +39,8 @@ typedef int (*int_handler_t)(void *arg);
 #define IRQ_EDGE  0
 #define IRQ_LEVEL 2
 
+#define IRQ_TYPE_MPIC_DIRECT 4
+
 typedef struct irqaction {
 	struct irqaction *next;
 	int_handler_t handler;
