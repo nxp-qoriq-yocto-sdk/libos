@@ -71,6 +71,7 @@
 #define FH_BYTE_CHANNEL_POLL            20
 #define FH_VMPIC_IACK                   21
 #define FH_SEND_NMI                     22
+#define FH_VMPIC_GET_MSIR               23
 #define FH_PARTITION_SEND_DBELL         32
 
 /*
@@ -581,6 +582,30 @@ static inline unsigned int fh_vmpic_eoi(unsigned int interrupt)
 		: "+r" (r11), "+r" (r3)
 		: : HCALL_CLOBBERS1
 	);
+
+	return r3;
+}
+
+/**
+ * fh_vmpic_get_msir - returns the MPIC-MSI register value
+ * @interrupt: the interrupt number
+ * @msir_val: returned MPIC-MSI register value
+ *
+ * Returns 0 for success, or an error code.
+ */
+static inline unsigned int fh_vmpic_get_msir(unsigned int interrupt,
+	unsigned int *msir_val)
+{
+	register uintptr_t r11 __asm__("r11") = FH_VMPIC_GET_MSIR;
+	register uintptr_t r3 __asm__("r3") = interrupt;
+	register uintptr_t r4 __asm__("r4");
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3), "=r" (r4)
+		: : HCALL_CLOBBERS2
+	);
+
+	*msir_val = r4;
 
 	return r3;
 }
