@@ -1,11 +1,7 @@
 /** @file
- * Error definitions.
+ * Freescale hypervisor error numbers.
  *
- * These start at -256 to avoid conflicts with libfdt errors.
- */
-
-/*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,22 +24,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LIBOS_ERRORS_H
-#define LIBOS_ERRORS_H
+#ifndef LIBOS_HCALL_ERRORS_H
+#define LIBOS_HCALL_ERRORS_H
 
-#include <libos/hcall-errors.h>
+/* Posix return codes */
 
-#define ERR_BADTREE          (-256) /**< Semantic error in device tree */
-#define ERR_NOMEM            (-257) /**< Out of memory */
-#define ERR_NOTRANS          (-258) /**< No translation possible */
-#define ERR_BUSY             (-259) /**< Resource busy */
-#define ERR_INVALID          (-260) /**< Invalid request or argument */
-#define ERR_BADIMAGE         (-261) /**< Data image is invalid or broken */
-#define ERR_BADADDR          (-262) /**< Bad pointer or address */
-#define ERR_RANGE            (-263) /**< Value out of range */
-#define ERR_UNHANDLED        (-264) /**< Operation not handled */
-#define ERR_NOTFOUND         (-265) /**< Item not found */
-#define ERR_WOULDBLOCK       (-266) /**< Operation would block; try again */
-#define ERR_UNKNOWN          (-267) /**< Unknown failure */
+#define ENOENT           2      /**< Entry Not Found */
+#define EAGAIN          11      /**< The operation had insufficient resources to complete and should be retried */
+#define ENOMEM          12      /**< There was insufficient memory to complete the operation */
+#define EFAULT          16      /**< Bad guest address */
+#define EINVAL          22      /**< An argument supplied to the hcall was out of range or invalid */
+
+/* Extended return codes */
+
+#define FH_ERR_INTERNAL         1024    /**< An internal error occured */
+#define FH_ERR_CONFIG           1025    /**< A configuration error was detected */
+#define FH_ERR_INVALID_STATE    1026    /**< The object is in an invalid state */
+#define FH_ERR_UNIMPLEMENTED    1027    /**< Unimplemented hypercall */
+#define FH_ERR_BUFFER_OVERFLOW  1028    /**< Caller-supplied buffer too small */
+#define FH_ERR_TOO_LARGE        1029    /**< Argument is too large */
 
 #endif

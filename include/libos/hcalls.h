@@ -42,6 +42,8 @@
 #ifndef _FREESCALE_HCALLS_H
 #define _FREESCALE_HCALLS_H
 
+#include <libos/hcall-errors.h>
+
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) (x)
 #define cpu_to_be32(x) (x)
@@ -49,6 +51,8 @@
 #define FH_API_VERSION 1
 
 #define FH_CPU_WHOAMI                   1
+#define FH_PARTITION_GET_DTPROP         3
+#define FH_PARTITION_SET_DTPROP         4
 #define FH_PARTITION_RESTART            5
 #define FH_PARTITION_GET_STATUS         6
 #define FH_PARTITION_START              7
@@ -68,20 +72,6 @@
 #define FH_VMPIC_IACK                   21
 #define FH_SEND_NMI                     22
 #define FH_PARTITION_SEND_DBELL         32
-
-/* Posix return codes */
-
-#define EAGAIN          11      /**< The operation had insufficient resources to complete and should be retried */
-#define ENOMEM          12      /**< There was insufficient memory to complete the operation */
-#define EFAULT          16      /**< Bad guest address */
-#define EINVAL          22      /**< An argument supplied to the hcall was out of range or invalid */
-
-/* Extended return codes */
-
-#define FH_ERR_INTERNAL         1024    /**< An internal error occured */
-#define FH_ERR_CONFIG           1025    /**< A configuration error was detected */
-#define FH_ERR_INVALID_STATE    1026    /**< The object is in an invalid state */
-#define FH_ERR_UNIMPLEMENTED    1027    /**< Unimplemented hypercall */
 
 /*
  * Hypercall register clobber list
@@ -172,6 +162,99 @@ static inline unsigned int fh_send_nmi(unsigned int vcpu_mask)
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
 		: : HCALL_CLOBBERS1
+	);
+
+	return r3;
+}
+
+/* Arbitrary limits to avoid excessive memory allocation in hypervisor */
+#define FH_DTPROP_MAX_PATHLEN 4096
+#define FH_DTPROP_MAX_PROPLEN 32768
+
+/**
+ * Get a property from a guest device tree.
+ * @handle[in] handle of partition whose device tree is to be accessed
+ * @dtpath_addr[in] physical address of device tree path to access
+ * @propname_addr[in] physical address of name of property
+ * @propvalue_addr[in] physical address of property value buffer
+ * @propvalue_len[in,out]
+ *    length of buffer on entry, length of property on return
+ * @return zero on success, non-zero on error.
+ */
+static inline unsigned int fh_partition_get_dtprop(int handle,
+                                                   uint64_t dtpath_addr,
+                                                   uint64_t propname_addr,
+                                                   uint64_t propvalue_addr,
+                                                   uint32_t *propvalue_len)
+{
+	register uintptr_t r11 __asm__("r11") = FH_PARTITION_GET_DTPROP;
+	register uintptr_t r3 __asm__("r3") = handle;
+
+#ifdef CONFIG_LIBOS_PHYS_64BIT
+	register uintptr_t r4 __asm__("r4") = dtpath_addr >> 32;
+	register uintptr_t r6 __asm__("r6") = propname_addr >> 32;
+	register uintptr_t r8 __asm__("r8") = propvalue_addr >> 32;
+#else
+	register uintptr_t r4 __asm__("r4") = 0;
+	register uintptr_t r6 __asm__("r6") = 0;
+	register uintptr_t r8 __asm__("r8") = 0;
+#endif
+	register uintptr_t r5 __asm__("r5") = (uint32_t)dtpath_addr;
+	register uintptr_t r7 __asm__("r7") = (uint32_t)propname_addr;
+	register uintptr_t r9 __asm__("r9") = (uint32_t)propvalue_addr;
+
+	register uintptr_t r10 __asm__("r10") = *propvalue_len;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11),
+		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7),
+		  "+r" (r8), "+r" (r9), "+r" (r10)
+		: : HCALL_CLOBBERS8
+	);
+
+	*propvalue_len = r4;
+	return r3;
+}
+
+/**
+ * Set a property in a guest device tree.
+ * @handle[in] handle of partition whose device tree is to be accessed
+ * @dtpath_addr[in] physical address of device tree path to access
+ * @propname_addr[in] physical address of name of property
+ * @propvalue_addr[in] physical address of property value
+ * @propvalue_len[in] length of property
+ *
+ * @return zero on success, non-zero on error.
+ */
+static inline unsigned int fh_partition_set_dtprop(int handle,
+                                                   uint64_t dtpath_addr,
+                                                   uint64_t propname_addr,
+                                                   uint64_t propvalue_addr,
+                                                   uint32_t propvalue_len)
+{
+	register uintptr_t r11 __asm__("r11") = FH_PARTITION_SET_DTPROP;
+	register uintptr_t r3 __asm__("r3") = handle;
+
+#ifdef CONFIG_LIBOS_PHYS_64BIT
+	register uintptr_t r4 __asm__("r4") = dtpath_addr >> 32;
+	register uintptr_t r6 __asm__("r6") = propname_addr >> 32;
+	register uintptr_t r8 __asm__("r8") = propvalue_addr >> 32;
+#else
+	register uintptr_t r4 __asm__("r4") = 0;
+	register uintptr_t r6 __asm__("r6") = 0;
+	register uintptr_t r8 __asm__("r8") = 0;
+#endif
+	register uintptr_t r5 __asm__("r5") = (uint32_t)dtpath_addr;
+	register uintptr_t r7 __asm__("r7") = (uint32_t)propname_addr;
+	register uintptr_t r9 __asm__("r9") = (uint32_t)propvalue_addr;
+
+	register uintptr_t r10 __asm__("r10") = propvalue_len;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11),
+		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7),
+		  "+r" (r8), "+r" (r9), "+r" (r10)
+		: : HCALL_CLOBBERS8
 	);
 
 	return r3;
