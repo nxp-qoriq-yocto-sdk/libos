@@ -1,7 +1,7 @@
 /** @file printf, etc.
  */
 /*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
