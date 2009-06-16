@@ -29,10 +29,13 @@
 
 /* Posix return codes */
 
+#define EPERM            1      /**< Operation not permitted */
 #define ENOENT           2      /**< Entry Not Found */
+#define EIO              5      /**< I/O error occured */
 #define EAGAIN          11      /**< The operation had insufficient resources to complete and should be retried */
 #define ENOMEM          12      /**< There was insufficient memory to complete the operation */
 #define EFAULT          16      /**< Bad guest address */
+#define ENODEV          19      /**< No such device */
 #define EINVAL          22      /**< An argument supplied to the hcall was out of range or invalid */
 
 /* Extended return codes */

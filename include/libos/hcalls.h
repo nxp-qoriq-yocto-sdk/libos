@@ -72,6 +72,7 @@
 #define FH_VMPIC_IACK                   21
 #define FH_SEND_NMI                     22
 #define FH_VMPIC_GET_MSIR               23
+#define FH_SYSTEM_RESET                 24
 #define FH_PARTITION_SEND_DBELL         32
 
 /*
@@ -729,6 +730,24 @@ static inline unsigned int fh_vmpic_iack(unsigned int *vector)
 	);
 
 	*vector = r4;
+
+	return r3;
+}
+
+/**
+ * Reset the system
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_system_reset(void)
+{
+	register uintptr_t r11 __asm__("r11") = FH_SYSTEM_RESET;
+	register uintptr_t r3 __asm__("r3");
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "=r" (r3)
+		: : HCALL_CLOBBERS1
+	);
 
 	return r3;
 }
