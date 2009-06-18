@@ -38,11 +38,14 @@ typedef struct mpic_interrupt {
 	mpic_hwirq_t *hw;
 	msi_hwirq_t *msi;
 	uint32_t msi_reg;
+	ipi_hwirq_t ipi;
 	int config;
 } mpic_interrupt_t;
 
 static mpic_interrupt_t mpic_irqs[MPIC_NUM_SRCS];
+static mpic_interrupt_t mpic_ipi_irqs[MPIC_NUM_IPI_SRCS];
 static uint32_t mpic_lock;
+
 int mpic_coreint;
 
 static inline void mpic_write(uint32_t reg, uint32_t val)
@@ -396,6 +399,37 @@ int_ops_t mpic_msi_ops = {
 	.get_msir = mpic_msi_get_msir,
 };
 
+static void ipi_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
+{
+	register_t saved = spin_lock_intsave(&mpic_lock);
+	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
+	mirq->ipi.dispatch_cpu_mask |= destcpu;
+	spin_unlock_intsave(&mpic_lock, saved);
+}
+
+void mpic_set_ipi_dispatch_register(interrupt_t *irq)
+{
+	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
+	out32(mirq->ipi.dr, mirq->ipi.dispatch_cpu_mask);
+}
+
+int_ops_t mpic_ipi_ops = {
+	.eoi = mpic_eoi,
+	.enable = mpic_irq_unmask,
+	.disable = mpic_irq_mask,
+	.is_disabled = mpic_irq_get_mask,
+	.set_cpu_dest_mask = ipi_irq_set_destcpu,
+	.set_priority = mpic_irq_set_priority,
+	.get_priority = mpic_irq_get_priority,
+	.is_active = mpic_irq_get_activity,
+};
+
+interrupt_t *mpic_get_ipi_irq(int irq)
+{
+	mpic_interrupt_t *ipi = &mpic_ipi_irqs[irq];
+	return &ipi->irq;
+}
+
 static interrupt_t *get_mpic_irq(device_t *dev,
                                  const uint32_t *intspec,
                                  int ncells)
@@ -490,6 +524,27 @@ void mpic_init(int coreint)
 
 		vpr.data = 0;
 		vpr.vector = j;
+		vpr.msk = 1;
+		vpr.priority = 0;
+
+		out32(&mirq->hw->vecpri, vpr.data);
+	}
+
+	/* IPI interrupt sources */
+	uint32_t *ipivpr;
+	for (i = 0; i < MPIC_NUM_IPI_SRCS; i++) {
+		ipivpr = (uint32_t *)(CCSRBAR_VA + MPIC + MPIC_IPIVPR_BASE);
+		ipivpr += i * MPIC_IPIVPR_OFFSET / sizeof(uint32_t);
+
+		mirq = &mpic_ipi_irqs[i];
+		mirq->hw = (mpic_hwirq_t *)ipivpr;
+		mirq->ipi.dr = (uint32_t *)(CCSRBAR_VA + MPIC +
+							MPIC_IPIDR_BASE);
+		mirq->ipi.dr += i * MPIC_IPIDR_OFFSET / sizeof(uint32_t);
+		mirq->ipi.dispatch_cpu_mask = 0;
+		mirq->irq.ops = &mpic_ipi_ops;
+
+		vpr.data = 0;
 		vpr.msk = 1;
 		vpr.priority = 0;
 

@@ -39,8 +39,13 @@
 #define MPIC_EXT_MCHECK_SUMMARY 0x3c00
 #define MPIC_INT_MCHECK_SUMMARY 0x3c40
 
+#define MPIC_IPIDR_BASE  0x40
+#define MPIC_IPIVPR_BASE 0x10A0
 #define MPIC_IRQ_BASE 0x10000
 #define MSI_INT_BASE 0x1600
+
+#define MPIC_IPIVPR_OFFSET 0x10
+#define MPIC_IPIDR_OFFSET  0x10
 
 #define MPIC_IVPR_MASK     0x80000000
 #define MPIC_IVPR_ACTIVE   0x40000000
@@ -85,12 +90,19 @@ typedef struct msi_hwirq {
 	uint32_t reserved3[47];
 } msi_hwirq_t;
 
+typedef struct ipi_hwirq {
+	uint32_t *dr;
+	uint32_t dispatch_cpu_mask;
+} ipi_hwirq_t;
+
 #define MPIC_NUM_EXT_SRCS	12
 #define MPIC_NUM_INT_SRCS	128
 #define MPIC_NUM_MSG_SRCS	8
 #define MPIC_NUM_MSI_SRCS	24
 #define MPIC_NUM_EXTINT_SRCS (MPIC_NUM_INT_SRCS + 16)
 #define MPIC_NUM_SRCS (MPIC_NUM_EXTINT_SRCS + 32 + MPIC_NUM_MSG_SRCS + 40 + MPIC_NUM_MSI_SRCS)
+
+#define MPIC_NUM_IPI_SRCS	4
 
 #define MPIC_INT_SRCS_START_OFFSET 16
 #define MPIC_MSI_SRCS_START_OFFSET 0xE0
@@ -106,6 +118,8 @@ void mpic_irq_set_ctpr(uint8_t priority);
 int32_t mpic_irq_get_ctpr(void);
 uint16_t mpic_iack(void);
 void mpic_reset_core(void);
+interrupt_t *mpic_get_ipi_irq(int irq);
+void mpic_set_ipi_dispatch_register(interrupt_t *irq);
 
 #define MPIC_EXTERNAL_BASE  0
 #define MPIC_INTERNAL_BASE  16
