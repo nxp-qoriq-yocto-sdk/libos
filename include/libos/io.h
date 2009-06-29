@@ -143,23 +143,19 @@ static inline void smp_sync(void)
 	sync();
 }
 
-/* Remove the hardcoded opcode once all toolchain users are upgraded. */
 static inline void tlb_inv_addr(register_t vaddr)
 {
-	asm volatile(".long 0x7c600024 | (%0 << 11)" : : "r" (vaddr));
-//	asm volatile("tlbilxva 0, %0" : : "r" (vaddr));
+	asm volatile("tlbilxva 0, %0" : : "r" (vaddr));
 }
 
 static inline void tlb_inv_pid(void)
 {
-	asm volatile(".long 0x7c200024");
-//	asm volatile("tlbilxpid");
+	asm volatile("tlbilxpid");
 }
 
 static inline void tlb_inv_lpid(void)
 {
-	asm volatile(".long 0x7c000024");
-//	asm volatile("tlbilxlpid");
+	asm volatile("tlbilxlpid");
 }
 
 static inline register_t disable_critint_save(void)
