@@ -50,6 +50,26 @@ static inline int compare_and_swap(unsigned long *ptr,
 	return ret == old;
 }
 
+// Returns non-zero if the operation succeeded.
+// We duplicate this on 32-bit rather than reuse it with a cast
+// to avoid violating strict aliasing rules.  I want templates.
+static inline int compare_and_swap32(uint32_t *ptr, uint32_t old, uint32_t new)
+{
+	uint32_t ret;
+
+	asm volatile("1: lwarx %0, %y1;"
+	             "cmpw %0, %2;"
+	             "bne 2f;"
+	             "stwcx. %3, %y1;"
+	             "bne 1b;"
+	             "2:" :
+	             "=&r" (ret), "+Z" (*ptr) :
+	             "r" (old), "r" (new) :
+	             "memory", "cc");
+
+	return ret == old;
+}
+
 static inline int spin_lock_held(uint32_t *ptr)
 {
 	return *ptr == mfspr_nonvolatile(SPR_PIR) + 1;
@@ -81,6 +101,12 @@ static inline void spin_lock(uint32_t *ptr)
 	             "=&r" (tmp), "+Z" (*ptr) :
 	             "r" (pir) :
 	             "memory", "cc");
+}
+
+/* Returns non-zero on success, zero if the lock is already held */
+static inline int spin_trylock(uint32_t *ptr)
+{
+	return compare_and_swap32(ptr, 0, mfspr_nonvolatile(SPR_PIR) + 1);
 }
 
 static inline void spin_unlock(uint32_t *ptr)
