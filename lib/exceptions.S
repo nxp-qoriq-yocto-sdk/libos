@@ -63,7 +63,7 @@
 #endif
 
 	.macro	exception, handler, type, exc, name, scratch, \
-	        srr0, srr1, stack, savearea, traplevel
+	        srr0, srr1, stack, savearea, traplevel, keepee
 	.global \name
 	.align	4
 \name:
@@ -153,20 +153,40 @@
 	isync
 #endif
 
-	/* Don't let the guest's clearing of CE or ME affect the hypervisor */
+	/* Don't let the guest's clearing of EE/CE/ME affect the hypervisor */
 	.if	\savearea != CPU_MACHKSAVE
 	mfmsr	%r0
 	.if	\savearea == CPU_NORMSAVE
 	oris	%r0, %r0, MSR_CE@h
 	.endif
+	.if	(\savearea == CPU_NORMSAVE) && (\keepee != 0)
+	ori	%r0, %r0, (MSR_ME|MSR_EE)@l
+	.else
 	ori	%r0, %r0, MSR_ME@l
+	.endif
+	mtmsr	%r0
+	.endif
+
+	b	3f
+
+	/* If requested, preserve EE when not changing privilege levels */
+	.if	\keepee != 0
+	mfmsr	%r0
+	rlwimi	%r0, %r10, 0, MSR_EE
 	mtmsr	%r0
 	.endif
 2:	
-
+#else
+	.if	\keepee != 0
+	andi.	%r0, %r10, MSR_EE
+	bne+	3f
+	mfmsr	%r0
+	rlwimi	%r0, %r10, 0, MSR_EE
+	mtmsr	%r0
+	.endif
 #endif
 
-	mr	%r3, %r1
+3:	mr	%r3, %r1
 	bl	\handler
 	b	ret_from_\type
 .endm
@@ -256,9 +276,9 @@ ret_from_\type:
 	rlwinm	\reg, \reg, 0, ~MSR_EE
 	.endm
 
-	.macro	baseexception, exc, name, handler
+	.macro	baseexception, exc, name, handler, keepee
 	exception \handler exception \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          basestack CPU_NORMSAVE 0
+	          basestack CPU_NORMSAVE 0 \keepee
 	.endm
 
 	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi basedisable
@@ -269,7 +289,7 @@ ret_from_\type:
 
 	.macro	critexception, exc, name, handler
 	exception \handler crit \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
-	          critstack CPU_CRITSAVE 1
+	          critstack CPU_CRITSAVE 1 0
 	.endm
 
 	ret_from_exc_type crit SPR_CSRR0 SPR_CSRR1 rfci critdisable
@@ -285,7 +305,7 @@ ret_from_\type:
 
 	.macro	machinecheck, exc, name, handler
 	exception \handler mcheck \exc \name SPR_SPRG8 SPR_MCSRR0 SPR_MCSRR1 \
-	          mcheckstack CPU_MACHKSAVE 2
+	          mcheckstack CPU_MACHKSAVE 2 0
 	.endm
 
 	ret_from_exc_type mcheck SPR_MCSRR0 SPR_MCSRR1 rfmci mcdisable
@@ -301,7 +321,7 @@ ret_from_\type:
 
 	.macro	debugexception, exc, name, handler
 	exception \handler debug \exc \name SPR_SPRG9 SPR_DSRR0 SPR_DSRR1 \
-	          debugstack CPU_DBGSAVE 3
+	          debugstack CPU_DBGSAVE 3 0
 	.endm
 
 	ret_from_exc_type debug SPR_DSRR0 SPR_DSRR1 rfdi debugdisable
@@ -311,26 +331,26 @@ ret_from_\type:
 interrupt_vector_base:
 	critexception EXC_CRIT_INT int_critical_input EXC_CRIT_INT_HANDLER
 	machinecheck EXC_MCHECK int_machine_check EXC_MCHECK_HANDLER
-	baseexception EXC_DSI int_data_storage EXC_DSI_HANDLER
-	baseexception EXC_ISI int_instr_storage EXC_ISI_HANDLER
-	baseexception EXC_EXT_INT int_external_input EXC_EXT_INT_HANDLER
-	baseexception EXC_ALIGN int_alignment EXC_ALIGN_HANDLER
-	baseexception EXC_PROGRAM int_program EXC_PROGRAM_HANDLER
-	baseexception EXC_FPUNAVAIL int_fpunavail EXC_FPUNAVAIL_HANDLER
-	baseexception EXC_SYSCALL int_syscall EXC_SYSCALL_HANDLER
-	baseexception EXC_AUXUNAVAIL int_auxunavail EXC_AUXUNAVAIL_HANDLER
-	baseexception EXC_DECR int_decrementer EXC_DECR_HANDLER
-	baseexception EXC_FIT int_fixed_interval_timer EXC_FIT_HANDLER
+	baseexception EXC_DSI int_data_storage EXC_DSI_HANDLER 1
+	baseexception EXC_ISI int_instr_storage EXC_ISI_HANDLER 1
+	baseexception EXC_EXT_INT int_external_input EXC_EXT_INT_HANDLER 0
+	baseexception EXC_ALIGN int_alignment EXC_ALIGN_HANDLER 1
+	baseexception EXC_PROGRAM int_program EXC_PROGRAM_HANDLER 1
+	baseexception EXC_FPUNAVAIL int_fpunavail EXC_FPUNAVAIL_HANDLER 1
+	baseexception EXC_SYSCALL int_syscall EXC_SYSCALL_HANDLER 1
+	baseexception EXC_AUXUNAVAIL int_auxunavail EXC_AUXUNAVAIL_HANDLER 1
+	baseexception EXC_DECR int_decrementer EXC_DECR_HANDLER 0
+	baseexception EXC_FIT int_fixed_interval_timer EXC_FIT_HANDLER 0
 	critexception EXC_WDOG int_watchdog EXC_WDOG_HANDLER
-	baseexception EXC_DTLB int_data_tlb_error EXC_DTLB_HANDLER
-	baseexception EXC_ITLB int_inst_tlb_error EXC_ITLB_HANDLER
+	baseexception EXC_DTLB int_data_tlb_error EXC_DTLB_HANDLER 1
+	baseexception EXC_ITLB int_inst_tlb_error EXC_ITLB_HANDLER 1
 	debugexception EXC_DEBUG int_debug EXC_DEBUG_HANDLER
-	baseexception EXC_PERFMON int_perf_mon EXC_PERFMON_HANDLER
-	baseexception EXC_DOORBELL int_doorbell EXC_DOORBELL_HANDLER
+	baseexception EXC_PERFMON int_perf_mon EXC_PERFMON_HANDLER 0
+	baseexception EXC_DOORBELL int_doorbell EXC_DOORBELL_HANDLER 0
 	critexception EXC_DOORBELLC int_doorbell_critical EXC_DOORBELLC_HANDLER
 #ifdef HYPERVISOR
-	baseexception EXC_GDOORBELL int_guest_doorbell EXC_GDOORBELL_HANDLER
+	baseexception EXC_GDOORBELL int_guest_doorbell EXC_GDOORBELL_HANDLER 1
 	critexception EXC_GDOORBELLC int_guest_doorbell_critical EXC_GDOORBELLC_HANDLER
-	baseexception EXC_HCALL int_hypercall EXC_HCALL_HANDLER
-	baseexception EXC_EHPRIV int_ehpriv EXC_EHPRIV_HANDLER
+	baseexception EXC_HCALL int_hypercall EXC_HCALL_HANDLER 1
+	baseexception EXC_EHPRIV int_ehpriv EXC_EHPRIV_HANDLER 1
 #endif
