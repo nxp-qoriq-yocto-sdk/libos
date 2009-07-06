@@ -96,11 +96,12 @@ static void traceback(trapframe_t *regs)
 void dump_regs(trapframe_t *regs)
 {
 	static uint32_t dump_lock;
+	register_t saved = 0;
 	int lock = 0;
 
 	if (!spin_lock_held(&dump_lock)) {
 		lock = 1;
-		spin_lock(&dump_lock);
+		saved = spin_lock_intsave(&dump_lock);
 	}
 
 	printf("%s\n", trapname(regs->exc));
@@ -127,7 +128,7 @@ void dump_regs(trapframe_t *regs)
 		traceback(regs);
 
 	if (lock)
-		spin_unlock(&dump_lock);
+		spin_unlock_intsave(&dump_lock, saved);
 }
 
 void unknown_exception(trapframe_t *regs)

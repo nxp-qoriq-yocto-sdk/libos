@@ -1,5 +1,10 @@
 #define LIBOS_MALLOC
 
+/* 
+  Code under the LIBOS_MALLOC #ifdef was added by Freescale,
+  and is Copyright (C) 2009 Freescale Semiconductor, Inc.
+*/
+
 /*
   This is a version (aka dlmalloc) of malloc/free/realloc written by
   Doug Lea and released to the public domain, as explained at
@@ -1420,10 +1425,29 @@ static int win32munmap(void* ptr, size_t size) {
 
 #ifdef LIBOS_MALLOC
 /* By default use posix locks */
-#define MLOCK_T uint32_t
-#define INITIAL_LOCK(l) do { *(l) = 0; } while (0)
-#define ACQUIRE_LOCK(l) (spin_lock(l), 0)
-#define RELEASE_LOCK(l) spin_unlock(l)
+
+typedef struct malloc_mutex {
+	register_t saved;
+	uint32_t lock;
+} malloc_mutex_t;
+
+#define MLOCK_T malloc_mutex_t
+
+static void INITIAL_LOCK(malloc_mutex_t *lock)
+{
+	lock->lock = 0;
+}
+
+static void ACQUIRE_LOCK(malloc_mutex_t *lock)
+{
+	register_t saved = spin_lock_intsave(&lock->lock);
+	lock->saved = saved;
+}
+
+static void RELEASE_LOCK(malloc_mutex_t *lock)
+{
+	spin_unlock_intsave(&lock->lock, lock->saved);
+}
 
 static MLOCK_T magic_init_mutex;
 #else
@@ -2155,7 +2179,7 @@ static int has_segment_link(mstate m, msegmentptr ss) {
 /* Ensure locks are initialized */
 #define GLOBALLY_INITIALIZE() (mparams.page_size == 0 && init_mparams())
 
-#define PREACTION(M)  ((GLOBALLY_INITIALIZE() || use_lock(M))? ACQUIRE_LOCK(&(M)->mutex) : 0)
+#define PREACTION(M)  ((GLOBALLY_INITIALIZE() || use_lock(M))? ACQUIRE_LOCK(&(M)->mutex), 0 : 0)
 #define POSTACTION(M) { if (use_lock(M)) RELEASE_LOCK(&(M)->mutex); }
 #else /* USE_LOCKS */
 
