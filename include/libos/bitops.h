@@ -80,6 +80,10 @@ static inline void spin_lock(uint32_t *ptr)
 	uint32_t pir = mfspr_nonvolatile(SPR_PIR) + 1;
 	uint32_t tmp;
 
+#ifdef CONFIG_LIBOS_NO_BARE_SPINLOCKS
+	assert(!ints_enabled());
+#endif
+
 	if (spin_lock_held(ptr)) {
 		set_crashing();
 		printf("Recursive spin_lock detected on %p\n", ptr);
@@ -145,6 +149,7 @@ static inline void spin_unlock_intsave(uint32_t *ptr, register_t saved)
 
 static inline void spin_lock_int(uint32_t *ptr)
 {
+	assert(ints_enabled());
 	disable_int();
 	spin_lock(ptr);
 }

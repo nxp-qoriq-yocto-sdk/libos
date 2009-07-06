@@ -170,4 +170,11 @@ config LIBOS_CRITICAL_INTS
 		interrupts, and enable/disable int operations also
 		operate on critical interrupts.
 
+config LIBOS_NO_BARE_SPINLOCKS
+	bool
+	help
+		Indicates that the client OS can be preempted, and thus
+		all spinlocks must be interrupt-safe.  The bare
+		spin_lock() function will assert if interrupts are enabled.
+
 endmenu

@@ -190,6 +190,11 @@ static inline void enable_int(void)
 {
 	mtmsr(mfmsr() | MSR_CE | MSR_EE);
 }
+
+static inline int ints_enabled(void)
+{
+	return (mfmsr() & (MSR_CE | MSR_EE)) == (MSR_CE | MSR_EE);
+}
 #else
 static inline register_t disable_int_save(void)
 {
@@ -211,6 +216,11 @@ static inline void disable_int(void)
 static inline void enable_int(void)
 {
 	asm volatile("wrteei 1" : : : "memory");
+}
+
+static inline int ints_enabled(void)
+{
+	return mfmsr() & MSR_EE;
 }
 #endif
 
