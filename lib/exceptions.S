@@ -178,7 +178,7 @@
 2:	
 #else
 	.if	\keepee != 0
-	andi.	%r0, %r10, MSR_EE
+	andi.	%r0, %r10, MSR_PR
 	bne+	3f
 	mfmsr	%r0
 	rlwimi	%r0, %r10, 0, MSR_EE
