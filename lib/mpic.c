@@ -264,6 +264,8 @@ static void call_irq_handler(interrupt_t *irq)
 {
 	irqaction_t *action = irq->actions;
 
+	assert(action);
+
 	while (action) {
 		action->handler(action->devid);
 		action = action->next;
