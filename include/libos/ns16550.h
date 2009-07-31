@@ -71,6 +71,7 @@
 #define NS16550_IER_ERLSI  0x04 // receiver line status interrupt
 #define NS16550_IER_EMSI   0x08 // modem status interrput
 
+#define NS16550_LCR_8BIT   0x03
 #define NS16550_LCR_NTSB   0x04 // number of stop bits
 #define NS16550_LCR_EPS    0x10 // Even parity selected
 #define NS16550_LCR_PEN    0x08 // Parity enable

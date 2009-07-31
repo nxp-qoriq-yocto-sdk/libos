@@ -323,7 +323,8 @@ chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
                         int baudclock, int txfifo)
 {
 	ns16550 *priv;
-//FIXME	byte_chan_reg_params_t byte_chan_reg_params;
+	int baud = 115200;
+	int divisor;
 
 	priv = alloc_type(ns16550);
 	if (!priv)
@@ -332,6 +333,16 @@ chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
 	priv->cd.ops = &ops;
 	priv->reg = reg;
 	priv->txfifo = txfifo;
+
+	baud *= 16;
+	divisor = (baudclock + baud / 2) / baud;
+
+	out8(&priv->reg[NS16550_LCR], NS16550_LCR_DLAB);
+
+	out8(&priv->reg[NS16550_DMB], (divisor >> 8) & 0xff);
+	out8(&priv->reg[NS16550_DLB], divisor & 0xff);
+
+	out8(&priv->reg[NS16550_LCR], NS16550_LCR_8BIT);
 
 	out8(&priv->reg[NS16550_FCR],
 	     NS16550_FCR_FEN | NS16550_FCR_RFR | NS16550_FCR_TFR);
@@ -351,68 +362,3 @@ chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
 
 	return &priv->cd;
 }
-
-// FIXME
-#if 0
-void ns16550_config(uart_param_t param)
-{
-	int divisor;
-	uint8_t tmp;
-
-	/* copy all the parameters for statistics */
-	uart->data_bits  = param->data_bits;
-	uart->stop_bits  = param->stop_bits;
-	uart->parity     = param->parity;
-	uart->baudrate   = param->baudrate;
-	uart->attributes = param->attributes;
-	uart->offset     = (char*)param->offset;
-	uart->byte_chan  = byte_chan;
-
-	byte_chan_reg_params.end_point_handler = uart;
-	byte_chan_reg_params.byte_chan_rx_data_avail = duart_start_tx;
-	byte_chan_reg_params.byte_chan_tx_space_avail = NULL;
-	byte_chan_register(byte_chan, &byte_chan_reg_params);
-
-	/* First calculate a divider */
-	divisor = get_system_clock()*1000000 / param->baudrate / 16;
-
-	/* Set access to UDMB/UDLB/UAFR */
-	out8(&priv->reg[NS16550_LCR], NS16550_LCR_DLAB);
-
-	out8(&priv->reg[NS16550_DMB], (divisor >> 8) & 0xff);
-	out8(&priv->reg[NS16550_DLB], divisor & 0xff);
-
-	/* Building NS16550_LCR register */
-	switch (param->parity) {
-		case 'n': /* Non */
-			tmp = 0;
-			break;
-		case 'o': /* Odd */
-			tmp = NS16550_LCR_PEN;
-			break;
-		case 'e': /* Even */
-			tmp = NS16550_LCR_PEN | NS16550_LCR_EPS;
-			break;
-		case 's': /* Space */
-			tmp = NS16550_LCR_PEN | NS16550_LCR_EPS | NS16550_LCR_SP;
-			break;
-		case 'm': /* Mark */
-			tmp = NS16550_LCR_PEN | NS16550_LCR_SP;
-			break;
-		default:
-			return INVALID_PARAM;
-	}
-
-	/* Data bits configuration */
-	if ( (param->data_bits < 5) || (param->data_bits > 8) )
-		return INVALID_PARAM;
-	tmp |= param->data_bits - 5;
-
-	/* Stop bits configuration */
-	if ( (param->stop_bits != 1) && (param->data_bits != 2) )
-		return INVALID_PARAM;
-	tmp |= ((param->stop_bits - 1) << 2);
-
-	out8(&priv->reg[NS16550_LCR], tmp);
-}
-#endif
