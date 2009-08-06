@@ -22,44 +22,106 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef CONFIG_LIBOS_LIBC
-.global bzero_aligned
-	/* OPT 64-bit */
-bzero_aligned:
-	lis	%r5, cache_block_size@ha
-	lwz	%r5, cache_block_size@l(%r5)
-	
-	addi	%r6, %r5, -1
-	subf.	%r7, %r5, %r4
-	blt-	bzero_not_cache_aligned
+#define ASSERT
 
-	and.	%r0, %r3, %r6
-	bne-	bzero_not_cache_aligned
+.global memset
+	/* OPT 64-bit */
+memset:
+	lis	%r9, cache_block_size@ha
+	cmpwi	%r4, 0
+	lwz	%r9, cache_block_size@l(%r9)
+	bne-	memset_byte_tail
+
+	andi.	%r8, %r3, 3
+	bne-	memset_byte_head
 	
+	addi	%r6, %r9, -1
+again:
+	subf.	%r7, %r9, %r5
+	blt-	memset_word_tail
+
+	and.	%r8, %r3, %r6
+	bne-	memset_word_head
+
+#ifdef ASSERT
+	and	%r0, %r3, %r6
+	twllei	%r5, %r6
+	twnei	%r0, 0
+#endif
+
 1:	dcbz	0, %r3
-	subf.	%r7, %r5, %r7
-	add	%r3, %r3, %r5
+	subf.	%r7, %r9, %r7
+	add	%r3, %r3, %r9
 	bge+	1b
 
-bzero_not_cache_aligned:
-	and	%r4, %r4, %r6
-	li	%r0, 0
-	rlwinm.	%r7, %r4, 30, 2, 31
-	mtctr	%r7
-	beq-	bzero_no_words
+	add.	%r5, %r7, %r9
+	beqlr
 
-2:	stw	%r0, 0(%r3)
+memset_word_tail:
+#ifdef ASSERT
+	andi.	%r0, %r3, 3
+	twnei	%r0, 0
+#endif
+
+	rlwinm.	%r7, %r5, 30, 2, 31
+	mtctr	%r7
+	beq-	memset_byte_tail
+
+2:	stw	%r4, 0(%r3)
 	addi	%r3, %r3, 4
 	bdnz	2b
 
-bzero_no_words:
-	andi.	%r4, %r4, 3
-	mtctr	%r4
+	andi.	%r5, %r5, 3
+memset_byte_tail:
+	cmpwi	%r5, 0
+	mtctr	%r5
 	beqlr
 
-3:	stb	%r0, 0(%r3)
+3:	stb	%r4, 0(%r3)
 	addi	%r3, %r3, 1
 	bdnz	3b
 	blr
 
+	// r8 = address & 3
+	// We can get here with fewer than 3 bytes to set.
+memset_byte_head:
+#ifdef ASSERT
+	twlgti	%r8, 3
 #endif
+	cmpwi	%r5, 3
+	subfic	%r8, %r8, 4
+	ble-	memset_byte_tail
+
+	mtctr	%r8
+4:	stb	%r4, 0(%r3)
+	addi	%r3, %r3, 1
+	bdnz	4b
+
+	subf	%r5, %r8, %r5
+	b	again
+
+	// r8 = address & (cache block size - 1)
+	// We only get here if we'll be setting into the
+	// next cache block.
+memset_word_head:
+#ifdef ASSERT
+	andi.	%r0, %r3, 3
+	twlgt	%r8, %r6
+	twnei	%r0, 0
+#endif
+
+	subf	%r8, %r8, %r9
+#ifdef ASSERT
+	twllt	%r5, %r8
+#endif
+
+	rlwinm.	%r7, %r8, 30, 2, 31
+	mtctr	%r7
+
+5:	stw	%r4, 0(%r3)
+	addi	%r3, %r3, 4
+	bdnz	5b
+
+	subf.	%r5, %r8, %r5
+	bne	again
+	blr
