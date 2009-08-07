@@ -22,6 +22,12 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+config LIBOS_HV_GUEST
+	bool
+	help
+		Select this in projects which are a hypervisor guest, to
+		enable relevant config options.
+
 config LIBOS_INIT
 	bool
 	help
@@ -149,6 +155,18 @@ config LIBOS_DRIVER_MODEL
 		If selected, the client must define driver_begin and driver_end
 		symbols around the .libos.drivers section in the linker script.
 
+config LIBOS_BYTE_CHAN
+	bool "Hypercall byte-channel driver"
+	depends on LIBOS_HV_GUEST
+	help
+		Provides a polled character driver for byte channel hypercalls.
+		
+		Only select this in clients which are running as a guest of
+		the Freescale Embedded Hypervisor (or another hypervisor with
+		compatible hcalls).
+
+endmenu
+
 config LIBOS_THREADS
 	bool
 	help
@@ -176,5 +194,3 @@ config LIBOS_NO_BARE_SPINLOCKS
 		Indicates that the client OS can be preempted, and thus
 		all spinlocks must be interrupt-safe.  The bare
 		spin_lock() function will assert if interrupts are enabled.
-
-endmenu

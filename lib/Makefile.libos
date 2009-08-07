@@ -72,6 +72,7 @@ libos-src-$(CONFIG_LIBOS_PAMU) += pamu.c
 libos-src-y += printlog.c
 libos-src-$(CONFIG_LIBOS_DRIVER_MODEL) += driver.c
 libos-src-$(CONFIG_LIBOS_THREADS) += thread.S
+libos-src-$(CONFIG_LIBOS_BYTE_CHAN) += byte-chan.c
 
 GENASSYM=$(libos)lib/genassym.sh
 
