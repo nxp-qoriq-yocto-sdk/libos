@@ -56,6 +56,7 @@ static ssize_t byte_chan_rx(chardev_t *cd, uint8_t *buf,
 		if (this_count == 0 && (flags & CHARDEV_BLOCKING))
 			continue;
 
+		buf += this_count;
 		total += this_count;
 		count -= this_count;
 	}
@@ -79,6 +80,7 @@ static ssize_t byte_chan_tx(chardev_t *cd, const uint8_t *buf,
 		else if (ret)
 			return total == 0 ? ret : (ssize_t)total;
 
+		buf += this_count;
 		total += this_count;
 		count -= this_count;
 	}
