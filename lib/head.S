@@ -344,12 +344,14 @@ clear_bss:
 
 	blr
 
-	.section .bss
+	.section .stack, "aw", @nobits
 	.align 4
 	/* Initial boot stack */
 	.space 4096
 	.global init_stack_top
 init_stack_top:
+
+	.section .bss
 	.global cache_block_size
 cache_block_size:
 	.space 4
