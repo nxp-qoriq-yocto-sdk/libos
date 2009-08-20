@@ -22,4 +22,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libos/console.h>
+#include <stdarg.h>
+
+#define EOF -1
+
+int putchar(int c);
+int puts(const char *s);
+int printf(const char *str, ...);
+int vprintf(const char *str, va_list args);

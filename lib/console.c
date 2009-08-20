@@ -24,13 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdarg.h>
-#include <string.h>
-#include <limits.h>
-#include <libos/bitops.h>
 #include <libos/console.h>
-#include <libos/chardev.h>
-#include <libos/readline.h>
 #include <libos/percpu.h> 
 
 static chardev_t *console;
@@ -38,7 +32,7 @@ static chardev_t *console;
 DECLARE_QUEUE(consolebuf, 4096);
 static queue_t *qconsole;
 #endif
-static uint32_t console_lock;
+uint32_t console_lock;
 
 #ifdef CONFIG_LIBOS_QUEUE
 static void drain_consolebuf_cd(queue_t *q)
@@ -107,7 +101,7 @@ static int __putchar(int c)
 	return c;
 }
 
-static void __puts_len(const char *s, size_t len)
+void console_write_nolock(const char *s, size_t len)
 {
 	while (*s && len--)
 		__putchar(*s++);
@@ -117,14 +111,13 @@ static void __puts_len(const char *s, size_t len)
 #endif
 }
 
-int putchar(int c)
+void console_write(const char *s, size_t len)
 {
 	int lock = 1;
-	char ch = c;
 
 	if (unlikely(cpu->crashing)) {
 		if (cpu->crashing > 1)
-			return -1;
+			return;
 
 		cpu->crashing++;
 		lock = 0;
@@ -135,7 +128,7 @@ int putchar(int c)
 	if (lock)
 		spin_lock(&console_lock);
 		
-	__puts_len(&ch, 1);
+	console_write_nolock(s, len);
 
 	if (lock)
 		spin_unlock(&console_lock);
@@ -143,85 +136,6 @@ int putchar(int c)
 		cpu->crashing--;
 
 	restore_int(saved);
-	return 0;
-}
-
-int puts(const char *s)
-{
-	int lock = 1;
-
-	if (unlikely(cpu->crashing)) {
-		if (cpu->crashing > 1)
-			return -1;
-
-		cpu->crashing++;
-		lock = 0;
-	}
-
-	register_t saved = disable_int_save();
-
-	if (lock)
-		spin_lock(&console_lock);
-		
-	__puts_len(s, INT_MAX);
-	__puts_len("\r\n", 2);
-
-	if (lock)
-		spin_unlock(&console_lock);
-	else
-		cpu->crashing--;
-
-	restore_int(saved);
-	return 0;
-}
-
-int vprintf(const char *str, va_list args)
-{
-	enum {
-		buffer_size = 4096,
-	};
-
-	static char buffer[buffer_size];
-	int lock = 1;
-
-	if (unlikely(cpu->crashing)) {
-		if (cpu->crashing > 1)
-			return -1;
-
-		cpu->crashing++;
-		lock = 0;
-	}
-
-	register_t saved = disable_int_save();
-
-	if (lock)
-		spin_lock(&console_lock);
-		
-	int ret = vsnprintf(buffer, buffer_size, str, args);
-	if (ret > buffer_size)
-		ret = buffer_size;
-	
-	__puts_len(buffer, ret);
-
-	if (lock)
-		spin_unlock(&console_lock);
-	else
-		cpu->crashing--;
-
-	restore_int(saved);
-	return ret;
-}
-
-int printf(const char *str, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, str);
-	ret = vprintf(str, args);
-	va_end(args);
-
-	return ret;
 }
 
 void set_crashing(void)

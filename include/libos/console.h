@@ -25,16 +25,16 @@
 #ifndef LIBOS_CONSOLE_H
 #define LIBOS_CONSOLE_H
 
-#include <stdarg.h>
 #include <libos/chardev.h>
 
 void console_init(chardev_t *cd);
 void qconsole_init(queue_t *q);
-int putchar(int c);
-int puts(const char *s);
-int printf(const char *str, ...);
-int vprintf(const char *str, va_list args);
+
+void console_write_nolock(const char *s, size_t len);
+void console_write(const char *s, size_t len);
 
 extern queue_t consolebuf;
+
+extern uint32_t console_lock;
 
 #endif
