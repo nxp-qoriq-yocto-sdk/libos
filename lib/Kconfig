@@ -52,6 +52,12 @@ config LIBOS_LIBC
 		A libc subset, containing string and memory functions,
 		and vsnprintf.
 
+config LIBOS_POSIX
+	bool
+	help
+		Indicates that a POSIX environment is extrenally provided. For example, it indicates
+		the availability of sys/types.h
+
 config LIBOS_CONSOLE
 	bool
 	help

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008 - 2009 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,10 +27,16 @@
 
 #include <stdint.h>
 
+#ifdef CONFIG_LIBOS_POSIX
+#include <sys/types.h>
+#else
+
 #ifndef _SSIZE_T
 #define _SSIZE_T
 typedef long ssize_t;
 #endif
+
+#endif	/* CONFIG_LIBOS_POSIX */
 
 typedef uint64_t phys_addr_t;
 typedef unsigned long register_t;
