@@ -48,6 +48,7 @@
 #define SPR_MAS1         625  // MMU Assist Register 1
 #define   MAS1_VALID         0x80000000
 #define   MAS1_IPROT         0x40000000
+#define   MAS1_IPROT_SHIFT   30
 #define   MAS1_TID_MASK      0x00FF0000
 #define   MAS1_TID_SHIFT     16
 #define   MAS1_TS            0x00001000
@@ -119,6 +120,7 @@
 #define SPR_MAS8         341  // MMU Assist Register 8
 #define   MAS8_GTS           0x80000000 /* Guest space */
 #define   MAS8_VF            0x40000000 /* Virtualization Fault */
+#define   MAS8_VF_SHIFT      30
 #define   MAS8_TLPID         0x000000ff
 
 #define TLB_TSIZE_4K   1
