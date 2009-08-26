@@ -164,15 +164,13 @@ ssize_t queue_write_blocking(queue_t *q, const uint8_t *buf, size_t len)
 		libos_prepare_to_block();
 
 		ssize_t ret = queue_write(q, buf, len);
-		if (ret < 0)
-			return ret;
-
-		if ((size_t)ret < len) {
+		if (ret > 0) {
+			len -= ret;
 			queue_notify_consumer(q);
-			libos_block();
+			continue;
 		}
 
-		len -= ret;
+		libos_block();
 	}
 
 	libos_unblock(cpu->thread);
@@ -199,15 +197,16 @@ int queue_writechar_blocking(queue_t *q, uint8_t c)
 		libos_prepare_to_block();
 
 		int ret = queue_writechar(q, c);
-		if (ret == ERR_BUSY) {
-			queue_notify_consumer(q);
-			libos_block();
-			continue;
-		}
-
-		libos_unblock(cpu->thread);
-		return ret;
+		if (ret == 0)
+			break;
+		
+		assert(ret == ERR_BUSY);
+		libos_block();
 	}
+
+	queue_notify_consumer(q);
+	libos_unblock(cpu->thread);
+	return 0;
 }
 
 size_t qprintf(queue_t *q, int blocking, const char *str, ...)
