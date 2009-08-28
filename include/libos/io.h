@@ -368,4 +368,14 @@ IO_DEF_OUT(out32_rev, uint32_t)
 IO_DEF_OUT(out32_be, uint32_t)
 IO_DEF_OUT(out32_le, uint32_t)
 
+static inline void prefetch(void *ptr)
+{
+	asm volatile("dcbt 0, %0" : : "r" (ptr));
+}
+
+static inline void prefetch_store(void *ptr)
+{
+	asm volatile("dcbtst 0, %0" : : "r" (ptr));
+}
+
 #endif
