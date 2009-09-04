@@ -37,6 +37,8 @@
  */
 
 #include <libos/types.h>
+#include <libos/libos.h>
+
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
@@ -44,7 +46,7 @@
 enum {
 	alt_form =        0x0001,
 	zero_pad =        0x0002,
-	neg_field =       0x0004,
+	left_justify =    0x0004,
 	leave_blank =     0x0008,
 	always_sign =     0x0010,
 	group_thousands = 0x0020, // FIXME -- unimplemented
@@ -153,20 +155,17 @@ static void printf_num(char *obuf, size_t *opos, size_t limit,
 	
 	len += extralen;
 	
-	if (!(flags & neg_field) && len < fieldwidth) {
+	if (!(flags & left_justify) && len < fieldwidth) {
 		char padchar = (flags & zero_pad) ? '0' : ' ';
 		printf_fill(obuf, opos, limit, padchar, fieldwidth - len);
-		len = fieldwidth;
 	}
 
-	if (precision != 0) {
+	if (precision != 0)
 		printf_fill(obuf, opos, limit, '0', precision);
-		len += precision;
-	}
 	
 	printf_string(obuf, opos, limit, buf + pos + 1, 64 - pos);
 	
-	if ((flags & neg_field) && len < fieldwidth)
+	if ((flags & left_justify) && len < fieldwidth)
 		printf_fill(obuf, opos, limit, ' ', fieldwidth - len);
 }
 
@@ -227,6 +226,12 @@ int vsnprintf(char *buf, size_t size, const char *str, va_list args)
 						goto default_case;
 					
 					fieldwidth = va_arg(args, int);
+					
+					if (fieldwidth < 0) {
+						fieldwidth = -fieldwidth;
+						flags |= left_justify;
+					}
+
 					break;
 				
 				case '.':
@@ -235,6 +240,9 @@ int vsnprintf(char *buf, size_t size, const char *str, va_list args)
 					if (str[pos + 1] == '*') {
 						pos++;
 						precision = va_arg(args, int);
+						
+						if (precision < 0)
+							precision = 0;
 					} else while (str[pos + 1] >= '0' && str[pos + 1] <= '9') {
 						precision *= 10;
 						precision += str[++pos] - '0';
@@ -243,7 +251,7 @@ int vsnprintf(char *buf, size_t size, const char *str, va_list args)
 					break;
 						
 				case '-':
-					flags |= neg_field;
+					flags |= left_justify;
 					break;
 				
 				case ' ':
@@ -281,27 +289,6 @@ int vsnprintf(char *buf, size_t size, const char *str, va_list args)
 				case 't':
 					flags |= ptrdiff_arg;
 					break;
-				
-				/*
-				 * Note that %z and other such "new" format characters are
-				 * basically useless because some GCC coder actually went out
-				 * of their way to make the compiler reject C99 format
-				 * strings in C++ code, with no way of overriding it that I
-				 * can find (the source code comments suggest the checking is
-				 * only when using -pedantic, but I wasn't using -pedantic).
-				 *
-				 * Thus, we have the choice of either avoiding %z and friends
-				 * (and possibly needing to insert hackish casts to silence
-				 * the compiler's warnings if different architectures define
-				 * types like size_t in different ways), or not using the
-				 * format warnings at all.
-				 *
-				 * To mitigate this, 32-bit architectures should define
-				 * pointer-sized special types as "long" rather than "int",
-				 * so that %lx/%ld can always be used with them.  Fixed-size
-				 * 32-bit types should be declared as "int" rather than
-				 * "long" for the same reason.
-				 */
 				
 				case 'z':
 					flags |= size_t_arg;
@@ -383,12 +370,26 @@ int vsnprintf(char *buf, size_t size, const char *str, va_list args)
 				
 				case 's': {
 					const char *arg = va_arg(args, const char *);
+					size_t len;
 					
 					if (!arg)
 						arg = "(null)";
 					
-					size_t len = strlen(arg);
+					if (flags & has_precision)
+						len = min(precision, strnlen(arg, precision));
+					else
+						len = strlen(arg);
+
+					if (!(flags & left_justify) && len < fieldwidth)
+						printf_fill(buf, &opos, size - 1, ' ',
+						            fieldwidth - len);
+					
 					printf_string(buf, &opos, size - 1, arg, len);
+
+					if ((flags & left_justify) && len < fieldwidth)
+						printf_fill(buf, &opos, size - 1, ' ',
+						            fieldwidth - len);
+
 					state = 0;
 					break;
 				}
