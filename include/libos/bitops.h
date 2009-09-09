@@ -238,10 +238,16 @@ static inline int ilog2_roundup(unsigned long val)
  */
 static inline void icache_block_sync(char *ptr)
 {
-	asm volatile ("dcbf %y0;"
-	    "msync;"
-	    "icbi %y0;"
-	    "msync;"
-	    "isync;" : : "Z" (*ptr) : "memory");
+	asm volatile("dcbf %y0;"
+	             "msync;"
+	             "icbi %y0;"
+	             "msync;"
+	             "isync;" : : "Z" (*ptr) : "memory");
 }
+
+static inline void dcache_block_flush(char *ptr)
+{
+	asm volatile("dcbf %y0; msync" : : "Z" (*ptr) : "memory");
+}
+
 #endif
