@@ -38,6 +38,12 @@
 
 #define TLB1_SIZE 64
 
+#define TRAPLEVEL_THREAD 0 /* No trap, executing in thread context */
+#define TRAPLEVEL_NORMAL 1
+#define TRAPLEVEL_CRIT   2
+#define TRAPLEVEL_MCHECK 3
+#define TRAPLEVEL_DEBUG  4
+
 #ifndef _ASM
 typedef uint8_t kstack_t[KSTACK_SIZE] __attribute__((aligned(16)));
 
@@ -55,7 +61,7 @@ typedef struct cpu {
 	kstack_t debugstack, critstack, mcheckstack;
 	unsigned int coreid;
 	int console_ok, crashing;
-	unsigned int traplevel; /**< Normally 0, 1 if in critical exception context */
+	unsigned int traplevel;
 	int errno; /**< Used for C/POSIX funcitons that set errno */
 #ifdef LIBOS_RET_HOOK
 	int ret_hook;

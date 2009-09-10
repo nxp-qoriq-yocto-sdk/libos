@@ -278,7 +278,7 @@ ret_from_\type:
 
 	.macro	baseexception, exc, name, handler, keepee
 	exception \handler exception \exc \name SPR_SPRG1 SPR_SRR0 SPR_SRR1 \
-	          basestack CPU_NORMSAVE 0 \keepee
+	          basestack CPU_NORMSAVE TRAPLEVEL_NORMAL \keepee
 	.endm
 
 	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi basedisable
@@ -289,7 +289,7 @@ ret_from_\type:
 
 	.macro	critexception, exc, name, handler
 	exception \handler crit \exc \name SPR_SPRG2 SPR_CSRR0 SPR_CSRR1 \
-	          critstack CPU_CRITSAVE 1 0
+	          critstack CPU_CRITSAVE TRAPLEVEL_CRIT 0
 	.endm
 
 	ret_from_exc_type crit SPR_CSRR0 SPR_CSRR1 rfci critdisable
@@ -305,7 +305,7 @@ ret_from_\type:
 
 	.macro	machinecheck, exc, name, handler
 	exception \handler mcheck \exc \name SPR_SPRG8 SPR_MCSRR0 SPR_MCSRR1 \
-	          mcheckstack CPU_MACHKSAVE 2 0
+	          mcheckstack CPU_MACHKSAVE TRAPLEVEL_MCHECK 0
 	.endm
 
 	ret_from_exc_type mcheck SPR_MCSRR0 SPR_MCSRR1 rfmci mcdisable
@@ -321,7 +321,7 @@ ret_from_\type:
 
 	.macro	debugexception, exc, name, handler
 	exception \handler debug \exc \name SPR_SPRG9 SPR_DSRR0 SPR_DSRR1 \
-	          debugstack CPU_DBGSAVE 3 0
+	          debugstack CPU_DBGSAVE TRAPLEVEL_DEBUG 0
 	.endm
 
 	ret_from_exc_type debug SPR_DSRR0 SPR_DSRR1 rfdi debugdisable
