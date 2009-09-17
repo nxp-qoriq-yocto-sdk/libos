@@ -115,7 +115,12 @@
 #ifdef HYPERVISOR
 	andis.	%r0, %r10, MSR_GS@h
 	beq-	2f
-	
+#ifdef CONFIG_LIBOS_STATISTICS
+	mfspr	%r3, SPR_TBL
+	li	%r4, 0
+	STORE	%r3, FRAME_INITIAL_CYCLES(%r1)
+	STORE	%r4, FRAME_CURRENT_EVENT(%r1)
+#endif
 	mfspr	%r3, SPR_EPLC
 	mfspr	%r4, SPR_EPSC
 	mfspr	%r5, SPR_PID
@@ -188,6 +193,15 @@
 
 3:	mr	%r3, %r1
 	bl	\handler
+#ifdef CONFIG_LIBOS_STATISTICS
+	LOAD	%r10, FRAME_SRR1(%r1)
+	andis.	%r0, %r10, MSR_GS@h
+	beq-	4f
+	LOAD	%r3, FRAME_INITIAL_CYCLES(%r1)
+	LOAD	%r4, FRAME_CURRENT_EVENT(%r1)
+	bl	UPDATE_STATS
+4:
+#endif
 	b	ret_from_\type
 .endm
 

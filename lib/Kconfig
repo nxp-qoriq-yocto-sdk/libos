@@ -200,3 +200,9 @@ config LIBOS_NO_BARE_SPINLOCKS
 		Indicates that the client OS can be preempted, and thus
 		all spinlocks must be interrupt-safe.  The bare
 		spin_lock() function will assert if interrupts are enabled.
+
+config LIBOS_STATISTICS
+	bool
+	help
+		Provides support for gathering statistics corresponding to
+		hypervisor exceptions.

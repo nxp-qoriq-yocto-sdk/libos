@@ -68,6 +68,10 @@ ASSYM(FRAME_EPLC, offsetof(trapframe_t, eplc));
 ASSYM(FRAME_EPSC, offsetof(trapframe_t, epsc));
 ASSYM(FRAME_EXC, offsetof(trapframe_t, exc));
 ASSYM(FRAME_TRAPLEVEL, offsetof(trapframe_t, traplevel));
+#ifdef CONFIG_LIBOS_STATISTICS
+ASSYM(FRAME_INITIAL_CYCLES, offsetof(trapframe_t, initial_cycles));
+ASSYM(FRAME_CURRENT_EVENT, offsetof(trapframe_t, current_event));
+#endif
 
 ASSYM(THREAD_STACK, offsetof(libos_thread_t, stack));
 ASSYM(THREAD_KSTACK, offsetof(libos_thread_t, kstack));

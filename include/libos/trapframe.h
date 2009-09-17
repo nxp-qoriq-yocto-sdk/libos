@@ -36,6 +36,10 @@ typedef struct trapframe {
 	register_t srr0, srr1, dear, esr;
 	uint32_t eplc, epsc;
 	unsigned int exc, traplevel;
+#ifdef CONFIG_LIBOS_STATISTICS
+	int current_event;
+	uint32_t initial_cycles;
+#endif
 	uint32_t pad[4];
 } trapframe_t;
 
