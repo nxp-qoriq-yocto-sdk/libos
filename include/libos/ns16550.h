@@ -90,6 +90,6 @@
 struct interrupt;
 
 struct chardev *ns16550_init(uint8_t *reg, struct interrupt *irq,
-                             int baudclock, int txfifo);
+                             int baudclock, int txfifo, int baud);
 
 #endif

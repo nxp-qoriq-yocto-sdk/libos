@@ -320,10 +320,9 @@ static const chardev_ops ops = {
  * @param[in] txfifo size of the transmit fifo, or 1 to disable.
  */
 chardev_t *ns16550_init(uint8_t *reg, interrupt_t *irq,
-                        int baudclock, int txfifo)
+                        int baudclock, int txfifo, int baud)
 {
 	ns16550 *priv;
-	int baud = 115200;
 	int divisor;
 
 	priv = alloc_type(ns16550);
