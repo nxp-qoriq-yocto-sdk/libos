@@ -50,7 +50,6 @@
 
 #define FH_API_VERSION 1
 
-#define FH_CPU_WHOAMI                   1
 #define FH_ERR_GET_INFO                 2
 #define FH_PARTITION_GET_DTPROP         3
 #define FH_PARTITION_SET_DTPROP         4
@@ -128,28 +127,6 @@
  * clobber list will tell the compiler that the hypercall modifies those
  * registers, which is good enough.
  */
-
-/**
- * Get the index number of the running virtual CPU.
- * @param[out] cpu_index index of the calling CPU
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_cpu_whoami(unsigned int *cpu_index)
-{
-	register uintptr_t r11 __asm__("r11") = FH_CPU_WHOAMI;
-	register uintptr_t r3 __asm__("r3");
-	register uintptr_t r4 __asm__("r4");
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "=r" (r3), "=r" (r4)
-		: : HCALL_CLOBBERS2
-	);
-
-	*cpu_index = r4;
-
-	return r3;
-}
 
 /**
  * Send NMI to virtual cpu.
