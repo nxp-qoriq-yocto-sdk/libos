@@ -133,6 +133,7 @@
 #define SPR_PVR          287  // Processor Version Register
 
 #define SPR_DBSR         304  // Debug Status Register
+#define   DBSR_MRR         0x30000000 // Most recent reset
 #define   DBSR_ICMP        0x08000000 // Instruction complete debug event
 #define   DBSR_BRT         0x04000000 // Branch taken debug event
 #define   DBSR_IRPT        0x02000000 // Interrupt taken debug event
