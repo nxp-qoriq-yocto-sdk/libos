@@ -111,7 +111,7 @@ void console_write_nolock(const char *s, size_t len)
 	 * We insist on a few extra characters beyond len to account for
 	 * any \n to \r\n conversions that putchar_nolock() may make.
 	 */
-	if (queue_get_space(&consolebuf) < len + 5)
+	if (queue_get_space(&consolebuf) < min(strnlen(s, len), len + 5))
 		return;
 
 	while (*s && len--)
