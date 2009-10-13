@@ -87,6 +87,19 @@ int queue_writechar_blocking(queue_t *q, uint8_t c);
 size_t qprintf(queue_t *q, int blocking, const char *str, ...)
 	__attribute__((format(printf, 3, 4)));
 
+/** Find a character in a queue.
+ *
+ * This must be called by a consumer.  The caller must ensure that there
+ * are at least "start" bytes on the queue.
+ *
+ * @param[in] q address of the queue to search.
+ * @param[in] c byte to search for
+ * @param[in] start Offset from head to search from, or zero for whole queue
+ * @return Offset from head to first instance of character no earler
+ *         than start, or negative if not found.
+ */
+ssize_t queue_memchr(queue_t *q, int c, size_t start);
+
 static inline void queue_notify_consumer(queue_t *q)
 {
 	void (*callback)(struct queue *q) = q->data_avail;
@@ -125,7 +138,7 @@ static inline int queue_empty(const queue_t *q)
 
 static inline int queue_full(const queue_t *q)
 {
-	return queue_wrap(q, raw_in32(&q->head) + 1) == raw_in32(&q->tail);
+	return queue_wrap(q, raw_in32(&q->tail) + 1) == raw_in32(&q->head);
 }
 
 static inline ssize_t queue_writestr(queue_t *q, const char *str)

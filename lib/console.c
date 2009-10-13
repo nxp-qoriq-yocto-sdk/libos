@@ -74,37 +74,48 @@ void qconsole_init(queue_t *q)
 }
 #endif
 
-static int __putchar(int c)
+static int putchar_nolock(int c)
 {
 	uint8_t ch = c;
 
+	if (c == '\n')
+		putchar_nolock('\r');
 
 #ifdef CONFIG_LIBOS_QUEUE
 	/* If we're crashing and we have a direct console device,
 	 * go ahead and use it, and don't worry about screwing up
 	 * the readline output.
 	 */
-	if (!(unlikely(cpu->crashing) && console && cpu->console_ok)) {
-		if (c == '\n')
-			queue_writechar(&consolebuf, '\r');
-
+	if (!(unlikely(cpu->crashing) && console && cpu->console_ok))
 		queue_writechar(&consolebuf, ch);
-	} else
+	else
 #endif
-	if (console && cpu->console_ok) {
-		if (c == '\n')
-			console->ops->tx(console, (const uint8_t *)"\r", 1, CHARDEV_BLOCKING);
-
+	if (console && cpu->console_ok)
 		console->ops->tx(console, &ch, 1, CHARDEV_BLOCKING);
-	}
 
 	return c;
 }
 
 void console_write_nolock(const char *s, size_t len)
 {
+	/* This is a bit of a hack, but we can't spin on a queue
+	 * consumer, and when the queue is full it's better to drop
+	 * full lines than end up with small, unintelligible fragments.
+	 * This can still result in shorter strings crowding out the
+	 * longer ones.
+	 *
+	 * Eventually, we may want to consider a special crash/debug output
+	 * path that can take over (and spin on) a chardev that is normally
+	 * attached to a byte channel.
+	 *
+	 * We insist on a few extra characters beyond len to account for
+	 * any \n to \r\n conversions that putchar_nolock() may make.
+	 */
+	if (queue_get_space(&consolebuf) < len + 5)
+		return;
+
 	while (*s && len--)
-		__putchar(*s++);
+		putchar_nolock(*s++);
 
 #ifdef CONFIG_LIBOS_QUEUE
 	queue_notify_consumer(&consolebuf);

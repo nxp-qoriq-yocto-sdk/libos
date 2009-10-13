@@ -305,14 +305,29 @@ static int need_to_drain(readline_t *rl)
 
 static void do_drain(readline_t *rl)
 {
+	size_t max = consolebuf.size;
+
 	if (!rl->suspended)
 		readline_suspend(rl);
 
-	ssize_t num = queue_to_queue(rl->out, &consolebuf, consolebuf.size, 0, 0);
+	/* If we have pending input, only drain to the next newline
+	 * to avoid starvation.
+	 */
+	if (!queue_empty(rl->in)) {
+		ssize_t ret = queue_memchr(&consolebuf, '\n', 0);
+		if (ret >= 0)
+			max = ret + 1;
+	}
 
-	/* Don't resume the console in the middle of a line */
-	if (num == 0 ||
-	    consolebuf.buf[queue_wrap(&consolebuf, consolebuf.head - 1)] == '\n')
+	queue_to_queue(rl->out, &consolebuf, max, 0, 0);
+
+	/* Don't resume the console in the middle of a line.
+	 *
+	 * FIXME: wait for the output queue to drain, or otherwise
+	 * deal with a full output queue during readline operations
+	 * (most places could block, but not resume).
+	 */
+	if (rl->out->buf[queue_wrap(rl->out, rl->out->tail - 1)] == '\n')
 		readline_resume(rl);
 }
 
@@ -325,20 +340,24 @@ static void readline_rx(readline_t *rl)
 
 	while (1) {
 		queue_notify_consumer(rl->out);
-
 		libos_prepare_to_block();
 
-		if (rl->suspended ||
-		    (queue_empty(rl->in) && !need_to_drain(rl)))
+		while ((rl->suspended || queue_empty(rl->in)) &&
+		       !need_to_drain(rl)) {
 			libos_block();
-		else
-			libos_unblock(rl->thread);
+			libos_prepare_to_block();
+		}	
+
+		libos_unblock(rl->thread);
 
 		if (need_to_drain(rl)) {
 			spin_lock_int(&rl->lock);
 			do_drain(rl);
 			spin_unlock_int(&rl->lock);
 		}
+
+		if (rl->suspended)
+			continue;
 
 		ch = queue_readchar(rl->in, 0);
 		if (ch < 0)

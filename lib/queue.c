@@ -374,3 +374,24 @@ size_t queue_discard(queue_t *q, size_t num)
 	raw_out32(&q->head, queue_wrap(q, q->head + num));
 	return num;
 }
+
+ssize_t queue_memchr(queue_t *q, int c, size_t start)
+{
+	uint32_t pos = queue_wrap(q, q->head + start);
+	uint32_t tail = raw_in32(&q->tail);
+	uint8_t *ret;
+
+	if (pos > tail) {
+		ret = memchr(&q->buf[pos], c, q->size - q->head);
+		if (ret)
+			return ret - &q->buf[q->head];
+
+		pos = 0;
+	}
+
+	ret = memchr(&q->buf[pos], c, tail - q->head);
+	if (ret)
+		return queue_wrap(q, ret - &q->buf[q->head]);
+
+	return -1;
+}
