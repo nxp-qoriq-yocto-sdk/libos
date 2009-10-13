@@ -417,6 +417,12 @@
 #define   L1CSR1_ICE       0x00000001 // Instruction Cache Enable
 
 #define SPR_L2CSR0       1017 // L2 Cache Control and Status Register 0
+#define   L2CSR0_L2E       0x80000000 // L2 Enable
+#define   L2CSR0_L2PE      0x40000000 // L2 Parity Enable
+#define   L2CSR0_L2FI      0x00200000 // L2 Flash Invalidate
+#define   L2CSR0_L2IO      0x00100000 // L2 Instruction Only
+#define   L2CSR0_L2DO      0x00010000 // L2 Data Only
+#define   L2CSR0_L2FL      0x00000800 // L2 Flush
 #define   L2CSR0_L2LFC     0x00000400 // L2 Cache Lock Flash Clear
 #define   L2CSR0_L2FCID    0x00000300 // L2 Cache Lock Flash Clear Instruction or Data
 #define   L2CSR0_L2SLC     0x00000040 // L2 Cache Snoop Lock Clear
