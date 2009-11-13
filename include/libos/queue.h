@@ -44,13 +44,18 @@ typedef struct queue {
 	/** Consumer callback to indicate data available.
 	 *
 	 * @param[in] q the queue with data available.
+	 * @param[in] blocking
+	 *    If non-NULL, do not return until all data has been
+	 *    processed that was present at the beginning of the call, if
+	 *    possible.  This is not the thread-based blocking as in
+	 *    queue_write_blocking, but spinning as in CHARDEV_BLOCKING.
 	 *
 	 * This pointer should be NULL when a callback is not requested. 
 	 * This function must not be called from within a space_avail()
 	 * callback for the same queue, only from asynchronous contexts. 
 	 * This function may be called from interrupt context.
 	 */
-	void (*volatile data_avail)(struct queue *q);
+	void (*volatile data_avail)(struct queue *q, int blocking);
 
 	/// Private data for the consumer.
 	void *consumer;
@@ -100,12 +105,12 @@ size_t qprintf(queue_t *q, int blocking, const char *str, ...)
  */
 ssize_t queue_memchr(queue_t *q, int c, size_t start);
 
-static inline void queue_notify_consumer(queue_t *q)
+static inline void queue_notify_consumer(queue_t *q, int blocking)
 {
-	void (*callback)(struct queue *q) = q->data_avail;
+	void (*callback)(struct queue *q, int blocking) = q->data_avail;
 	
 	if (callback)
-		callback(q);
+		callback(q, blocking);
 }
 
 static inline void queue_notify_producer(queue_t *q)

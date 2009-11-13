@@ -85,8 +85,9 @@ static inline void spin_lock(uint32_t *ptr)
 #endif
 
 	if (spin_lock_held(ptr)) {
-		set_crashing();
+		set_crashing(1);
 		printf("Recursive spin_lock detected on %p\n", ptr);
+		set_crashing(0);
 		BUG();
 	}
 

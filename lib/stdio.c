@@ -40,15 +40,17 @@ int putchar(int c)
 	return (unsigned char)ch;
 }
 
+#define CRASH_IN_PRINT 10000
+
 int puts(const char *s)
 {
 	int lock = 1;
 
 	if (unlikely(cpu->crashing)) {
-		if (cpu->crashing > 1)
+		if (cpu->crashing > CRASH_IN_PRINT)
 			return EOF;
 
-		cpu->crashing++;
+		cpu->crashing += CRASH_IN_PRINT;
 		lock = 0;
 	}
 
@@ -63,7 +65,7 @@ int puts(const char *s)
 	if (lock)
 		spin_unlock(&console_lock);
 	else
-		cpu->crashing--;
+		cpu->crashing -= CRASH_IN_PRINT;
 
 	restore_int(saved);
 	return 0;
@@ -79,10 +81,10 @@ int vprintf(const char *str, va_list args)
 	int lock = 1;
 
 	if (unlikely(cpu->crashing)) {
-		if (cpu->crashing > 1)
+		if (cpu->crashing > CRASH_IN_PRINT)
 			return -1;
 
-		cpu->crashing++;
+		cpu->crashing += CRASH_IN_PRINT;
 		lock = 0;
 	}
 
@@ -100,7 +102,7 @@ int vprintf(const char *str, va_list args)
 	if (lock)
 		spin_unlock(&console_lock);
 	else
-		cpu->crashing--;
+		cpu->crashing -= CRASH_IN_PRINT;
 
 	restore_int(saved);
 	return ret;

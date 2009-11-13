@@ -277,7 +277,7 @@ static void readline_suspend(readline_t *rl)
 			hide_line(rl);
 		
 		queue_writechar(rl->out, '\r');
-		queue_notify_consumer(rl->out);
+		queue_notify_consumer(rl->out, 0);
 	}
 
 	rl->suspended = 1;
@@ -289,7 +289,7 @@ static void readline_resume(readline_t *rl)
 {
 	if (rl->state != st_action) {
 		unhide_line(rl);
-		queue_notify_consumer(rl->out);
+		queue_notify_consumer(rl->out, 0);
 	}
 
 	rl->suspended = 0;
@@ -339,7 +339,7 @@ static void readline_rx(readline_t *rl)
 	readline_resume(rl);
 
 	while (1) {
-		queue_notify_consumer(rl->out);
+		queue_notify_consumer(rl->out, 0);
 		libos_prepare_to_block();
 
 		while ((rl->suspended || queue_empty(rl->in)) &&
@@ -389,7 +389,7 @@ static void readline_rx(readline_t *rl)
 					set_cursor_temp(rl, rl->line->end);
 
 				queue_writestr(rl->out, "\r\n");
-				queue_notify_consumer(rl->out);
+				queue_notify_consumer(rl->out, 0);
 				
 				if (rl->line->next) {
 					/* If an older command was re-issued as-is, bring it
@@ -633,7 +633,7 @@ no_normal:
 	}
 }
 
-static void drain_callback(queue_t *q)
+static void drain_callback(queue_t *q, int blocking)
 {
 	readline_t *rl = q->consumer;
 	register_t saved;
@@ -651,7 +651,7 @@ static void drain_callback(queue_t *q)
 	spin_unlock_intsave(&rl->lock, saved);
 }
 
-static void rx_callback(queue_t *q)
+static void rx_callback(queue_t *q, int blocking)
 {
 	readline_t *rl = q->consumer;
 	libos_unblock(rl->thread);
@@ -691,7 +691,7 @@ int readline_init(queue_t *in, queue_t *out,
 
 	/* Request terminal status, to see if we have an ANSI-capable terminal */
 	queue_writestr(out, "\033[5n");
-	queue_notify_consumer(rl->out);
+	queue_notify_consumer(rl->out, 0);
 
 	smp_lwsync();
 	in->data_avail = rx_callback;

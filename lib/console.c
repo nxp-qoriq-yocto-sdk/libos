@@ -35,18 +35,46 @@ static queue_t *qconsole;
 uint32_t console_lock;
 
 #ifdef CONFIG_LIBOS_QUEUE
-static void drain_consolebuf_cd(queue_t *q)
+static void drain_consolebuf_cd(chardev_t *dest, int blocking)
 {
 	if (cpu->console_ok)
-		queue_to_chardev(q->consumer, q, q->size, 0, CHARDEV_BLOCKING);
+		queue_to_chardev(dest, &consolebuf, consolebuf.size,
+		                 0, CHARDEV_BLOCKING);
 }
 
-static void drain_consolebuf_queue(queue_t *q)
+static void drain_consolebuf_queue(queue_t *dest, int blocking)
 {
 	if (cpu->console_ok) {
-		queue_to_queue(q->consumer, q, q->size, 0, 0);
-		queue_notify_consumer(q->consumer);
+		queue_to_queue(dest, &consolebuf, consolebuf.size, 0, 0);
+		queue_notify_consumer(dest, blocking);
 	}
+}
+
+static void drain_consolebuf_cd_callback(queue_t *q, int blocking)
+{
+	assert(q == &consolebuf);
+	drain_consolebuf_cd(q->consumer, blocking);
+}
+
+static void drain_consolebuf_queue_callback(queue_t *q, int blocking)
+{
+	assert(q == &consolebuf);
+	drain_consolebuf_queue(q->consumer, blocking);
+}
+
+static void drain_consolebuf(void)
+{
+	/* If we're crashing, or if consolebuf is getting full and we
+	 * can't wait for readline, drain everything directly.
+	 */
+	if (console && cpu->console_ok)
+		drain_consolebuf_cd(console, 1);
+	else if (qconsole)
+		drain_consolebuf_queue(qconsole, 1);
+}
+#else
+static void drain_consolebuf(void)
+{
 }
 #endif
 
@@ -56,7 +84,7 @@ void console_init(chardev_t *cd)
 	assert(!consolebuf.consumer);
 	consolebuf.consumer = cd;
 	smp_lwsync();
-	consolebuf.data_avail = drain_consolebuf_cd;
+	consolebuf.data_avail = drain_consolebuf_cd_callback;
 #endif
 
 	console = cd;
@@ -68,18 +96,18 @@ void qconsole_init(queue_t *q)
 	assert(!consolebuf.consumer);
 	consolebuf.consumer = q;
 	smp_lwsync();
-	consolebuf.data_avail = drain_consolebuf_queue;
+	consolebuf.data_avail = drain_consolebuf_queue_callback;
 
 	qconsole = q;
 }
 #endif
 
-static int putchar_nolock(int c)
+static int putchar_nolock(queue_t *q, int c)
 {
 	uint8_t ch = c;
 
 	if (c == '\n')
-		putchar_nolock('\r');
+		putchar_nolock(q, '\r');
 
 #ifdef CONFIG_LIBOS_QUEUE
 	/* If we're crashing and we have a direct console device,
@@ -87,7 +115,7 @@ static int putchar_nolock(int c)
 	 * the readline output.
 	 */
 	if (!(unlikely(cpu->crashing) && console && cpu->console_ok))
-		queue_writechar(&consolebuf, ch);
+		queue_writechar(q, ch);
 	else
 #endif
 	if (console && cpu->console_ok)
@@ -98,39 +126,37 @@ static int putchar_nolock(int c)
 
 void console_write_nolock(const char *s, size_t len)
 {
-	/* This is a bit of a hack, but we can't spin on a queue
-	 * consumer, and when the queue is full it's better to drop
-	 * full lines than end up with small, unintelligible fragments.
-	 * This can still result in shorter strings crowding out the
-	 * longer ones.
-	 *
-	 * Eventually, we may want to consider a special crash/debug output
-	 * path that can take over (and spin on) a chardev that is normally
-	 * attached to a byte channel.
-	 *
-	 * We insist on a few extra characters beyond len to account for
-	 * any \n to \r\n conversions that putchar_nolock() may make.
-	 */
-	if (queue_get_space(&consolebuf) < min(strnlen(s, len), len + 5))
-		return;
+	queue_t *q = &consolebuf;
+
+	if (unlikely(cpu->crashing) && qconsole)
+		q = qconsole;
 
 	while (*s && len--)
-		putchar_nolock(*s++);
+		putchar_nolock(q, *s++);
 
 #ifdef CONFIG_LIBOS_QUEUE
-	queue_notify_consumer(&consolebuf);
+	queue_notify_consumer(q, cpu->crashing);
+
+	/* We try to wait for readline to gracefully handle output,
+	 * but don't wait forever if output is coming too quickly --
+	 * it's probably debugging output that we don't want to miss.
+	 */
+	if (q == &consolebuf && queue_get_space(q) < q->size / 2)
+		drain_consolebuf();
 #endif
 }
+
+#define CRASH_IN_PRINT 10000
 
 void console_write(const char *s, size_t len)
 {
 	int lock = 1;
 
 	if (unlikely(cpu->crashing)) {
-		if (cpu->crashing > 1)
+		if (cpu->crashing > CRASH_IN_PRINT)
 			return;
 
-		cpu->crashing++;
+		cpu->crashing += CRASH_IN_PRINT;
 		lock = 0;
 	}
 
@@ -144,12 +170,20 @@ void console_write(const char *s, size_t len)
 	if (lock)
 		spin_unlock(&console_lock);
 	else
-		cpu->crashing--;
+		cpu->crashing -= CRASH_IN_PRINT;
 
 	restore_int(saved);
 }
 
-void set_crashing(void)
+void set_crashing(int crashing)
 {
-	cpu->crashing = 1;
+	if (crashing) {
+		cpu->crashing++;
+		drain_consolebuf();
+	} else {
+		cpu->crashing--;
+		
+		if (cpu->crashing < 0)
+			cpu->crashing = 0;
+	}
 }

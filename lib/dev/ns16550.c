@@ -66,14 +66,7 @@ static void __ns16550_tx_callback(ns16550 *priv)
 {
 	int i;
 
-	while (1) {
-		if (!(in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE)) {
-			out8(&priv->reg[NS16550_IER],
-			     in8(&priv->reg[NS16550_IER]) | NS16550_IER_ETHREI);
-
-			return;
-		}
-
+	if (in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE) {
 		for (i = 0; i < priv->txfifo; i++) {
 			int c = queue_readchar(priv->cd.tx, 0);
 			if (c < 0) {
@@ -86,22 +79,24 @@ static void __ns16550_tx_callback(ns16550 *priv)
 			priv->tx_counter++;
 			out8(&priv->reg[NS16550_THR], c);
 		}
-
-		if (1) {
-			out8(&priv->reg[NS16550_IER],
-			     in8(&priv->reg[NS16550_IER]) | NS16550_IER_ETHREI);
-
-			return;
-		}
 	}
+
+	out8(&priv->reg[NS16550_IER],
+	     in8(&priv->reg[NS16550_IER]) | NS16550_IER_ETHREI);
 }
 
-static void ns16550_tx_callback(queue_t *q)
+static void ns16550_tx_callback(queue_t *q, int blocking)
 {
 	ns16550 *priv = q->consumer;
 	assert(q == priv->cd.tx);
-	int lock = !unlikely(cpu->crashing);
 
+	if (blocking) {
+		size_t len = queue_get_avail(q);
+		queue_to_chardev(&priv->cd, q, len, 0, CHARDEV_BLOCKING);
+		return;
+	}
+
+	int lock = !unlikely(cpu->crashing);
 	register_t saved = disable_int_save();
 
 	if (lock)
@@ -186,7 +181,7 @@ static int ns16550_isr(void *arg)
 	spin_unlock(&priv->lock);
 
 	if (rx_notify)
-		queue_notify_consumer(priv->cd.rx);
+		queue_notify_consumer(priv->cd.rx, 0);
 
 	if (tx_notify) {
 		queue_notify_producer(priv->cd.tx);
@@ -283,19 +278,23 @@ static ssize_t ns16550_tx(chardev_t *cd, const uint8_t *buf,
 			if (!(flags & CHARDEV_BLOCKING))
 				return ret;
 
-		unsigned long saved = spin_lock_intsave(&priv->lock);
+		int lock = !unlikely(cpu->crashing);
+		register_t saved = disable_int_save();
 
-		if (!(in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE)) {
-			spin_unlock_intsave(&priv->lock, saved);
-			continue;
+		if (lock)
+			spin_lock(&priv->lock);
+
+		if (in8(&priv->reg[NS16550_LSR]) & NS16550_LSR_THRE) {
+			for (i = 0; i < priv->txfifo && ret < count; i++) {
+				priv->tx_counter++;
+				out8(&priv->reg[NS16550_THR], buf[ret++]);
+			}
 		}
 
-		for (i = 0; i < priv->txfifo && ret < count; i++) {
-			priv->tx_counter++;
-			out8(&priv->reg[NS16550_THR], buf[ret++]);
-		}
+		if (lock)
+			spin_unlock(&priv->lock);
 
-		spin_unlock_intsave(&priv->lock, saved);
+		restore_int(saved);
 	} while (ret < count);
 
 	return ret;

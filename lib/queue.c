@@ -166,7 +166,7 @@ ssize_t queue_write_blocking(queue_t *q, const uint8_t *buf, size_t len)
 		ssize_t ret = queue_write(q, buf, len);
 		if (ret > 0) {
 			len -= ret;
-			queue_notify_consumer(q);
+			queue_notify_consumer(q, 0);
 			continue;
 		}
 
@@ -204,7 +204,7 @@ int queue_writechar_blocking(queue_t *q, uint8_t c)
 		libos_block();
 	}
 
-	queue_notify_consumer(q);
+	queue_notify_consumer(q, 0);
 	libos_unblock(cpu->thread);
 	return 0;
 }

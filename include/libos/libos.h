@@ -41,14 +41,15 @@
 } while (0)
 
 #ifdef CONFIG_LIBOS_CONSOLE
-extern void set_crashing(void);
+extern void set_crashing(int crashing);
 #else
-#define set_crashing()
+#define set_crashing(crashing)
 #endif
 
 #define BUG() do { \
-	set_crashing(); \
+	set_crashing(1); \
 	printf("Assertion failure at %s:%d\n", __FILE__, __LINE__); \
+	set_crashing(0); \
 	__builtin_trap(); \
 } while (0)
 
