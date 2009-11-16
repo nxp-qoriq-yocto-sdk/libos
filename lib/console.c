@@ -126,6 +126,7 @@ static int putchar_nolock(queue_t *q, int c)
 
 void console_write_nolock(const char *s, size_t len)
 {
+#ifdef CONFIG_LIBOS_QUEUE
 	queue_t *q = &consolebuf;
 
 	if (unlikely(cpu->crashing) && qconsole)
@@ -134,7 +135,6 @@ void console_write_nolock(const char *s, size_t len)
 	while (*s && len--)
 		putchar_nolock(q, *s++);
 
-#ifdef CONFIG_LIBOS_QUEUE
 	queue_notify_consumer(q, cpu->crashing);
 
 	/* We try to wait for readline to gracefully handle output,
@@ -143,6 +143,9 @@ void console_write_nolock(const char *s, size_t len)
 	 */
 	if (q == &consolebuf && queue_get_space(q) < q->size / 2)
 		drain_consolebuf();
+#else
+	while (*s && len--)
+		putchar_nolock(NULL, *s++);
 #endif
 }
 
