@@ -28,7 +28,9 @@
 #define GUEST_ERROR_EVENT_QUEUE  0
 #define GLOBAL_ERROR_EVENT_QUEUE 1
 
-#define ERROR_PAMU_AV 0
+#define ERROR_MACHINE_CHECK 0
+#define ERROR_PAMU_AV 1
+
 #define MAX_ERROR_EVENTS 64
 
 #endif

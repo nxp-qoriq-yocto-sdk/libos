@@ -42,6 +42,7 @@
 #define MSRBIT_IS        58 // Instruction Address Space
 #define MSRBIT_DS        59 // Data Address Space
 #define MSRBIT_PMM       61 // Performance Monitor Mask
+#define MSRBIT_RI        62 // Recoverable interrupt
 
 #define MSR_GS           (1 << (63 - MSRBIT_GS))
 #define MSR_UCLE         (1 << (63 - MSRBIT_UCLE))
@@ -58,6 +59,7 @@
 #define MSR_IS           (1 << (63 - MSRBIT_IS))
 #define MSR_DS           (1 << (63 - MSRBIT_DS))
 #define MSR_PMM          (1 << (63 - MSRBIT_PMM))
+#define MSR_RI           (1 << (63 - MSRBIT_RI))
 
 // MOVE
 #define MSR_HVPRIV       (MSR_GS | MSR_UCLE | MSR_DE | MSR_WE | MSR_PMM)
@@ -299,12 +301,17 @@
 #define SPR_MCSRR1       571  // Machine Check SRR1
 #define SPR_MCSR         572  // Machine Check Status
 #define   MCSR_MCP         0x80000000 // Input to core
+#define   MCSR_ICPERR      0x40000000 // Instruction cache parity error
+#define   MCSR_DCPERR      0x20000000 // Data cache parity error
+#define   MCSR_L2MMU_MHIT  0x08000000 // L2 MMU simultaneous hits
 #define   MCSR_NMI         0x00100000 // Non-Maskable Interrupt
 #define   MCSR_MAV         0x00080000 // Address Valid
 #define   MCSR_MEA         0x00040000 // MCAR is virtual
 #define   MCSR_IF          0x00010000 // Instruction Fetch
 #define   MCSR_LD          0x00008000 // Load
-#define   MCSR_ST          0x00002000 // Store
+#define   MCSR_ST          0x00004000 // Store
+#define   MCSR_LDG         0x00002000 // Guarded load
+#define   MCSR_BSL2_ERR    0x00000001 // L2 cache error
 #define SPR_MCAR         573  // Machine check Address
 
 #define SPR_DSRR0        574  // Debug SRR0
