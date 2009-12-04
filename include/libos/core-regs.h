@@ -323,6 +323,7 @@
 #define SPR_SPRG9        605
 
 #define SPR_L1CSR2       606 // L1 Cache Control and Status Register 2
+#define   L1CSR2_DCWS      0x40000000 // Data cache write shadow
 #define SPR_L1CSR3       607 // L1 Cache Control and Status Register 3
 
 #define SPR_PID1         633  // Process ID Register 1 (e500v1, e500v2)
