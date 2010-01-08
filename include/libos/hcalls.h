@@ -3,7 +3,7 @@
  *
  * Author: Timur Tabi <timur@freescale.com>
  *
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,6 +73,7 @@
 #define FH_SEND_NMI                     22
 #define FH_VMPIC_GET_MSIR               23
 #define FH_SYSTEM_RESET                 24
+#define FH_IDLE                         25
 #define FH_PARTITION_SEND_DBELL         32
 
 /*
@@ -778,4 +779,23 @@ static inline unsigned int fh_err_get_info(int queue, uint32_t *error_info)
 
 	return r3;
 }
+
+/**
+ * Idle -- wait for next interrupt on this core
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_idle(void)
+{
+	register uintptr_t r11 __asm__("r11") = FH_IDLE;
+	register uintptr_t r3 __asm__("r3");
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "=r" (r3)
+		: : HCALL_CLOBBERS1
+	);
+
+	return r3;
+}
+
 #endif
