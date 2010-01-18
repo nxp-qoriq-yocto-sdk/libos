@@ -1,7 +1,7 @@
 
 
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -245,7 +245,7 @@ fixup_mmu:
 	/* Switch to the above TLB1[BASE_TLB_ENTRY] mapping */
 	lis	%r20, 6f@h
 	ori	%r20, %r20, 6f@l
-	li	%r21, 0
+	li	%r21, MSR_RI@l
 	mtspr   SPR_SRR0, %r20
 	mtspr   SPR_SRR1, %r21
 	rfi

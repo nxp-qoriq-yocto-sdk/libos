@@ -1,7 +1,7 @@
 /*
  * Exception vectors
  *
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  * Author: Scott Wood <scottwood@freescale.com>
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -158,9 +158,10 @@
 	isync
 #endif
 
-	/* Don't let the guest's clearing of EE/CE/ME affect the hypervisor */
+	/* Don't let the guest's clearing of EE/CE/ME/RI affect the hypervisor */
 	.if	\savearea != CPU_MACHKSAVE
 	mfmsr	%r0
+	ori	%r0, %r0, MSR_RI@l
 	.if	\savearea == CPU_NORMSAVE
 	oris	%r0, %r0, MSR_CE@h
 	.endif
