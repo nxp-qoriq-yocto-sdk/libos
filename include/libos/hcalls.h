@@ -43,10 +43,10 @@
 #define _FREESCALE_HCALLS_H
 
 #include <libos/hcall-errors.h>
+#include <libos/endian.h>
 
 /* For compatibility with Linux which shares a file like this one */
-#define be32_to_cpu(x) (x)
-#define cpu_to_be32(x) (x)
+#define be32_to_cpu(x) cpu_from_be32(x)
 
 #define FH_API_VERSION 1
 
