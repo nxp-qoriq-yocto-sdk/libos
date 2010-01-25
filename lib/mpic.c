@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -461,7 +461,8 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 
 	register_t saved = spin_lock_intsave(&mpic_lock);
 	if (!mirq->config) {
-		mirq->irq.config = mpic_intspec_to_config[intspec[1]];
+		mirq->irq.config = mpic_intspec_to_config[intspec[1]] |
+					 IRQ_TYPE_MPIC_DIRECT;
 		__mpic_irq_set_config(&mirq->irq, mirq->irq.config);
 	}
 	spin_unlock_intsave(&mpic_lock, saved);
