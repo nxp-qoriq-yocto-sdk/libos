@@ -3,7 +3,7 @@
  * Polling only, no interrupt support yet.
  */
 /*
- * Copyright (C) 2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009,2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,23 +69,25 @@ static ssize_t byte_chan_tx(chardev_t *cd, const uint8_t *buf,
 {
 	byte_chan_t *priv = to_container(cd, byte_chan_t, cd);
 	size_t total = 0;
-	int ret;
+	int ret = 0;
 
 	while (count > 0) {
-		unsigned int this_count = min(count, 16U);
-	
-		ret = fh_byte_channel_send(priv->handle, this_count, (const char *)buf);
-		if (ret == EAGAIN && (flags & CHARDEV_BLOCKING))
-			continue;
-		else if (ret)
-			return total == 0 ? ret : (ssize_t)total;
+		unsigned int sent = min(count, 16U);
 
-		buf += this_count;
-		total += this_count;
-		count -= this_count;
+		ret = fh_byte_channel_send(priv->handle, &sent, (const char *)buf);
+
+		if (sent == 0 && !(ret == EAGAIN && (flags & CHARDEV_BLOCKING)))
+			break;
+
+		buf += sent;
+		total += sent;
+		count -= sent;
 	}
 
-	return total;
+	if (ret)
+		return total == 0 ? ret : (ssize_t)total;
+	else
+		return total;
 }
 
 static const chardev_ops ops = {
