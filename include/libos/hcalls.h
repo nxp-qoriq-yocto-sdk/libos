@@ -44,6 +44,7 @@
 
 #include <libos/hcall-errors.h>
 #include <libos/endian.h>
+#include <libos/types.h>
 
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) cpu_from_be32(x)
@@ -74,6 +75,9 @@
 #define FH_VMPIC_GET_MSIR               23
 #define FH_SYSTEM_RESET                 24
 #define FH_IDLE                         25
+#define FH_GET_CORE_STATE               26
+#define FH_ENTER_NAP                    27
+#define FH_EXIT_NAP                     28
 #define FH_PARTITION_SEND_DBELL         32
 
 /*
@@ -798,4 +802,77 @@ static inline unsigned int fh_idle(void)
 	return r3;
 }
 
+#define FH_VCPU_RUN       0
+#define	FH_VCPU_IDLE      1
+#define FH_VCPU_NAP       2
+
+/**
+ * Get the state of a vcpu.
+ *
+ * @handle[in] handle of partition containing the vcpu
+ * @vcpu[in] vcpu number within the partition
+ * @state[out] the current state of the vcpu, see FH_VCPU_*
+ * @return zero on success, non-zero on error.
+ */
+static inline unsigned int fh_get_core_state(unsigned int handle,
+	unsigned int vcpu, unsigned int *state)
+{
+	register uintptr_t r11 __asm__("r11") = FH_GET_CORE_STATE;
+	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r4 __asm__("r4") = vcpu;
+	register uintptr_t r5 __asm__("r5");
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3), "+r" (r4), "=r" (r5)
+		: : HCALL_CLOBBERS3
+	);
+
+	*state = r5;
+	return r3;
+}
+
+/**
+ * Enter nap on a vcpu
+ *
+ * Note that though the API supports entering nap on a vcpu other
+ * than the caller, this may not be implmented and may return EINVAL.
+ *
+ * @handle[in] handle of partition containing the vcpu
+ * @vcpu[in] vcpu number within the partition
+ * @return zero on success, non-zero on error.
+ */
+static inline unsigned int fh_enter_nap(unsigned int handle, unsigned int vcpu)
+{
+	register uintptr_t r11 __asm__("r11") = FH_ENTER_NAP;
+	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r4 __asm__("r4") = vcpu;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3), "+r" (r4)
+		: : HCALL_CLOBBERS2
+	);
+
+	return r3;
+}
+
+/**
+ * Exit nap on a vcpu
+ *
+ * @handle[in] handle of partition containing the vcpu
+ * @vcpu[in] vcpu number within the partition
+ * @return zero on success, non-zero on error.
+ */
+static inline unsigned int fh_exit_nap(unsigned int handle, unsigned int vcpu)
+{
+	register uintptr_t r11 __asm__("r11") = FH_EXIT_NAP;
+	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r4 __asm__("r4") = vcpu;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3), "+r" (r4)
+		: : HCALL_CLOBBERS2
+	);
+
+	return r3;
+}
 #endif
