@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,21 +75,10 @@ static inline int spin_lock_held(uint32_t *ptr)
 	return *ptr == mfspr_nonvolatile(SPR_PIR) + 1;
 }
 
-static inline void spin_lock(uint32_t *ptr)
+static inline void raw_spin_lock(uint32_t *ptr)
 {
 	uint32_t pir = mfspr_nonvolatile(SPR_PIR) + 1;
 	uint32_t tmp;
-
-#ifdef CONFIG_LIBOS_NO_BARE_SPINLOCKS
-	assert(!ints_enabled());
-#endif
-
-	if (spin_lock_held(ptr)) {
-		set_crashing(1);
-		printf("Recursive spin_lock detected on %p\n", ptr);
-		set_crashing(0);
-		BUG();
-	}
 
 	asm volatile("1: lwarx %0, %y1;"
 	             "cmpwi %0, 0;"
@@ -108,15 +97,40 @@ static inline void spin_lock(uint32_t *ptr)
 	             "memory", "cc");
 }
 
-/* Returns non-zero on success, zero if the lock is already held */
-static inline int spin_trylock(uint32_t *ptr)
+static inline void spin_lock(uint32_t *ptr)
+{
+#ifdef CONFIG_LIBOS_NO_BARE_SPINLOCKS
+	assert(!ints_enabled());
+#endif
+
+	if (spin_lock_held(ptr)) {
+		set_crashing(1);
+		printf("Recursive spin_lock detected on %p\n", ptr);
+		set_crashing(0);
+		BUG();
+	}
+
+	raw_spin_lock(ptr);
+}
+
+static inline int raw_spin_trylock(uint32_t *ptr)
 {
 	return compare_and_swap32(ptr, 0, mfspr_nonvolatile(SPR_PIR) + 1);
 }
 
+/* Returns non-zero on success, zero if the lock is already held */
+static inline int spin_trylock(uint32_t *ptr)
+{
+#ifdef CONFIG_LIBOS_NO_BARE_SPINLOCKS
+	assert(!ints_enabled());
+#endif
+
+	return raw_spin_trylock(ptr);
+}
+
 static inline void spin_unlock(uint32_t *ptr)
 {
-	__attribute__((unused)) uint32_t pir = mfspr(SPR_PIR) + 1;
+	__attribute__((unused)) uint32_t pir = mfspr_nonvolatile(SPR_PIR) + 1;
 
 	assert(*ptr == pir);
 	asm volatile("lwsync; stw%U0%X0 %1, %0" : "=m" (*ptr) : "r" (0) : "memory");
