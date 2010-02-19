@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,6 +39,9 @@
 #define MPIC_EXT_MCHECK_SUMMARY 0x3c00
 #define MPIC_INT_MCHECK_SUMMARY 0x3c40
 
+#define MPIC_ERROR_INT_SUMMARY 0x3900
+#define MPIC_ERROR_INT_MASK 0x3904
+
 #define MPIC_IPIDR_BASE  0x40
 #define MPIC_IPIVPR_BASE 0x10A0
 #define MPIC_IRQ_BASE 0x10000
@@ -52,6 +55,10 @@
 #define MPIC_IVPR_POLARITY 0x00800000
 #define MPIC_IVPR_SENSE    0x00400000
 #define MPIC_IVPR_CONFIG_SHIFT 22
+
+/*Interrupt types and sub types as per the MPIC binding*/
+#define MPIC_DEV_INT 0
+#define MPIC_ERR_INT 1
 
 typedef union {
 	uint32_t data;
@@ -95,10 +102,20 @@ typedef struct ipi_hwirq {
 	uint32_t dispatch_cpu_mask;
 } ipi_hwirq_t;
 
+typedef struct error_interrupt {
+	uint32_t  *eisr0, *eimr0;
+} error_interrupt_t;
+
+typedef struct error_sub_int {
+	interrupt_t dev_err_irq;
+	int subintnum;
+} error_sub_int_t;
+
 #define MPIC_NUM_EXT_SRCS	12
 #define MPIC_NUM_INT_SRCS	128
 #define MPIC_NUM_MSG_SRCS	8
 #define MPIC_NUM_MSI_SRCS	24
+#define MPIC_NUM_ERR_SRCS	32 /* corresponds to number of bits in EISR0 */
 #define MPIC_NUM_EXTINT_SRCS (MPIC_NUM_INT_SRCS + 16)
 #define MPIC_NUM_SRCS (MPIC_NUM_EXTINT_SRCS + 32 + MPIC_NUM_MSG_SRCS + 40 + MPIC_NUM_MSI_SRCS)
 

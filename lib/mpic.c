@@ -39,12 +39,14 @@ typedef struct mpic_interrupt {
 	msi_hwirq_t *msi;
 	uint32_t msi_reg;
 	ipi_hwirq_t ipi;
+	error_interrupt_t err;
 	int config;
 } mpic_interrupt_t;
 
 static mpic_interrupt_t mpic_irqs[MPIC_NUM_SRCS];
 static mpic_interrupt_t mpic_ipi_irqs[MPIC_NUM_IPI_SRCS];
-static uint32_t mpic_lock;
+static uint32_t mpic_lock, error_int_lock;
+static error_sub_int_t error_subints[MPIC_NUM_ERR_SRCS];
 
 int mpic_coreint;
 
@@ -74,6 +76,7 @@ static void mpic_irq_mask(interrupt_t *irq)
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	
 	register_t saved = spin_lock_intsave(&mpic_lock);
+	irq->maskcnt++;
 	out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) | MPIC_IVPR_MASK);
 	spin_unlock_intsave(&mpic_lock, saved);
 }
@@ -84,7 +87,8 @@ static void mpic_irq_unmask(interrupt_t *irq)
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 
 	register_t saved = spin_lock_intsave(&mpic_lock);
-	out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) & ~MPIC_IVPR_MASK);
+	if ((irq->maskcnt > 0) && (--irq->maskcnt == 0))
+		out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) & ~MPIC_IVPR_MASK);
 	spin_unlock_intsave(&mpic_lock, saved);
 }
 
@@ -401,6 +405,99 @@ int_ops_t mpic_msi_ops = {
 	.get_msir = mpic_msi_get_msir,
 };
 
+static int error_int_handler(void *arg)
+{
+	error_interrupt_t *err = arg;
+	uint32_t val = in32(err->eisr0);
+	int i;
+
+	while (val) {
+		i = count_lsb_zeroes(val);
+		/* The irq handler must clear the condition by masking the corresponding
+		 * EIMR0 bit.
+		 */
+		call_irq_handler(&error_subints[31 - i].dev_err_irq);
+		val &= ~(1 << i);
+	}
+
+	return 0;
+}
+
+static int error_int_get_mask(interrupt_t *irq)
+{
+	assert(irq->parent);
+
+	error_sub_int_t *err = to_container(irq, error_sub_int_t, dev_err_irq);
+	mpic_interrupt_t *mirq = to_container(irq->parent, mpic_interrupt_t, irq);
+
+	return !!(in32(mirq->err.eimr0) & (0x80000000 >> err->subintnum));
+}
+
+static void error_int_mask(interrupt_t *irq)
+{
+	assert(irq->parent);
+
+	error_sub_int_t *err = to_container(irq, error_sub_int_t, dev_err_irq);
+	mpic_interrupt_t *mirq = to_container(irq->parent, mpic_interrupt_t, irq);
+
+	register_t saved = spin_lock_intsave(&error_int_lock);
+	irq->maskcnt++;
+	out32(mirq->err.eimr0, in32(mirq->err.eimr0) | (0x80000000 >> err->subintnum));
+	spin_unlock_intsave(&error_int_lock, saved);
+}
+
+static void error_int_unmask(interrupt_t *irq)
+{
+	assert(irq->parent);
+
+	error_sub_int_t *err = to_container(irq, error_sub_int_t, dev_err_irq);
+	mpic_interrupt_t *mirq = to_container(irq->parent, mpic_interrupt_t, irq);
+
+	register_t saved = spin_lock_intsave(&error_int_lock);
+	if ((irq->maskcnt > 0) && (--irq->maskcnt == 0)) {
+		out32(mirq->err.eimr0, in32(mirq->err.eimr0) & ~(0x80000000 >> err->subintnum));
+	}
+	spin_unlock_intsave(&error_int_lock, saved);
+}
+
+static int error_int_register(interrupt_t *irq, int_handler_t handler,
+                         void *devid, int flags)
+{
+	assert(irq->parent);
+
+	/* Check if the irq handler for the mpic int0 has been registered */
+	register_t saved = spin_lock_intsave(&error_int_lock);
+	if (!irq->parent->actions) {
+		error_interrupt_t *err = &(to_container(irq->parent, mpic_interrupt_t, irq))->err;
+		irq->parent->ops->register_irq(irq->parent, error_int_handler,
+						err, TYPE_MCHK);
+	}
+
+	irqaction_t *action = alloc_type(irqaction_t);
+	if (!action) {
+		spin_unlock_intsave(&error_int_lock, saved);
+		return ERR_NOMEM;
+	}
+
+	action->handler = handler;
+	action->devid = devid;
+
+	action->next = irq->actions;
+	irq->actions = action;
+	spin_unlock_intsave(&error_int_lock, saved);
+
+	error_int_unmask(irq);
+
+	return 0;
+}
+
+int_ops_t error_int_ops = {
+	.register_irq = error_int_register,
+	.enable = error_int_unmask,
+	.disable = error_int_mask,
+	.is_disabled = error_int_get_mask,
+};
+
 static void ipi_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
 {
 	register_t saved = spin_lock_intsave(&mpic_lock);
@@ -432,12 +529,27 @@ interrupt_t *mpic_get_ipi_irq(int irq)
 	return &ipi->irq;
 }
 
+static void error_int_init(mpic_interrupt_t *mirq)
+{
+	mirq->err.eisr0 = (uint32_t *)(CCSRBAR_VA + MPIC + MPIC_ERROR_INT_SUMMARY);
+	mirq->err.eimr0 = (uint32_t *)(CCSRBAR_VA + MPIC + MPIC_ERROR_INT_MASK);
+
+	/* At reset all the interrupts would be unmasked, so we mask them here */
+	out32(mirq->err.eimr0, ~0);
+
+	for (int i = 0; i < MPIC_NUM_ERR_SRCS; i++) {
+		error_subints[i].dev_err_irq.ops = &error_int_ops;
+		error_subints[i].dev_err_irq.parent = &mirq->irq;
+	}
+}
+
 static interrupt_t *get_mpic_irq(device_t *dev,
                                  const uint32_t *intspec,
                                  int ncells)
 {
 	unsigned int irqnum;
 	mpic_interrupt_t *mirq;
+	interrupt_t *irq = NULL;
 
 	assert(dev->irqctrl == &mpic_ops);
 	
@@ -459,6 +571,36 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 
 	mirq = &mpic_irqs[irqnum];
 
+	if (ncells == 4) {
+		switch (intspec[2]) {
+		case MPIC_DEV_INT:
+			irq = &mirq->irq;
+			break;
+
+		case MPIC_ERR_INT: {
+			uint32_t subint = intspec[3];
+			if (subint >= MPIC_NUM_ERR_SRCS) {
+				printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR, "Invalid sub interrupt\n");
+			}
+
+			if (!mirq->config)
+				error_int_init(mirq);
+
+			error_sub_int_t *err = &error_subints[subint];
+			err->dev_err_irq.config = mpic_intspec_to_config[intspec[1]];
+			err->subintnum = subint;
+			irq = &err->dev_err_irq;
+			break;
+		}
+
+		default:
+			printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR, "Unhandled interrupt type %d\n", intspec[2]);
+			return irq;
+		}
+	} else {
+		irq = &mirq->irq;
+	}
+
 	register_t saved = spin_lock_intsave(&mpic_lock);
 	if (!mirq->config) {
 		mirq->irq.config = mpic_intspec_to_config[intspec[1]] |
@@ -466,7 +608,8 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 		__mpic_irq_set_config(&mirq->irq, mirq->irq.config);
 	}
 	spin_unlock_intsave(&mpic_lock, saved);
-	return &mirq->irq;
+
+	return irq;
 }
 
 /** Global MPIC initialization routine */
