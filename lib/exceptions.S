@@ -50,16 +50,40 @@
  * SPRG9: debug exception scratch
  */
 
-#if 1
+#ifndef CONFIG_LIBOS_64BIT
 /* 32-bit */
 #define LONGBYTES 4
 #define LOAD lwz
 #define STORE stw
+
+	.macro SAVE_GPRs
+	stmw	%r3, LONGBYTES*3 + FRAME_GPREGS(%r1)
+	.endm
+
+	.macro RESTORE_GPRs
+	lmw	%r2, LONGBYTES*2 + FRAME_GPREGS(%r1)
+	.endm
+
 #else
 /* 64-bit */
 #define LONGBYTES 8
 #define LOAD ld
 #define STORE std
+
+	.macro SAVE_GPRs
+	.irp REG, 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24, \
+		25,26,27,28,29,30,31
+	std %r\REG, LONGBYTES*3 + (FRAME_GPREGS + (\REG-3) * LONGBYTES)(%r1)
+	.endr
+	.endm
+
+	.macro RESTORE_GPRs
+	.irp REG, 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23, \
+		24,25,26,27,28,29,30,31
+	ld %r\REG, LONGBYTES*2 + (FRAME_GPREGS + (\REG-2) * LONGBYTES)(%r1)
+	.endr
+	.endm
+
 #endif
 
 	.macro	exception, handler, type, exc, name, scratch, \
@@ -76,8 +100,7 @@
 	\stack
 	stw	%r0, FRAME_CR(%r1)
 
-	/* fixme for 64-bit */
-	stmw	%r3, LONGBYTES*3 + FRAME_GPREGS(%r1)
+	SAVE_GPRs
 
 	LOAD	%r0, LONGBYTES*0 + \savearea(%r2)
 	LOAD	%r3, LONGBYTES*1 + \savearea(%r2)
@@ -253,8 +276,7 @@ ret_from_\type:
 	mtspr	\srr1, %r10
 	stw	%r11, CPU_TRAPLEVEL(%r2)
 
-	/* fixme for 64-bit */
-	lmw	%r2, LONGBYTES*2 + FRAME_GPREGS(%r1)
+	RESTORE_GPRs
 
 	LOAD	%r0, LONGBYTES*0 + FRAME_GPREGS(%r1)
 	LOAD	%r1, LONGBYTES*1 + FRAME_GPREGS(%r1)
