@@ -824,14 +824,13 @@ static inline unsigned int fh_get_core_state(unsigned int handle,
 	register uintptr_t r11 __asm__("r11") = FH_GET_CORE_STATE;
 	register uintptr_t r3 __asm__("r3") = handle;
 	register uintptr_t r4 __asm__("r4") = vcpu;
-	register uintptr_t r5 __asm__("r5");
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "+r" (r4), "=r" (r5)
-		: : HCALL_CLOBBERS3
+		: "+r" (r11), "+r" (r3), "+r" (r4)
+		: : HCALL_CLOBBERS2
 	);
 
-	*state = r5;
+	*state = r4;
 	return r3;
 }
 
