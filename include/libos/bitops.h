@@ -149,6 +149,19 @@ static inline void spin_unlock_critsave(uint32_t *ptr, register_t saved)
 	restore_critint(saved);
 }
 
+static inline register_t spin_lock_mchksave(uint32_t *ptr)
+{
+	register_t ret = disable_mchk_save();
+	spin_lock(ptr);
+	return ret;
+}
+
+static inline void spin_unlock_mchksave(uint32_t *ptr, register_t saved)
+{
+	spin_unlock(ptr);
+	restore_mchk(saved);
+}
+
 static inline register_t spin_lock_intsave(uint32_t *ptr)
 {
 	register_t ret = disable_int_save();

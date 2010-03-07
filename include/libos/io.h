@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -166,6 +166,18 @@ static inline register_t disable_critint_save(void)
 }
 
 static inline void restore_critint(register_t saved)
+{
+	mtmsr(saved);
+}
+
+static inline register_t disable_mchk_save(void)
+{
+	register_t ret = mfmsr();
+	mtmsr(ret & ~(MSR_CE | MSR_EE | MSR_ME));
+	return ret;
+}
+
+static inline void restore_mchk(register_t saved)
 {
 	mtmsr(saved);
 }
