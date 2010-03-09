@@ -51,6 +51,7 @@ typedef struct interrupt {
 	struct int_ops *ops;
 	irqaction_t *actions;
 	int config, maskcnt;
+	uint32_t oldmask, lock;
 	void *priv;
 	struct interrupt *parent;
 } interrupt_t;
@@ -77,5 +78,9 @@ typedef struct int_ops {
 	int (*is_active)(interrupt_t *irq);
 	uint32_t (*get_msir)(interrupt_t *irq);
 } int_ops_t;
+
+void interrupt_mask(interrupt_t *irq);
+void interrupt_reset(interrupt_t *irq);
+void interrupt_unmask(interrupt_t *irq);
 
 #endif

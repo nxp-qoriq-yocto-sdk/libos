@@ -76,7 +76,6 @@ static void mpic_irq_mask(interrupt_t *irq)
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	
 	register_t saved = spin_lock_intsave(&mpic_lock);
-	irq->maskcnt++;
 	out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) | MPIC_IVPR_MASK);
 	spin_unlock_intsave(&mpic_lock, saved);
 }
@@ -87,8 +86,7 @@ static void mpic_irq_unmask(interrupt_t *irq)
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 
 	register_t saved = spin_lock_intsave(&mpic_lock);
-	if ((irq->maskcnt > 0) && (--irq->maskcnt == 0))
-		out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) & ~MPIC_IVPR_MASK);
+	out32(&mirq->hw->vecpri, in32(&mirq->hw->vecpri) & ~MPIC_IVPR_MASK);
 	spin_unlock_intsave(&mpic_lock, saved);
 }
 
@@ -440,10 +438,9 @@ static void error_int_mask(interrupt_t *irq)
 	error_sub_int_t *err = to_container(irq, error_sub_int_t, dev_err_irq);
 	mpic_interrupt_t *mirq = to_container(irq->parent, mpic_interrupt_t, irq);
 
-	register_t saved = spin_lock_intsave(&error_int_lock);
-	irq->maskcnt++;
+	register_t saved = spin_lock_mchksave(&error_int_lock);
 	out32(mirq->err.eimr0, in32(mirq->err.eimr0) | (0x80000000 >> err->subintnum));
-	spin_unlock_intsave(&error_int_lock, saved);
+	spin_unlock_mchksave(&error_int_lock, saved);
 }
 
 static void error_int_unmask(interrupt_t *irq)
@@ -453,11 +450,9 @@ static void error_int_unmask(interrupt_t *irq)
 	error_sub_int_t *err = to_container(irq, error_sub_int_t, dev_err_irq);
 	mpic_interrupt_t *mirq = to_container(irq->parent, mpic_interrupt_t, irq);
 
-	register_t saved = spin_lock_intsave(&error_int_lock);
-	if ((irq->maskcnt > 0) && (--irq->maskcnt == 0)) {
-		out32(mirq->err.eimr0, in32(mirq->err.eimr0) & ~(0x80000000 >> err->subintnum));
-	}
-	spin_unlock_intsave(&error_int_lock, saved);
+	register_t saved = spin_lock_mchksave(&error_int_lock);
+	out32(mirq->err.eimr0, in32(mirq->err.eimr0) & ~(0x80000000 >> err->subintnum));
+	spin_unlock_mchksave(&error_int_lock, saved);
 }
 
 static int error_int_register(interrupt_t *irq, int_handler_t handler,
@@ -540,6 +535,7 @@ static void error_int_init(mpic_interrupt_t *mirq)
 	for (int i = 0; i < MPIC_NUM_ERR_SRCS; i++) {
 		error_subints[i].dev_err_irq.ops = &error_int_ops;
 		error_subints[i].dev_err_irq.parent = &mirq->irq;
+		interrupt_reset(&error_subints[i].dev_err_irq);
 	}
 }
 
@@ -652,6 +648,8 @@ void mpic_init(int coreint)
 
 		vpr.priority = 0;
 
+		interrupt_reset(&mirq->irq);
+
 		out32(&mirq->hw->vecpri, vpr.data);
 	}
 
@@ -673,6 +671,8 @@ void mpic_init(int coreint)
 		vpr.msk = 1;
 		vpr.priority = 0;
 
+		interrupt_reset(&mirq->irq);
+
 		out32(&mirq->hw->vecpri, vpr.data);
 	}
 
@@ -693,6 +693,8 @@ void mpic_init(int coreint)
 		vpr.data = 0;
 		vpr.msk = 1;
 		vpr.priority = 0;
+
+		interrupt_reset(&mirq->irq);
 
 		out32(&mirq->hw->vecpri, vpr.data);
 	}
