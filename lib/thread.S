@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009,2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,29 +26,77 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* FIXME 64-bit */
+#ifndef CONFIG_LIBOS_64BIT
+/* 32-bit */
+#define LONGBYTES 4
+#define LOAD lwz
+#define STORE stw
+#define STOREU stwu
+/* As defined by 32-bit PowerPC ABI specifications */
+#define GPR_SAVE_AREA 18*LONGBYTES
+#define GPR_SAVE_AREA_OFFSET 24
+#define CR_SAVE_WORD_OFFSET 20
+#define STACK_FRAMELEN (GPR_SAVE_AREA + GPR_SAVE_AREA_OFFSET)
+#define LR_SAVE_WORD_OFFSET (STACK_FRAMELEN + 4)
+
+	.macro SAVE_GPRs
+	stmw	%r14, GPR_SAVE_AREA_OFFSET(%r1)
+	.endm
+
+	.macro RESTORE_GPRs
+	lmw	%r14, GPR_SAVE_AREA_OFFSET(%r1)
+	.endm
+
+#else
+/* 64-bit */
+#define LONGBYTES 8
+#define LOAD ld
+#define STORE std
+#define STOREU stdu
+/* As defined by 64-bit PowerPC ELF ABI specifications */
+#define GPR_SAVE_AREA 18*LONGBYTES
+/* Minimum stack frame overhead on PPC64 */
+#define GPR_SAVE_AREA_OFFSET 112
+#define CR_SAVE_WORD_OFFSET LONGBYTES*1
+#define STACK_FRAMELEN (GPR_SAVE_AREA + GPR_SAVE_AREA_OFFSET)
+#define LR_SAVE_WORD_OFFSET (STACK_FRAMELEN + LONGBYTES * 2)
+
+	.macro SAVE_GPRs
+	.irp REG, 14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+	std %r\REG, GPR_SAVE_AREA_OFFSET + (LONGBYTES * (\REG-14))(%r1)
+	.endr
+	.endm
+
+	.macro RESTORE_GPRs
+	.irp REG, 14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+	ld %r\REG, GPR_SAVE_AREA_OFFSET + (LONGBYTES * (\REG-14))(%r1)
+	.endr
+	.endm
+
+#endif
+
 .global switch_thread
 switch_thread:
 	/* Save old thread's state */
-	stwu	%r1, -96(%r1)
-	stmw	%r14, 24(%r1)
+	STOREU	%r1, -STACK_FRAMELEN(%r1)
+	SAVE_GPRs
 	mr	%r5, %r3
 	mflr	%r4
 	
-	lwz	%r3, CPU_THREAD(%r2)
-	lwz	%r9, THREAD_KSTACK(%r5)
+	LOAD	%r3, CPU_THREAD(%r2)
+	LOAD	%r9, THREAD_KSTACK(%r5)
 	bl	1f
-1:	stw	%r5, CPU_THREAD(%r2)
+1:	STORE	%r5, CPU_THREAD(%r2)
 	mflr	%r7
-	stw	%r1, THREAD_STACK(%r3)
+	STORE	%r1, THREAD_STACK(%r3)
 	addi	%r7, %r7, 2f - 1b
-	stw	%r9, CPU_KSTACK(%r2)
+	STORE	%r9, CPU_KSTACK(%r2)
 	mfcr	%r8
-	stw	%r7, THREAD_PC(%r3)
-	lwz	%r6, THREAD_PC(%r5)
-	stw	%r4, 100(%r1)
-	stw	%r8, 20(%r1)
-	lwz	%r1, THREAD_STACK(%r5)
+	STORE	%r7, THREAD_PC(%r3)
+	LOAD	%r6, THREAD_PC(%r5)
+	STORE	%r4, LR_SAVE_WORD_OFFSET(%r1)
+	STORE	%r8, CR_SAVE_WORD_OFFSET(%r1)
+	LOAD	%r1, THREAD_STACK(%r5)
 
 	/* New threads will branch to their entry point; existing
 	 * threads will fall through to 2:
@@ -59,10 +107,10 @@ switch_thread:
 	/* Restore new thread's state, returning the
 	 * switched-from thread in r3.
 	 */
-2:	lwz	%r4, 100(%r1)
-	lwz	%r8, 20(%r1)
-	lmw	%r14, 24(%r1)
+2:	LOAD	%r4, LR_SAVE_WORD_OFFSET(%r1)
+	LOAD	%r8, CR_SAVE_WORD_OFFSET(%r1)
+	RESTORE_GPRs
 	mtlr	%r4
 	mtcr	%r8
-	addi	%r1, %r1, 96
+	addi	%r1, %r1, STACK_FRAMELEN
 	blr
