@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009,2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,19 +24,21 @@
 
 #define ASSERT
 
+/* void *memset(void *s, int c, size_t n) */
+
 .global memset
 	/* OPT 64-bit */
 memset:
 	lis	%r9, cache_block_size@ha
 	cmpwi	%r4, 0
 	lwz	%r9, cache_block_size@l(%r9)
-	bne-	memset_byte_tail
+	bne-	memset_byte_tail   // if value != 0 do it by byte
 
 	andi.	%r8, %r3, 3
-	bne-	memset_byte_head
+	bne-	memset_byte_head   // memset the leading bytes
 	
-	addi	%r6, %r9, -1
 again:
+	addi	%r6, %r9, -1       // create mask of block size
 	subf.	%r7, %r9, %r5
 	blt-	memset_word_tail
 
