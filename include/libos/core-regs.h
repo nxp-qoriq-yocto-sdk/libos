@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -477,6 +477,14 @@
 #define PMR_PMLCA1     145
 #define PMR_PMLCA2     146
 #define PMR_PMLCA3     147
+#define   PMLCA_FC         0x80000000
+#define   PMLCA_FCS        0x40000000
+#define   PMLCA_FCU        0x20000000
+#define   PMLCA_FCM1       0x10000000
+#define   PMLCA_FCM0       0x08000000
+#define   PMLCA_CE         0x04000000
+#define   PMLCA_EVENT      0x00ff0000
+#define   PMLCA_EVENT_SHIFT 16
 #define PMR_UPMLCB0    256
 #define PMR_UPMLCB1    257
 #define PMR_UPMLCB2    258
@@ -485,7 +493,14 @@
 #define PMR_PMLCB1     273
 #define PMR_PMLCB2     274
 #define PMR_PMLCB3     275
+#define   PMLCB_THRESHMUL  0x00000700
+#define   PMLCB_THRESHMUL_SHIFT 8
+#define   PMLCB_THRESHOLD  0x0000003f
+#define   PMLCB_THRESHOLD_SHIFT 0
 #define PMR_UPMGC0     384
 #define PMR_PMGC0      400
+#define   PMGC0_FAC        0x80000000
+#define   PMGC0_PMIE       0x40000000
+#define   PMGC0_FCECE      0x20000000
 
 #endif
