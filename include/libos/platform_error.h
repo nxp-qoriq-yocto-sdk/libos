@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009, 2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,12 +25,35 @@
 #ifndef PLATFORM_ERROR_H
 #define PLATFORM_ERROR_H
 
+typedef struct mcheck_error {
+	uint32_t mcsr;
+	uint64_t mcar;
+	uint64_t mcsrr0;
+	uint32_t mcsrr1;
+} mcheck_error_t;
+
+typedef struct pamu_error{
+	uint32_t lpid;
+	uint64_t access_violation_addr;
+	uint32_t avs1;
+	uint32_t avs2;
+	uint32_t liodn_handle;
+} pamu_error_t;
+
+typedef struct hv_error {
+	char domain[32];
+	char error[128];
+	char hdev_tree_path[256];
+	char gdev_tree_path[256];
+
+	union {
+		mcheck_error_t mcheck;
+		pamu_error_t pamu;
+
+	};
+} hv_error_t;
+
 #define GUEST_ERROR_EVENT_QUEUE  0
 #define GLOBAL_ERROR_EVENT_QUEUE 1
-
-#define ERROR_MACHINE_CHECK 0
-#define ERROR_PAMU_AV 1
-
-#define MAX_ERROR_EVENTS 64
 
 #endif

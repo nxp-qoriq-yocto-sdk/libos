@@ -758,32 +758,22 @@ static inline unsigned int fh_partition_send_dbell(unsigned int handle)
 	return r3;
 }
 
-static inline unsigned int fh_err_get_info(int queue, uint32_t *error_info)
+static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize, uint32_t addr_hi,
+						uint32_t addr_lo, int peek)
 {
 	register uintptr_t r11 __asm__("r11") = FH_ERR_GET_INFO;
 	register uintptr_t r3 __asm__("r3") = queue;
-	register uintptr_t r4 __asm__("r4");
-	register uintptr_t r5 __asm__("r5");
-	register uintptr_t r6 __asm__("r6");
-	register uintptr_t r7 __asm__("r7");
-	register uintptr_t r8 __asm__("r8");
-	register uintptr_t r9 __asm__("r9");
-	register uintptr_t r10 __asm__("r10");
+	register uintptr_t r4 __asm__("r4") = *bufsize;
+	register uintptr_t r5 __asm__("r5") = addr_hi;
+	register uintptr_t r6 __asm__("r6") = addr_lo;
+	register uintptr_t r7 __asm__("r7") = peek;
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "=r" (r4), "=r" (r5), "=r" (r6), "=r" (r7), "=r" (r8),
-			"=r" (r9), "=r" (r10)
-		: : HCALL_CLOBBERS8
+		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7)
+		: : HCALL_CLOBBERS5
 	);
 
-	error_info[0] = r4;
-	error_info[1] = r5;
-	error_info[2] = r6;
-	error_info[3] = r7;
-	error_info[4] = r8;
-	error_info[5] = r9;
-	error_info[6] = r10;
-	error_info[7] = r11;
+	*bufsize = r4;
 
 	return r3;
 }
