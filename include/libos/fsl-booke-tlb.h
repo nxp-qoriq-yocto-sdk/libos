@@ -60,7 +60,7 @@
 #define   MAS1_RESERVED      0x0000e0ff
 
 #define SPR_MAS2         626  // MMU Assist Register 2
-#define   MAS2_EPN           0xFFFFF000
+#define   MAS2_EPN           (~0xfffUL)
 #define   MAS2_EPN_SHIFT     12
 #define   MAS2_X0            0x00000040
 #define   MAS2_X1            0x00000020
