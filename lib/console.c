@@ -1,7 +1,7 @@
 /** @file printf, etc.
  */
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -129,8 +129,10 @@ void console_write_nolock(const char *s, size_t len)
 #ifdef CONFIG_LIBOS_QUEUE
 	queue_t *q = &consolebuf;
 
-	if (unlikely(cpu->crashing) && qconsole)
+	if (unlikely(cpu->crashing) && qconsole) {
 		q = qconsole;
+		queue_notify_consumer(q, 1);
+	}
 
 	while (*s && len--)
 		putchar_nolock(q, *s++);
