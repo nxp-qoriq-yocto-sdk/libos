@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,6 +75,8 @@ extern void set_crashing(int crashing);
 #define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))  /* to any y */
 
 #define align(x, y) (((x) + (y) - 1) & ~((y) - 1))
+
+#define P4080REV1 0x82080010 /* SVR value for P4080 Rev1 */
 
 #ifndef HAVE_VIRT_TO_PHYS
 static inline phys_addr_t virt_to_phys(void *ptr)

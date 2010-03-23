@@ -567,7 +567,7 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 
 	mirq = &mpic_irqs[irqnum];
 
-	if (ncells == 4) {
+	if ((ncells == 4) && !(mfspr(SPR_SVR) == P4080REV1)) {
 		switch (intspec[2]) {
 		case MPIC_DEV_INT:
 			irq = &mirq->irq;
@@ -578,6 +578,9 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 			if (subint >= MPIC_NUM_ERR_SRCS) {
 				printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR, "Invalid sub interrupt\n");
 			}
+
+			if (!mirq->config_done)
+				error_int_init(mirq);
 
 			error_sub_int_t *err = &error_subints[subint];
 			err->dev_err_irq.config = mpic_intspec_to_config[intspec[1]];
@@ -599,8 +602,6 @@ static interrupt_t *get_mpic_irq(device_t *dev,
 		mirq->irq.config = mpic_intspec_to_config[intspec[1]] |
 					 IRQ_TYPE_MPIC_DIRECT;
 		__mpic_irq_set_config(&mirq->irq, mirq->irq.config);
-		if (intspec[2] == MPIC_ERR_INT)
-			error_int_init(mirq);
 		mirq->config_done = 1;
 	}
 	spin_unlock_intsave(&mpic_lock, saved);
