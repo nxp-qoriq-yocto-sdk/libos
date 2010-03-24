@@ -241,12 +241,59 @@ void mpic_reset_core(void)
 	printf("mpic_reset_core(): too many interrupts, vector %x\n", vector);
 }
 
+static int error_int_p4080_rev1(void *arg)
+{
+	interrupt_t *irq = arg;
+
+	set_crashing(1);
+	printf("Shared error interrupt received, EISR0: %#x\n",
+	       in32((uint32_t *)(CCSRBAR_VA + MPIC + MPIC_ERROR_INT_SUMMARY)));
+	printf("Future error interrupts will be disabled "
+	       "due to p4080 rev 1 limitations.\n");
+	set_crashing(0);
+
+	mpic_irq_mask(irq);
+	mpic_irq_set_delivery_type(irq, TYPE_NORM);
+
+	return 0;
+}
+
 static int mpic_register(interrupt_t *irq, int_handler_t handler,
                          void *devid, int flags)
 {
 	irqaction_t *action = alloc_type(irqaction_t);
 	if (!action)
 		return ERR_NOMEM;
+
+#ifdef TOPAZ
+	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
+
+	/* On p4080 rev 1, don't allow handlers to be registered, but
+	 * instead just print EISR0 and disable the interrupt.  This
+	 * avoids problems with interrupt storms on error sources that
+	 * can't be cleared.
+	 */
+	if (mfspr(SPR_SVR) == P4080REV1 && mirq == &mpic_irqs[16]) {
+		register_t saved = spin_lock_intsave(&mpic_lock);
+
+		if (!irq->actions) {
+			action->handler = error_int_p4080_rev1;
+			action->devid = irq;
+
+			irq->actions = action;
+			spin_unlock_intsave(&mpic_lock, saved);
+
+			mpic_irq_set_delivery_type(irq, flags);
+			mpic_irq_unmask(irq);
+		} else {
+			spin_unlock_intsave(&mpic_lock, saved);
+			free(action);
+		}
+
+		return ERR_BUSY;
+	}
+#endif
+
 	
 	action->handler = handler;
 	action->devid = devid;
