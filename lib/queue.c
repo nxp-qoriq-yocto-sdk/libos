@@ -37,6 +37,9 @@
 
 int queue_init(queue_t *q, size_t size)
 {
+	if (size & (size - 1))
+		return ERR_INVALID;
+
 	q->buf = alloc(size, 1);
 	if (!q->buf)
 		return ERR_NOMEM;
