@@ -29,6 +29,16 @@
 #include <libos/core-regs.h>
 #include <libos/io.h>
 
+#ifdef CONFIG_LIBOS_64BIT
+#define LOAD_LINKED		"ldarx"
+#define STORE_CONDITIONAL	"stdcx."
+#define COMPARE 		"cmpd"
+#else
+#define LOAD_LINKED		"lwarx"
+#define STORE_CONDITIONAL	"stwcx."
+#define COMPARE 		"cmpw"
+#endif
+
 // Returns non-zero if the operation succeeded.
 static inline int compare_and_swap(unsigned long *ptr,
                                    unsigned long old,
@@ -36,11 +46,10 @@ static inline int compare_and_swap(unsigned long *ptr,
 {
 	unsigned long ret;
 
-	// FIXME 64-bit
-	asm volatile("1: lwarx %0, %y1;"
-	             "cmpw %0, %2;"
+	asm volatile("1:" LOAD_LINKED " %0, %y1;"
+	             COMPARE " %0, %2;"
 	             "bne 2f;"
-	             "stwcx. %3, %y1;"
+	             STORE_CONDITIONAL " %3, %y1;"
 	             "bne 1b;"
 	             "2:" :
 	             "=&r" (ret), "+Z" (*ptr) :
@@ -192,10 +201,9 @@ static inline unsigned long atomic_or(unsigned long *ptr, unsigned long val)
 {
 	unsigned long ret;
 
-	// FIXME 64-bit
-	asm volatile("1: lwarx %0, %y1;"
+	asm volatile("1:" LOAD_LINKED " %0, %y1;"
 	             "or %0, %0, %2;"
-	             "stwcx. %0, %y1;"
+	             STORE_CONDITIONAL " %0, %y1;"
 	             "bne 1b;" :
 	             "=&r" (ret), "+Z" (*ptr) :
 	             "r" (val) :
@@ -208,10 +216,9 @@ static inline unsigned long atomic_and(unsigned long *ptr, unsigned long val)
 {
 	unsigned long ret;
 
-	// FIXME 64-bit
-	asm volatile("1: lwarx %0, %y1;"
+	asm volatile("1:" LOAD_LINKED " %0, %y1;"
 	             "and %0, %0, %2;"
-	             "stwcx. %0, %y1;"
+	             STORE_CONDITIONAL " %0, %y1;"
 	             "bne 1b;" :
 	             "=&r" (ret), "+Z" (*ptr) :
 	             "r" (val) :
@@ -224,10 +231,9 @@ static inline unsigned long atomic_add(unsigned long *ptr, long val)
 {
 	unsigned long ret;
 
-	// FIXME 64-bit
-	asm volatile("1: lwarx %0, %y1;"
+	asm volatile("1:" LOAD_LINKED " %0, %y1;"
 	             "add %0, %0, %2;"
-	             "stwcx. %0, %y1;"
+	             STORE_CONDITIONAL " %0, %y1;"
 	             "bne 1b;" :
 	             "=&r" (ret), "+Z" (*ptr) :
 	             "r" (val) :
@@ -259,6 +265,27 @@ static inline int ilog2_roundup(unsigned long val)
 {
 	return LONG_BITS - count_msb_zeroes(val - 1);
 }
+
+static inline int count_msb_zeroes_32(uint32_t val)
+{
+	return __builtin_clz(val);
+}
+
+static inline int count_lsb_zeroes_32(uint32_t val)
+{
+	return __builtin_ctz(val);
+}
+
+static inline int ilog2_32(uint32_t val)
+{
+	return 31 - count_msb_zeroes_32(val);
+}
+
+static inline int ilog2_roundup_32(unsigned long val)
+{
+	return 32 - count_msb_zeroes_32(val - 1);
+}
+
 
 /* function to synchronize a cache block when modifying
  * instructions.  This follows the recommended sequence

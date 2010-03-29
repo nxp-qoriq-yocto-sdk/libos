@@ -327,7 +327,7 @@ static int get_internal_int(uint32_t reg)
 		uint32_t summary = mpic_read(reg + i * 16);
 		
 		if (summary)
-			return count_msb_zeroes(summary) + i * 32 + 16;
+			return count_msb_zeroes_32(summary) + i * 32 + 16;
 	}
 	
 	return -1;
@@ -337,7 +337,7 @@ static inline int get_ext_int(uint32_t reg)
 {
 	uint32_t summary = mpic_read(reg);
 
-	return summary ? count_msb_zeroes(summary) : -1;
+	return summary ? count_msb_zeroes_32(summary) : -1;
 }
 
 static int __mpic_get_critint(void)
@@ -457,7 +457,7 @@ static int error_int_handler(void *arg)
 	int i;
 
 	while (val) {
-		i = count_lsb_zeroes(val);
+		i = count_lsb_zeroes_32(val);
 		/* The irq handler must clear the condition by masking the corresponding
 		 * EIMR0 bit.
 		 */
