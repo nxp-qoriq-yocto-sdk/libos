@@ -180,15 +180,19 @@ void console_write(const char *s, size_t len)
 	restore_int(saved);
 }
 
+/* Prevent concurrent crashes from resulting in an unreadable
+ * intermingled mess.
+ */
+static uint32_t crash_lock;
+
 void set_crashing(int crashing)
 {
 	if (crashing) {
-		cpu->crashing++;
+		spin_lock(&crash_lock);
+		cpu->crashing = 1;
 		drain_consolebuf();
 	} else {
-		cpu->crashing--;
-		
-		if (cpu->crashing < 0)
-			cpu->crashing = 0;
+		cpu->crashing = 0;
+		spin_unlock(&crash_lock);
 	}
 }
