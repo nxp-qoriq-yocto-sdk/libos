@@ -188,11 +188,13 @@ static uint32_t crash_lock;
 void set_crashing(int crashing)
 {
 	if (crashing) {
-		spin_lock(&crash_lock);
-		cpu->crashing = 1;
-		drain_consolebuf();
+		if (cpu->crashing++ == 0) {
+			raw_spin_lock(&crash_lock);
+			cpu->crashing = 1;
+			drain_consolebuf();
+		}
 	} else {
-		cpu->crashing = 0;
-		spin_unlock(&crash_lock);
+		if (--cpu->crashing == 0)
+			spin_unlock(&crash_lock);
 	}
 }
