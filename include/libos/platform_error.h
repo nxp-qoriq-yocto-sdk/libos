@@ -40,6 +40,14 @@ typedef struct pamu_error{
 	uint32_t liodn_handle;
 } pamu_error_t;
 
+typedef struct ccf_error {
+	uint32_t cedr;
+	uint32_t ceer;
+	uint32_t cecar;
+	uint64_t cecaddr;
+	uint32_t cmecar;
+} ccf_error_t;
+
 typedef struct hv_error {
 	char domain[32];
 	char error[128];
@@ -49,7 +57,7 @@ typedef struct hv_error {
 	union {
 		mcheck_error_t mcheck;
 		pamu_error_t pamu;
-
+		ccf_error_t ccf;
 	};
 } hv_error_t;
 
