@@ -2,7 +2,7 @@
 
 /* 
   Code under the LIBOS_MALLOC #ifdef was added by Freescale,
-  and is Copyright (C) 2009 Freescale Semiconductor, Inc.
+  and is Copyright (C) 2009,2010 Freescale Semiconductor, Inc.
 */
 
 /*
@@ -2278,7 +2278,7 @@ static size_t traverse_and_check(mstate m);
   else if (X > 0xFFFF)\
     I = NTREEBINS-1;\
   else {\
-    unsigned int K = SIZE_T_BITSIZE - __builtin_clz(X) - 1; \
+    unsigned int K = SIZE_T_BITSIZE - __builtin_clzl(X) - 1; \
     I =  (bindex_t)((K << 1) + ((S >> (K + (TREEBIN_SHIFT-1)) & 1)));\
   }\
 }
