@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,6 +28,7 @@
 #include <libos/libos.h>
 #include <stdint.h>
 
+#ifndef CONFIG_LIBOS_64BIT
 typedef struct trapframe {
 	register_t backchain, lrsave;
 	register_t gpregs[32];
@@ -42,6 +43,24 @@ typedef struct trapframe {
 #endif
 	uint32_t pad[4];
 } trapframe_t;
+#else
+typedef struct trapframe {
+	register_t backchain, crsave, lrsave;
+	register_t compiler_dword, linker_dword;
+	register_t tocsave;
+	register_t gpregs[32];
+	register_t lr, ctr;
+	uint32_t cr, xer;
+	register_t srr0, srr1, dear, esr;
+	uint32_t eplc, epsc;
+	unsigned int exc, traplevel;
+#ifdef CONFIG_LIBOS_STATISTICS
+	int current_event;
+	uint32_t initial_cycles;
+#endif
+	uint32_t pad[4];
+} trapframe_t;
+#endif
 
 /* PPC ABI requires 16-byte-aligned stack frames. */
 #define FRAMELEN roundup(sizeof(trapframe_t), 16)

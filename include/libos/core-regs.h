@@ -27,6 +27,7 @@
 
 // FIXME: Separate out APUs and other target-specific definitions
 
+#define MSRBIT_CM        32 // Computation Mode
 #define MSRBIT_GS        35 // Guest State
 #define MSRBIT_UCLE      37 // User-mode Cache Lock Enable
 #define MSRBIT_SPE       38 // SPE Available
@@ -44,6 +45,7 @@
 #define MSRBIT_PMM       61 // Performance Monitor Mask
 #define MSRBIT_RI        62 // Recoverable interrupt
 
+#define MSR_CM           (1 << (63 - MSRBIT_CM))
 #define MSR_GS           (1 << (63 - MSRBIT_GS))
 #define MSR_UCLE         (1 << (63 - MSRBIT_UCLE))
 #define MSR_SPE          (1 << (63 - MSRBIT_SPE))
@@ -159,6 +161,8 @@
 #define   EPCR_DSIGS      0x10000000 // Guest gets DSIs
 #define   EPCR_ISIGS      0x08000000 // Guest gets ISIs
 #define   EPCR_DUVD       0x04000000 // Disable Embedded HV Debug
+#define   EPCR_ICM        0x02000000 // Interrupt Compuation Mode
+#define   EPCR_GICM       0x01000000 // Guest Interrupt Compuation Mode
 #define   EPCR_DGTMI      0x00800000 // Disable guest TLB management insns
 #define   EPCR_DMIUH      0x00400000 // Disable MAS int updates for hypervisor
 

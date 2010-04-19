@@ -70,9 +70,20 @@ _start:
  	mtlr	%r16
 	b	fixup_mmu
 
+#ifndef CONFIG_LIBOS_64BIT
 1:	lis	%r2, cpu0@ha
 	addi	%r2, %r2, cpu0@l
 	mtsprg0	%r2
+#else
+1:	lis	%r13, cpu0@ha
+	addi	%r13, %r13, cpu0@l
+	mtsprg0	%r13
+	/* Setup %r2 to toc_start + 0x8000 as expected by the 64-bit ABI */
+	lis	%r2, (toc_start)@h
+	ori	%r2, %r2, (toc_start)@l
+	addis	%r2, %r2, 0x8000@ha
+	addi	%r2, %r2, 0x8000@l
+#endif
 
 	bl	clear_bss
 
@@ -102,7 +113,12 @@ secondary_start:
  	mtlr	%r16
 	b	fixup_mmu
 
+#ifndef CONFIG_LIBOS_64BIT
 1:	mr	%r2, %r3
+#else
+1:	mr	%r13, %r3
+	/* TBD: TOC setup for secondary cores */
+#endif
 	mtsprg0	%r3
 	LOAD	%r1, CPU_KSTACK(%r3)
 
@@ -246,6 +262,9 @@ fixup_mmu:
 	lis	%r20, 6f@h
 	ori	%r20, %r20, 6f@l
 	li	%r21, MSR_RI@l
+#ifdef CONFIG_LIBOS_64BIT
+	oris	%r21, %r21, MSR_CM@h
+#endif
 	mtspr   SPR_SRR0, %r20
 	mtspr   SPR_SRR1, %r21
 	rfi

@@ -55,6 +55,8 @@
 #define LONGBYTES 4
 #define LOAD lwz
 #define STORE stw
+#define PERCPU_REG %r2
+#define PERCPU_REG_SAVE 2
 
 	.macro SAVE_GPRs
 	stmw	%r3, LONGBYTES*3 + FRAME_GPREGS(%r1)
@@ -69,11 +71,16 @@
 #define LONGBYTES 8
 #define LOAD ld
 #define STORE std
+#define PERCPU_REG %r13
+#define PERCPU_REG_SAVE 13
 
 	.macro SAVE_GPRs
-	.irp REG, 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24, \
-		25,26,27,28,29,30,31
-	std %r\REG, LONGBYTES*3 + (FRAME_GPREGS + (\REG-3) * LONGBYTES)(%r1)
+	.irp REG, 2,3,4,5,6,7,8,9,10,11,12
+	std %r\REG, LONGBYTES*2 + (FRAME_GPREGS + (\REG-2) * LONGBYTES)(%r1)
+	.endr
+
+	.irp REG, 14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+	std %r\REG, LONGBYTES*14 + (FRAME_GPREGS + (\REG-14) * LONGBYTES)(%r1)
 	.endr
 	.endm
 
@@ -91,19 +98,19 @@
 	.global \name
 	.align	4
 \name:
-	mtspr	\scratch, %r2
-	mfspr	%r2, SPR_SPRG0   /* r2 = percpu data pointer */
+	mtspr	\scratch, PERCPU_REG
+	mfspr	PERCPU_REG, SPR_SPRG0   /* PERCPU_REG = percpu data pointer */
 
-	STORE	%r0, LONGBYTES*0 + \savearea(%r2)
-	STORE	%r1, LONGBYTES*1 + \savearea(%r2)
+	STORE	%r0, LONGBYTES*0 + \savearea(PERCPU_REG)
+	STORE	%r1, LONGBYTES*1 + \savearea(PERCPU_REG)
 	mfcr	%r0
 	\stack
 	stw	%r0, FRAME_CR(%r1)
 
 	SAVE_GPRs
 
-	LOAD	%r0, LONGBYTES*0 + \savearea(%r2)
-	LOAD	%r3, LONGBYTES*1 + \savearea(%r2)
+	LOAD	%r0, LONGBYTES*0 + \savearea(PERCPU_REG)
+	LOAD	%r3, LONGBYTES*1 + \savearea(PERCPU_REG)
 	mfspr	%r4, \scratch
 	mflr	%r5
 	mfctr	%r6
@@ -112,27 +119,27 @@
 	mfspr	%r10, \srr1
 	mfspr	%r11, SPR_DEAR
 	mfspr	%r12, SPR_ESR
-	li	%r13, \exc
+	li	%r14, \exc     /* Avoid using %r13 as is PERCPU_REG in 64-bit */
 
 	STORE	%r0, LONGBYTES*0 + FRAME_GPREGS(%r1)
 	STORE	%r3, LONGBYTES*1 + FRAME_GPREGS(%r1)
-	STORE	%r4, LONGBYTES*2 + FRAME_GPREGS(%r1)
+	STORE	%r4, LONGBYTES*PERCPU_REG_SAVE + FRAME_GPREGS(%r1)
 	STORE	%r5, FRAME_LR(%r1)
 	STORE	%r6, FRAME_CTR(%r1)
 	stw	%r8, FRAME_XER(%r1)
 	STORE	%r9, FRAME_SRR0(%r1)
 	STORE	%r10, FRAME_SRR1(%r1)
 
-	lwz	%r3, CPU_TRAPLEVEL(%r2)
+	lwz	%r3, CPU_TRAPLEVEL(PERCPU_REG)
 	STORE	%r11, FRAME_DEAR(%r1)
 	STORE	%r12, FRAME_ESR(%r1)
-	stw	%r13, FRAME_EXC(%r1)
+	stw	%r14, FRAME_EXC(%r1)
 
 	cmplwi	%r3, \traplevel
 	stw	%r3, FRAME_TRAPLEVEL(%r1)
 	bgt-	1f
 	li	%r4, \traplevel
-	stw	%r4, CPU_TRAPLEVEL(%r2)
+	stw	%r4, CPU_TRAPLEVEL(PERCPU_REG)
 1:
 	
 #ifdef HYPERVISOR
@@ -237,7 +244,7 @@ ret_from_\type:
 	mtmsr	%r10
 
 #ifdef LIBOS_RET_HOOK
-	lwz	%r10, CPU_RETHOOK(%r2)
+	lwz	%r10, CPU_RETHOOK(PERCPU_REG)
 	cmpwi	%r10, 0
 	beq+	1f
 	
@@ -274,7 +281,7 @@ ret_from_\type:
 	mtxer	%r8
 	mtspr	\srr0, %r9
 	mtspr	\srr1, %r10
-	stw	%r11, CPU_TRAPLEVEL(%r2)
+	stw	%r11, CPU_TRAPLEVEL(PERCPU_REG)
 
 	RESTORE_GPRs
 
@@ -295,12 +302,12 @@ ret_from_\type:
 	beq-	1f
 	
 	.subsection 1
-1:	LOAD	%r1, LONGBYTES*1 + CPU_NORMSAVE(%r2)
+1:	LOAD	%r1, LONGBYTES*1 + CPU_NORMSAVE(PERCPU_REG)
 	stwu	%r1, -FRAMELEN(%r1)
 	b	2f
 	.subsection 0
 
-	lwz	%r1, CPU_KSTACK(%r2)
+	lwz	%r1, CPU_KSTACK(PERCPU_REG)
 2:
 	.endm
 
@@ -321,7 +328,7 @@ ret_from_\type:
 	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi basedisable
 
 	.macro	critstack
-	addi	%r1, %r2, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
+	addi	%r1, PERCPU_REG, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
 	.macro	critexception, exc, name, handler
@@ -332,7 +339,7 @@ ret_from_\type:
 	ret_from_exc_type crit SPR_CSRR0 SPR_CSRR1 rfci critdisable
 
 	.macro	mcheckstack
-	addi	%r1, %r2, CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN
+	addi	%r1, PERCPU_REG, CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
 	.macro	mcdisable, reg
@@ -348,7 +355,7 @@ ret_from_\type:
 	ret_from_exc_type mcheck SPR_MCSRR0 SPR_MCSRR1 rfmci mcdisable
 
 	.macro	debugstack
-	addi	%r1, %r2, CPU_DEBUGSTACK + KSTACK_SIZE - FRAMELEN
+	addi	%r1, PERCPU_REG, CPU_DEBUGSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
 	.macro	debugdisable, reg
