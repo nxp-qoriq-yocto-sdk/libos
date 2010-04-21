@@ -229,9 +229,17 @@
 #define   TCR_WIE          0x08000000 // Watchdog Int Enable
 #define   TCR_DIE          0x04000000 // Decrementer Int Enable
 #define   TCR_DIE_SHIFT    26
+#define   TCR_FP           0x03000000 // FIT count low bits
+#define   TCR_FPEXT        0x0001E000 // FIT count high bits
 #define   TCR_ARE          0x00400000 // Auto-reload enable
 #define   TCR_FIE          0x00800000 // Fixed Interval Int Enable
 #define   TCR_FIE_SHIFT    23
+// Convert TCR[FP|FPEXT] to an integer
+#define   TCR_FP_TO_INT(x) \
+	((((x) & TCR_FPEXT) >> 11) | (((x) & TCR_FP) >> 24))
+// Convert integer to TCR[FP|FPEXT] bits
+#define   TCR_INT_TO_FP(x) \
+	((((x) << 11) & TCR_FPEXT) | (((x) << 24) & TCR_FP))
 
 // Guest SPR General Registers
 #define SPR_GSPRG0       368
