@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,5 +45,6 @@
 #define ERR_NOTFOUND         (-265) /**< Item not found */
 #define ERR_WOULDBLOCK       (-266) /**< Operation would block; try again */
 #define ERR_UNKNOWN          (-267) /**< Unknown failure */
+#define ERR_HARDWARE         (-268) /**< Hardware error */
 
 #endif
