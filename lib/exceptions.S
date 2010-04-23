@@ -57,6 +57,7 @@
 #define STORE stw
 #define PERCPU_REG %r2
 #define PERCPU_REG_SAVE 2
+#define VOLATILE_STORAGE 0
 
 	.macro SAVE_GPRs
 	stmw	%r3, LONGBYTES*3 + FRAME_GPREGS(%r1)
@@ -73,6 +74,11 @@
 #define STORE std
 #define PERCPU_REG %r13
 #define PERCPU_REG_SAVE 13
+/*
+ * 288 bytes below stack pointer is volatile storage which should be preserved
+ * by interrupt handlers as per 64-bit PowerPC ABI
+ */
+#define VOLATILE_STORAGE 288
 
 	.macro SAVE_GPRs
 	.irp REG, 2,3,4,5,6,7,8,9,10,11,12
@@ -82,6 +88,10 @@
 	.irp REG, 14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
 	std %r\REG, LONGBYTES*14 + (FRAME_GPREGS + (\REG-14) * LONGBYTES)(%r1)
 	.endr
+
+	/* Setup %r2 to toc_start + 0x8000 as expected by the 64-bit ABI */
+	lis	%r2, (toc_start + 0x8000)@h
+	ori	%r2, %r2, (toc_start + 0x8000)@l
 	.endm
 
 	.macro RESTORE_GPRs
@@ -90,7 +100,6 @@
 	ld %r\REG, LONGBYTES*2 + (FRAME_GPREGS + (\REG-2) * LONGBYTES)(%r1)
 	.endr
 	.endm
-
 #endif
 
 	.macro	exception, handler, type, exc, name, scratch, \
@@ -303,11 +312,11 @@ ret_from_\type:
 	
 	.subsection 1
 1:	LOAD	%r1, LONGBYTES*1 + CPU_NORMSAVE(PERCPU_REG)
-	stwu	%r1, -FRAMELEN(%r1)
+	stwu	%r1, -(FRAMELEN + VOLATILE_STORAGE)(%r1)
 	b	2f
 	.subsection 0
 
-	lwz	%r1, CPU_KSTACK(PERCPU_REG)
+	LOAD	%r1, CPU_KSTACK(PERCPU_REG)
 2:
 	.endm
 
