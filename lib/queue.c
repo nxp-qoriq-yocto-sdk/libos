@@ -103,6 +103,48 @@ ssize_t queue_read(queue_t *q, uint8_t *buf, size_t len, int peek)
 	return orig_len - len;
 }
 
+#ifdef CONFIG_LIBOS_SCHED_API
+ssize_t queue_read_blocking(queue_t *q, uint8_t *buf, size_t len, int peek)
+{
+	ssize_t orig_len = len;
+
+	while (len > 0)  {
+		libos_prepare_to_block();
+
+		ssize_t ret = queue_read(q, &buf[orig_len - len], len, 0);
+
+		if (ret > 0) {
+			len -= ret;
+			queue_notify_producer(q);
+			continue;
+		}
+
+		libos_block();
+	}
+
+	return orig_len;
+}
+
+int queue_readchar_blocking(queue_t *q, int peek)
+{
+	int ret;
+	while (1) {
+		libos_prepare_to_block();
+
+		ret = queue_readchar(q, peek);
+		if (ret >= 0)
+			break;
+
+		assert(ret == ERR_WOULDBLOCK);
+		libos_block();
+	}
+
+	queue_notify_producer(q);
+
+	return ret;
+}
+#endif
+
 int queue_readchar(queue_t *q, int peek)
 {
 	if (q->head == raw_in32(&q->tail))

@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,9 +84,11 @@ int queue_init(queue_t *q, size_t size);
 
 void queue_destroy(queue_t *q);
 ssize_t queue_read(queue_t *q, uint8_t *buf, size_t len, int peek);
+ssize_t queue_read_blocking(queue_t *q, uint8_t *buf, size_t len, int peek);
 ssize_t queue_write(queue_t *q, const uint8_t *buf, size_t len);
 ssize_t queue_write_blocking(queue_t *q, const uint8_t *buf, size_t len);
 int queue_readchar(queue_t *q, int peek);
+int queue_readchar_blocking(queue_t *q, int peek);
 int queue_writechar(queue_t *q, uint8_t c);
 int queue_writechar_blocking(queue_t *q, uint8_t c);
 size_t qprintf(queue_t *q, int blocking, const char *str, ...)
