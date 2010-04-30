@@ -366,7 +366,7 @@ clear_bss:
 	.section .stack, "aw", @nobits
 	.align 4
 	/* Initial boot stack */
-	.space 4096
+	.space KSTACK_SIZE
 	.global init_stack_top
 init_stack_top:
 

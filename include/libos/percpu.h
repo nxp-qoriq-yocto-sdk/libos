@@ -58,7 +58,6 @@ typedef struct cpu {
 	tlb_entry_t tlb1[TLB1_SIZE];
 	uint8_t *kstack; // Set to stack[KSTACK_SIZE - FRAMELEN];
 	struct libos_thread *thread;
-	kstack_t debugstack, critstack, mcheckstack;
 	unsigned int coreid;
 	int console_ok, crashing;
 	unsigned int traplevel;
@@ -66,6 +65,8 @@ typedef struct cpu {
 #ifdef LIBOS_RET_HOOK
 	int ret_hook;
 #endif
+	/* Move the kstacks at the end to allow kstack scaling */
+	kstack_t debugstack, critstack, mcheckstack;
 } cpu_t;
 
 #ifndef CONFIG_LIBOS_64BIT

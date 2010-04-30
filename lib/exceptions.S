@@ -337,7 +337,12 @@ ret_from_\type:
 	ret_from_exc_type exception SPR_SRR0 SPR_SRR1 rfi basedisable
 
 	.macro	critstack
+#ifndef CONFIG_LIBOS_64BIT
 	addi	%r1, PERCPU_REG, CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN
+#else
+	addis	%r1, PERCPU_REG, (CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN)@ha
+	addi	%r1, PERCPU_REG, (CPU_CRITSTACK + KSTACK_SIZE - FRAMELEN)@l
+#endif
 	.endm
 
 	.macro	critexception, exc, name, handler
@@ -348,7 +353,12 @@ ret_from_\type:
 	ret_from_exc_type crit SPR_CSRR0 SPR_CSRR1 rfci critdisable
 
 	.macro	mcheckstack
+#ifndef CONFIG_LIBOS_64BIT
 	addi	%r1, PERCPU_REG, CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN
+#else
+	addis	%r1, PERCPU_REG, (CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN)@ha
+	addi	%r1, PERCPU_REG, (CPU_MCHECKSTACK + KSTACK_SIZE - FRAMELEN)@l
+#endif
 	.endm
 
 	.macro	mcdisable, reg
