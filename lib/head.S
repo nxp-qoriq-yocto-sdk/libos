@@ -294,6 +294,10 @@ tlb1_inval_entry:
 	blr
 
 ivor_setup:
+#ifdef CONFIG_LIBOS_64BIT
+	lis	%r21, EPCR_ICM@h
+	mtspr	SPR_EPCR, %r21
+#endif
 	/* Set base address of interrupt handler routines */
 	lis	%r21, interrupt_vector_base@h
 	mtspr	SPR_IVPR, %r21
