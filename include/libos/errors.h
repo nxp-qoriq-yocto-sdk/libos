@@ -46,5 +46,6 @@
 #define ERR_WOULDBLOCK       (-266) /**< Operation would block; try again */
 #define ERR_UNKNOWN          (-267) /**< Unknown failure */
 #define ERR_HARDWARE         (-268) /**< Hardware error */
+#define ERR_NORESOURCE       (-269) /**< Out of non-memory resource */
 
 #endif
