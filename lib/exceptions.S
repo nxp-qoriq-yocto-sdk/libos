@@ -29,17 +29,6 @@
 #include <libos/percpu.h>
 #include <libos/trap_booke.h>
 
-/* TODO
- *    -watchdog should be critical
- *    -uncomment IVOR init in head.S
- *    -don't need any TLB stuff in CPU
- *    -need separate exit for guest only exceptions, if it didn't come
- *     guest it's fatal
- *    -hypercall exception doesn't need to save registers
- *     (but if it doesn't, it should zero out volatiles to avoid
- *      information leakage).
- */
-
 /* SPRG allocation:
  * SPRG0: per-CPU data pointer
  * SPRG1: normal exception scratch
