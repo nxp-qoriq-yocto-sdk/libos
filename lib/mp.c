@@ -1,7 +1,7 @@
 /*
  * Multiprocessing support
  *
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  * Author: Scott Wood <scottwood@freescale.com>
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ int start_secondary_spin_table(struct boot_spin_table *table, int num,
 	phys_addr_t entry = virt_to_phys(&secondary_start);
 
 	printlog(LOGTYPE_MP, LOGLEVEL_DEBUG,
-	         "table %p addr %lx pir %lx entry %llx\n",
+	         "table %p addr %x pir %x entry %llx\n",
 	         table, table->addr_lo, table->pir, entry);
 
 	table->r3_lo = (unsigned long)newcpu;

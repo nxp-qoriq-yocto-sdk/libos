@@ -79,14 +79,14 @@ extern cpu_t cpu0;
 // Returns 0 on success, -1 on error (e.g. PIR mismatch in table)
 
 struct boot_spin_table {
-	unsigned long addr_hi;
-	unsigned long addr_lo;
-	unsigned long r3_hi;
-	unsigned long r3_lo;
-	unsigned long reserved;
-	unsigned long pir;
-	unsigned long r6_hi;
-	unsigned long r6_lo;
+	uint32_t addr_hi;
+	uint32_t addr_lo;
+	uint32_t r3_hi;
+	uint32_t r3_lo;
+	uint32_t reserved;
+	uint32_t pir;
+	uint32_t r6_hi;
+	uint32_t r6_lo;
 };
 
 typedef void (*entry_t)(void);

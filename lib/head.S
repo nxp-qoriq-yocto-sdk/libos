@@ -27,7 +27,7 @@
 #include <libos/core-regs.h>
 #include <libos/fsl-booke-tlb.h>
 
-#if 1
+#ifndef CONFIG_LIBOS_64BIT
 /* 32-bit */
 #define LONGBYTES 4
 #define LOAD lwz
