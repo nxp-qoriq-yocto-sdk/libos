@@ -48,6 +48,16 @@ typedef struct ccf_error {
 	uint32_t cmecar;
 } ccf_error_t;
 
+typedef struct cpc_error {
+	uint32_t cpcerrdet;
+	uint64_t cpcerraddr;
+	uint32_t cpcerrattr;
+	uint32_t cpcerrctl;
+	uint32_t cpcerrinten;
+	uint32_t cpcerrdis;
+	uint32_t cpccaptecc;
+} cpc_error_t;
+
 typedef struct hv_error {
 	char domain[32];
 	char error[128];
@@ -58,6 +68,7 @@ typedef struct hv_error {
 		mcheck_error_t mcheck;
 		pamu_error_t pamu;
 		ccf_error_t ccf;
+		cpc_error_t cpc;
 	};
 } hv_error_t;
 
