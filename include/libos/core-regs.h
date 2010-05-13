@@ -218,9 +218,15 @@
 #define SPR_LPIDR        338  // Logical Partition ID
 
 #define SPR_TCR          340  //  Timer Control Register
-#define   TCR_WP_VAL(x)    ((((x) >> 15) & 0x3c) | ((x) >> 30))
-#define   TCR_WP_MASK      0xC01E0000 // Watchdog Time Period Mask
-#define   TCR_WP_SET(x)    ((((x) & 0x3c) << 15) | (((x) & 3) << 30))
+#define   TCR_WP	   0xC0000000
+#define   TCR_WPEXT        0x001E0000
+#define   TCR_WP_MASK      (TCR_WPEXT | TCR_WP) // Watchdog Time Period Mask
+// Convert TCR[WP|WPEXT] to an integer
+#define   TCR_WP_TO_INT(x) \
+	((((x) & TCR_WPEXT) >> 15) | (((x) & TCR_WP) >> 30))
+// Convert integer to TCR[WP|WPEXT] bits
+#define   TCR_INT_TO_WP(x) \
+	((((x) << 15) & TCR_WPEXT) | (((x) << 30) & TCR_WP))
 #define   TCR_WRC          0x30000000 // Watchdog Reset Control
 #define   TCR_WRC_NOP      0x00000000 // Do nothing on 2nd Timeout
 #define   TCR_WRC_INT      0x10000000 // Send Int to MPIC on 2nd Timeout
@@ -231,6 +237,7 @@
 #define   TCR_DIE_SHIFT    26
 #define   TCR_FP           0x03000000 // FIT count low bits
 #define   TCR_FPEXT        0x0001E000 // FIT count high bits
+#define   TCR_FP_MASK      (TCR_FPEXT | TCR_FP) // FIT Period Mask
 #define   TCR_ARE          0x00400000 // Auto-reload enable
 #define   TCR_FIE          0x00800000 // Fixed Interval Int Enable
 #define   TCR_FIE_SHIFT    23
