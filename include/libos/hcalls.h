@@ -78,6 +78,7 @@
 #define FH_GET_CORE_STATE               26
 #define FH_ENTER_NAP                    27
 #define FH_EXIT_NAP                     28
+#define FH_CLAIM_DEVICE                 29
 #define FH_PARTITION_SEND_DBELL         32
 
 /*
@@ -263,6 +264,14 @@ static inline unsigned int fh_partition_restart(unsigned int partition)
 
 	return r3;
 }
+
+#define FH_PARTITION_STOPPED  0
+#define FH_PARTITION_RUNNING  1
+#define FH_PARTITION_STARTING 2
+#define FH_PARTITION_STOPPING 3
+#define FH_PARTITION_PAUSING  4
+#define FH_PARTITION_PAUSED   5
+#define FH_PARTITION_RESUMING 6
 
 /**
  * Gets the status of a partition.
@@ -864,6 +873,25 @@ static inline unsigned int fh_exit_nap(unsigned int handle, unsigned int vcpu)
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
 		: : HCALL_CLOBBERS2
+	);
+
+	return r3;
+}
+
+/**
+ * Claim a "claimable" shared device
+ *
+ * @param[in] handle fsl,hv-device-handle of node to claim
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_claim_device(unsigned int handle)
+{
+	register uintptr_t r11 __asm__("r11") = FH_CLAIM_DEVICE;
+	register uintptr_t r3 __asm__("r3") = handle;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3)
+		: : HCALL_CLOBBERS1
 	);
 
 	return r3;
