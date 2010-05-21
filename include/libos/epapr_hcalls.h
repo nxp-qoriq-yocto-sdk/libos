@@ -132,7 +132,7 @@
  * @param[in] interrupt the interrupt number
  * @param[in] config configuration for this interrupt
  * @param[in] priority interrupt priority
- * @param[in] destination destination CPU ID mask
+ * @param[in] destination destination CPU number
  *
  * @return 0 for success, or an error code.
  */
@@ -158,7 +158,7 @@ static inline unsigned int ev_int_set_config(unsigned int interrupt,
  * @param[in] interrupt the interrupt number
  * @param[out] config configuration for this interrupt
  * @param[out] priority interrupt priority
- * @param[out] destination destination CPU ID mask
+ * @param[out] destination destination CPU number
  *
  * @return 0 for success, or an error code.
  */
@@ -388,18 +388,24 @@ static inline unsigned int ev_byte_channel_poll(unsigned int handle,
 
 /**
  * Acknowledge an interrupt.
+ * @param[in] handle handle to the target interrupt controller
  * @param[out] vector interrupt vector
+ *
+ * If handle is zero, the function returns the next interrupt source
+ * number to be handled irrespective of the hierarchy or cascading
+ * of interrupt controllers. If non-zero, specifies a handle to the
+ * interrupt controller that is the target of the acknowledge.
  *
  * @return 0 for success, or an error code.
  */
-static inline unsigned int ev_int_iack(unsigned int *vector)
+static inline unsigned int ev_int_iack(unsigned int handle, unsigned int *vector)
 {
 	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_IACK);
-	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r3 __asm__("r3") = handle;
 	register uintptr_t r4 __asm__("r4");
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "=r" (r3), "=r" (r4)
+		: "+r" (r11), "+r" (r3), "=r" (r4)
 		: : EV_HCALL_CLOBBERS2
 	);
 
