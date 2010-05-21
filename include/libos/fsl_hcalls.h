@@ -39,8 +39,8 @@
  * order as the corresponding hypercall numbers.
  */
 
-#ifndef _FREESCALE_HCALLS_H
-#define _FREESCALE_HCALLS_H
+#ifndef _FSL_HCALLS_H
+#define _FSL_HCALLS_H
 
 #include <libos/hcall-errors.h>
 #include <libos/endian.h>
@@ -51,35 +51,27 @@
 
 #define FH_API_VERSION 1
 
-#define FH_ERR_GET_INFO                 2
-#define FH_PARTITION_GET_DTPROP         3
-#define FH_PARTITION_SET_DTPROP         4
-#define FH_PARTITION_RESTART            5
-#define FH_PARTITION_GET_STATUS         6
-#define FH_PARTITION_START              7
-#define FH_PARTITION_STOP               8
-#define FH_PARTITION_MEMCPY             9
-#define FH_VMPIC_SET_INT_CONFIG         10
-#define FH_VMPIC_GET_INT_CONFIG         11
-#define FH_DMA_ENABLE                   12
-#define FH_DMA_DISABLE                  13
-#define FH_VMPIC_SET_MASK               14
-#define FH_VMPIC_GET_MASK               15
-#define FH_VMPIC_GET_ACTIVITY           16
-#define FH_VMPIC_EOI                    17
-#define FH_BYTE_CHANNEL_SEND            18
-#define FH_BYTE_CHANNEL_RECEIVE         19
-#define FH_BYTE_CHANNEL_POLL            20
-#define FH_VMPIC_IACK                   21
-#define FH_SEND_NMI                     22
-#define FH_VMPIC_GET_MSIR               23
-#define FH_SYSTEM_RESET                 24
-#define FH_IDLE                         25
-#define FH_GET_CORE_STATE               26
-#define FH_ENTER_NAP                    27
-#define FH_EXIT_NAP                     28
-#define FH_CLAIM_DEVICE                 29
-#define FH_PARTITION_SEND_DBELL         32
+#define FH_ERR_GET_INFO                 1
+#define FH_PARTITION_GET_DTPROP         2
+#define FH_PARTITION_SET_DTPROP         3
+#define FH_PARTITION_RESTART            4
+#define FH_PARTITION_GET_STATUS         5
+#define FH_PARTITION_START              6
+#define FH_PARTITION_STOP               7
+#define FH_PARTITION_MEMCPY             8
+#define FH_DMA_ENABLE                   9
+#define FH_DMA_DISABLE                  10
+#define FH_SEND_NMI                     11
+#define FH_VMPIC_GET_MSIR               12
+#define FH_SYSTEM_RESET                 13
+#define FH_GET_CORE_STATE               14
+#define FH_ENTER_NAP                    15
+#define FH_EXIT_NAP                     16
+#define FH_CLAIM_DEVICE                 17
+
+/* vendor ID: Freescale Semiconductor */
+#define FH_VENDOR_ID                  1
+#define FH_HCALL_TOKEN(hcall_number)  ((FH_VENDOR_ID << 16) | (hcall_number))
 
 /*
  * Hypercall register clobber list
@@ -110,16 +102,16 @@
 */
 
 /* List of common clobbered registers.  Do not use this macro. */
-#define HCALL_CLOBBERS "r0", "r12", "xer", "ctr", "lr", "cc"
+#define FH_HCALL_CLOBBERS "r0", "r12", "xer", "ctr", "lr", "cc"
 
-#define HCALL_CLOBBERS8 HCALL_CLOBBERS
-#define HCALL_CLOBBERS7 HCALL_CLOBBERS8, "r10"
-#define HCALL_CLOBBERS6 HCALL_CLOBBERS7, "r9"
-#define HCALL_CLOBBERS5 HCALL_CLOBBERS6, "r8"
-#define HCALL_CLOBBERS4 HCALL_CLOBBERS5, "r7"
-#define HCALL_CLOBBERS3 HCALL_CLOBBERS4, "r6"
-#define HCALL_CLOBBERS2 HCALL_CLOBBERS3, "r5"
-#define HCALL_CLOBBERS1 HCALL_CLOBBERS2, "r4"
+#define FH_HCALL_CLOBBERS8 FH_HCALL_CLOBBERS
+#define FH_HCALL_CLOBBERS7 FH_HCALL_CLOBBERS8, "r10"
+#define FH_HCALL_CLOBBERS6 FH_HCALL_CLOBBERS7, "r9"
+#define FH_HCALL_CLOBBERS5 FH_HCALL_CLOBBERS6, "r8"
+#define FH_HCALL_CLOBBERS4 FH_HCALL_CLOBBERS5, "r7"
+#define FH_HCALL_CLOBBERS3 FH_HCALL_CLOBBERS4, "r6"
+#define FH_HCALL_CLOBBERS2 FH_HCALL_CLOBBERS3, "r5"
+#define FH_HCALL_CLOBBERS1 FH_HCALL_CLOBBERS2, "r4"
 
 /*
  * We use "uintptr_t" to define a register because it's guaranteed to be a
@@ -142,12 +134,12 @@
  */
 static inline unsigned int fh_send_nmi(unsigned int vcpu_mask)
 {
-	register uintptr_t r11 __asm__("r11") = FH_SEND_NMI;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_SEND_NMI);
 	register uintptr_t r3 __asm__("r3") = vcpu_mask;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
+		: : FH_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -173,7 +165,7 @@ static inline unsigned int fh_partition_get_dtprop(int handle,
                                                    uint64_t propvalue_addr,
                                                    uint32_t *propvalue_len)
 {
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_GET_DTPROP;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_GET_DTPROP);
 	register uintptr_t r3 __asm__("r3") = handle;
 
 #ifdef CONFIG_LIBOS_PHYS_64BIT
@@ -195,7 +187,7 @@ static inline unsigned int fh_partition_get_dtprop(int handle,
 		: "+r" (r11),
 		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7),
 		  "+r" (r8), "+r" (r9), "+r" (r10)
-		: : HCALL_CLOBBERS8
+		: : FH_HCALL_CLOBBERS8
 	);
 
 	*propvalue_len = r4;
@@ -218,7 +210,7 @@ static inline unsigned int fh_partition_set_dtprop(int handle,
                                                    uint64_t propvalue_addr,
                                                    uint32_t propvalue_len)
 {
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_SET_DTPROP;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_SET_DTPROP);
 	register uintptr_t r3 __asm__("r3") = handle;
 
 #ifdef CONFIG_LIBOS_PHYS_64BIT
@@ -240,7 +232,7 @@ static inline unsigned int fh_partition_set_dtprop(int handle,
 		: "+r" (r11),
 		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7),
 		  "+r" (r8), "+r" (r9), "+r" (r10)
-		: : HCALL_CLOBBERS8
+		: : FH_HCALL_CLOBBERS8
 	);
 
 	return r3;
@@ -254,12 +246,12 @@ static inline unsigned int fh_partition_set_dtprop(int handle,
  */
 static inline unsigned int fh_partition_restart(unsigned int partition)
 {
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_RESTART;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_RESTART);
 	register uintptr_t r3 __asm__("r3") = partition;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
+		: : FH_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -283,13 +275,13 @@ static inline unsigned int fh_partition_restart(unsigned int partition)
 static inline unsigned int fh_partition_get_status(unsigned int partition,
 	unsigned int *status)
 {
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_GET_STATUS;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_GET_STATUS);
 	register uintptr_t r3 __asm__("r3") = partition;
 	register uintptr_t r4 __asm__("r4");
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
-		: : HCALL_CLOBBERS2
+		: : FH_HCALL_CLOBBERS2
 	);
 
 	*status = r4;
@@ -310,13 +302,13 @@ static inline unsigned int fh_partition_get_status(unsigned int partition,
 static inline unsigned int fh_partition_start(unsigned int partition,
 	uint32_t entry_point)
 {
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_START;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_START);
 	register uintptr_t r3 __asm__("r3") = partition;
 	register uintptr_t r4 __asm__("r4") = entry_point;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : HCALL_CLOBBERS2
+		: : FH_HCALL_CLOBBERS2
 	);
 
 	return r3;
@@ -330,12 +322,12 @@ static inline unsigned int fh_partition_start(unsigned int partition,
  */
 static inline unsigned int fh_partition_stop(unsigned int partition)
 {
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_STOP;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_STOP);
 	register uintptr_t r3 __asm__("r3") = partition;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
+		: : FH_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -369,7 +361,7 @@ struct fh_sg_list {
 static inline unsigned int fh_partition_memcpy(unsigned int source,
 	unsigned int target, phys_addr_t sg_list, unsigned int count)
 {
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_MEMCPY;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_MEMCPY);
 	register uintptr_t r3 __asm__("r3") = source;
 	register uintptr_t r4 __asm__("r4") = target;
 	register uintptr_t r5 __asm__("r5") = (uint32_t) sg_list;
@@ -383,64 +375,8 @@ static inline unsigned int fh_partition_memcpy(unsigned int source,
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11),
 		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7)
-		: : HCALL_CLOBBERS5
+		: : FH_HCALL_CLOBBERS5
 	);
-
-	return r3;
-}
-
-/**
- * Configure the specified interrupt.
- * @param[in] interrupt the interrupt number
- * @param[in] config configuration for this interrupt
- * @param[in] priority interrupt priority
- * @param[in] destination destination CPU ID mask
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_vmpic_set_int_config(unsigned int interrupt,
-	uint32_t config, unsigned int priority, uint32_t destination)
-{
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_SET_INT_CONFIG;
-	register uintptr_t r3 __asm__("r3") = interrupt;
-	register uintptr_t r4 __asm__("r4") = config;
-	register uintptr_t r5 __asm__("r5") = priority;
-	register uintptr_t r6 __asm__("r6") = destination;
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6)
-		: : HCALL_CLOBBERS4
-	);
-
-	return r3;
-}
-
-/**
- * Return the config of the specified interrupt.
- * @param[in] interrupt the interrupt number
- * @param[out] config configuration for this interrupt
- * @param[out] priority interrupt priority
- * @param[out] destination destination CPU ID mask
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_vmpic_get_int_config(unsigned int interrupt,
-	uint32_t *config, unsigned int *priority, uint32_t *destination)
-{
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_GET_INT_CONFIG;
-	register uintptr_t r3 __asm__("r3") = interrupt;
-	register uintptr_t r4 __asm__("r4");
-	register uintptr_t r5 __asm__("r5");
-	register uintptr_t r6 __asm__("r6");
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "=r" (r4), "=r" (r5), "=r" (r6)
-		: : HCALL_CLOBBERS4
-	);
-
-	*config = r4;
-	*priority = r5;
-	*destination = r6;
 
 	return r3;
 }
@@ -453,12 +389,12 @@ static inline unsigned int fh_vmpic_get_int_config(unsigned int interrupt,
  */
 static inline unsigned int fh_dma_enable(unsigned int liodn)
 {
-	register uintptr_t r11 __asm__("r11") = FH_DMA_ENABLE;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_DMA_ENABLE);
 	register uintptr_t r3 __asm__("r3") = liodn;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
+		: : FH_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -472,112 +408,17 @@ static inline unsigned int fh_dma_enable(unsigned int liodn)
  */
 static inline unsigned int fh_dma_disable(unsigned int liodn)
 {
-	register uintptr_t r11 __asm__("r11") = FH_DMA_DISABLE;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_DMA_DISABLE);
 	register uintptr_t r3 __asm__("r3") = liodn;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
+		: : FH_HCALL_CLOBBERS1
 	);
 
 	return r3;
 }
 
-/**
- * Sets the mask for the specified interrupt source.
- * @param[in] interrupt the interrupt number
- * @param[in] mask 0=enable interrupts, 1=disable interrupts
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_vmpic_set_mask(unsigned int interrupt,
-	unsigned int mask)
-{
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_SET_MASK;
-	register uintptr_t r3 __asm__("r3") = interrupt;
-	register uintptr_t r4 __asm__("r4") = mask;
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : HCALL_CLOBBERS2
-	);
-
-	return r3;
-}
-
-/**
- * Returns the mask for the specified interrupt source.
- * @param[in] interrupt the interrupt number
- * @param[out] mask mask for this interrupt (0=enabled, 1=disabled)
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_vmpic_get_mask(unsigned int interrupt,
-	unsigned int *mask)
-{
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_GET_MASK;
-	register uintptr_t r3 __asm__("r3") = interrupt;
-	register uintptr_t r4 __asm__("r4");
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "=r" (r4)
-		: : HCALL_CLOBBERS2
-	);
-
-	*mask = r4;
-
-	return r3;
-}
-
-/**
- * Returns the activity status of an interrupt source.
- * @param[in] interrupt the interrupt number
- * @param[out] activity activity status.
- *
- * The activity status is a value that indicates whether an interrupt has
- * been requested (i.e. is in service).
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_vmpic_get_activity(unsigned int interrupt,
-	unsigned int *activity)
-{
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_GET_ACTIVITY;
-	register uintptr_t r3 __asm__("r3") = interrupt;
-	register uintptr_t r4 __asm__("r4");
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "=r" (r4)
-		: : HCALL_CLOBBERS2
-	);
-
-	*activity = r4;
-
-	return r3;
-}
-
-/**
- * Signal the end of interrupt processing.
- * @param[in] interrupt the interrupt number
- *
- * This function signals the end of processing for the the specified
- * interrupt, which must be the interrupt currently in service. By
- * definition, this is also the highest-priority interrupt.
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_vmpic_eoi(unsigned int interrupt)
-{
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_EOI;
-	register uintptr_t r3 __asm__("r3") = interrupt;
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
-	);
-
-	return r3;
-}
 
 /**
  * fh_vmpic_get_msir - returns the MPIC-MSI register value
@@ -589,13 +430,13 @@ static inline unsigned int fh_vmpic_eoi(unsigned int interrupt)
 static inline unsigned int fh_vmpic_get_msir(unsigned int interrupt,
 	unsigned int *msir_val)
 {
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_GET_MSIR;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_VMPIC_GET_MSIR);
 	register uintptr_t r3 __asm__("r3") = interrupt;
 	register uintptr_t r4 __asm__("r4");
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
-		: : HCALL_CLOBBERS2
+		: : FH_HCALL_CLOBBERS2
 	);
 
 	*msir_val = r4;
@@ -603,132 +444,6 @@ static inline unsigned int fh_vmpic_get_msir(unsigned int interrupt,
 	return r3;
 }
 
-/**
- * Send characters to a byte stream.
- * @param[in] handle byte stream handle
- * @param[in] count number of characters to send
- * @param[in,out] count input: number of characters to send,
- * output: number of characters sent
- * @param[in] buffer pointer to a 16-byte buffer
- *
- * 'buffer' must be at least 16 bytes long, because all 16 bytes will be
- * read from memory into registers, even if count < 16.
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_byte_channel_send(unsigned int handle,
-	unsigned int *count, const char buffer[16])
-{
-	register uintptr_t r11 __asm__("r11") = FH_BYTE_CHANNEL_SEND;
-
-	const uint32_t *p = (const uint32_t *) buffer;
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4") = *count;
-	register uintptr_t r5 __asm__("r5") = be32_to_cpu(p[0]);
-	register uintptr_t r6 __asm__("r6") = be32_to_cpu(p[1]);
-	register uintptr_t r7 __asm__("r7") = be32_to_cpu(p[2]);
-	register uintptr_t r8 __asm__("r8") = be32_to_cpu(p[3]);
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3),
-		  "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7), "+r" (r8)
-		: : HCALL_CLOBBERS6
-	);
-
-	*count = r4;
-
-	return r3;
-}
-
-/**
- * Fetch characters from a byte channel.
- * @param[in] handle byte channel handle
- * @param[in,out] count input: max num of chars to receive, output: num
- * chars received
- * @param[out] buffer pointer to a 16-byte buffer
- *
- * The size of 'buffer' must be at least 16 bytes, even if you request fewer
- * than 16 charactgers, because we always write 16 bytes to 'buffer'.  This
- * is for performance reasons.
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_byte_channel_receive(unsigned int handle,
-	unsigned int *count, char buffer[16])
-{
-	register uintptr_t r11 __asm__("r11") = FH_BYTE_CHANNEL_RECEIVE;
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4") = *count;
-	register uintptr_t r5 __asm__("r5");
-	register uintptr_t r6 __asm__("r6");
-	register uintptr_t r7 __asm__("r7");
-	register uintptr_t r8 __asm__("r8");
-
-	uint32_t *p = (uint32_t *) buffer;
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "+r" (r4),
-		  "=r" (r5), "=r" (r6), "=r" (r7), "=r" (r8)
-		: : HCALL_CLOBBERS6
-	);
-
-	*count = r4;
-	p[0] = cpu_to_be32(r5);
-	p[1] = cpu_to_be32(r6);
-	p[2] = cpu_to_be32(r7);
-	p[3] = cpu_to_be32(r8);
-
-	return r3;
-}
-
-/**
- * Returns the status of the byte channel buffers.
- * @param[in] handle byte channel handle
- * @param[out] rx_count count of bytes in receive queue
- * @param[out] tx_count count of bytes in transmit queue
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_byte_channel_poll(unsigned int handle,
-	unsigned int *rx_count,	unsigned int *tx_count)
-{
-	register uintptr_t r11 __asm__("r11") = FH_BYTE_CHANNEL_POLL;
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4");
-	register uintptr_t r5 __asm__("r5");
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "=r" (r4), "=r" (r5)
-		: : HCALL_CLOBBERS3
-	);
-
-	*rx_count = r4;
-	*tx_count = r5;
-
-	return r3;
-}
-
-/**
- * Acknowledge an interrupt.
- * @param[out] vector interrupt vector
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_vmpic_iack(unsigned int *vector)
-{
-	register uintptr_t r11 __asm__("r11") = FH_VMPIC_IACK;
-	register uintptr_t r3 __asm__("r3");
-	register uintptr_t r4 __asm__("r4");
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "=r" (r3), "=r" (r4)
-		: : HCALL_CLOBBERS2
-	);
-
-	*vector = r4;
-
-	return r3;
-}
 
 /**
  * Reset the system
@@ -737,40 +452,22 @@ static inline unsigned int fh_vmpic_iack(unsigned int *vector)
  */
 static inline unsigned int fh_system_reset(void)
 {
-	register uintptr_t r11 __asm__("r11") = FH_SYSTEM_RESET;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_SYSTEM_RESET);
 	register uintptr_t r3 __asm__("r3");
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "=r" (r3)
-		: : HCALL_CLOBBERS1
+		: : FH_HCALL_CLOBBERS1
 	);
 
 	return r3;
 }
 
-/**
- * Send a doorbell to another partition.
- * @param[in] handle doorbell send handle
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_partition_send_dbell(unsigned int handle)
-{
-	register uintptr_t r11 __asm__("r11") = FH_PARTITION_SEND_DBELL;
-	register uintptr_t r3 __asm__("r3") = handle;
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
-	);
-
-	return r3;
-}
 
 static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize, uint32_t addr_hi,
 						uint32_t addr_lo, int peek)
 {
-	register uintptr_t r11 __asm__("r11") = FH_ERR_GET_INFO;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_ERR_GET_INFO);
 	register uintptr_t r3 __asm__("r3") = queue;
 	register uintptr_t r4 __asm__("r4") = *bufsize;
 	register uintptr_t r5 __asm__("r5") = addr_hi;
@@ -779,7 +476,7 @@ static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize, uint32_
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7)
-		: : HCALL_CLOBBERS5
+		: : FH_HCALL_CLOBBERS5
 	);
 
 	*bufsize = r4;
@@ -787,23 +484,6 @@ static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize, uint32_
 	return r3;
 }
 
-/**
- * Idle -- wait for next interrupt on this core
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int fh_idle(void)
-{
-	register uintptr_t r11 __asm__("r11") = FH_IDLE;
-	register uintptr_t r3 __asm__("r3");
-
-	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "=r" (r3)
-		: : HCALL_CLOBBERS1
-	);
-
-	return r3;
-}
 
 #define FH_VCPU_RUN       0
 #define	FH_VCPU_IDLE      1
@@ -820,13 +500,13 @@ static inline unsigned int fh_idle(void)
 static inline unsigned int fh_get_core_state(unsigned int handle,
 	unsigned int vcpu, unsigned int *state)
 {
-	register uintptr_t r11 __asm__("r11") = FH_GET_CORE_STATE;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_GET_CORE_STATE);
 	register uintptr_t r3 __asm__("r3") = handle;
 	register uintptr_t r4 __asm__("r4") = vcpu;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : HCALL_CLOBBERS2
+		: : FH_HCALL_CLOBBERS2
 	);
 
 	*state = r4;
@@ -845,13 +525,13 @@ static inline unsigned int fh_get_core_state(unsigned int handle,
  */
 static inline unsigned int fh_enter_nap(unsigned int handle, unsigned int vcpu)
 {
-	register uintptr_t r11 __asm__("r11") = FH_ENTER_NAP;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_ENTER_NAP);
 	register uintptr_t r3 __asm__("r3") = handle;
 	register uintptr_t r4 __asm__("r4") = vcpu;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : HCALL_CLOBBERS2
+		: : FH_HCALL_CLOBBERS2
 	);
 
 	return r3;
@@ -866,18 +546,17 @@ static inline unsigned int fh_enter_nap(unsigned int handle, unsigned int vcpu)
  */
 static inline unsigned int fh_exit_nap(unsigned int handle, unsigned int vcpu)
 {
-	register uintptr_t r11 __asm__("r11") = FH_EXIT_NAP;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_EXIT_NAP);
 	register uintptr_t r3 __asm__("r3") = handle;
 	register uintptr_t r4 __asm__("r4") = vcpu;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : HCALL_CLOBBERS2
+		: : FH_HCALL_CLOBBERS2
 	);
 
 	return r3;
 }
-
 /**
  * Claim a "claimable" shared device
  *
@@ -886,12 +565,12 @@ static inline unsigned int fh_exit_nap(unsigned int handle, unsigned int vcpu)
  */
 static inline unsigned int fh_claim_device(unsigned int handle)
 {
-	register uintptr_t r11 __asm__("r11") = FH_CLAIM_DEVICE;
+	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_CLAIM_DEVICE);
 	register uintptr_t r3 __asm__("r3") = handle;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : HCALL_CLOBBERS1
+		: : FH_HCALL_CLOBBERS1
 	);
 
 	return r3;

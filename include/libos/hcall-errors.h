@@ -1,7 +1,7 @@
 /** @file
  * Freescale hypervisor error numbers.
  *
- * Copyright (C) 2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009,2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,24 +27,20 @@
 #ifndef LIBOS_HCALL_ERRORS_H
 #define LIBOS_HCALL_ERRORS_H
 
-/* Posix return codes */
+/* Epapr error codes */
 
-#define EPERM            1      /**< Operation not permitted */
-#define ENOENT           2      /**< Entry Not Found */
-#define EIO              5      /**< I/O error occured */
-#define EAGAIN          11      /**< The operation had insufficient resources to complete and should be retried */
-#define ENOMEM          12      /**< There was insufficient memory to complete the operation */
-#define EFAULT          14      /**< Bad guest address */
-#define ENODEV          19      /**< No such device */
-#define EINVAL          22      /**< An argument supplied to the hcall was out of range or invalid */
-
-/* Extended return codes */
-
-#define FH_ERR_INTERNAL         1024    /**< An internal error occured */
-#define FH_ERR_CONFIG           1025    /**< A configuration error was detected */
-#define FH_ERR_INVALID_STATE    1026    /**< The object is in an invalid state */
-#define FH_ERR_UNIMPLEMENTED    1027    /**< Unimplemented hypercall */
-#define FH_ERR_BUFFER_OVERFLOW  1028    /**< Caller-supplied buffer too small */
-#define FH_ERR_TOO_LARGE        1029    /**< Argument is too large */
+#define EV_EPERM                1       /** Operation not permitted */
+#define EV_ENOENT               2       /**  Entry Not Found */
+#define EV_EIO                  3       /** I/O error occured */
+#define EV_EAGAIN               4       /** The operation had insufficient resources to complete and should be retried */
+#define EV_ENOMEM               5       /** There was insufficient memory to complete the operation */
+#define EV_EFAULT               6       /** Bad guest address */
+#define EV_ENODEV               7       /** No such device */
+#define EV_EINVAL               8       /** An argument supplied to the hcall was out of range or invalid */
+#define EV_INTERNAL             9       /** An internal error occured */
+#define EV_CONFIG              10       /** A configuration error was detected */
+#define EV_INVALID_STATE       11       /** The object is in an invalid state */
+#define EV_UNIMPLEMENTED       12       /** Unimplemented hypercall */
+#define EV_BUFFER_OVERFLOW     13       /** Caller-supplied buffer too small */
 
 #endif

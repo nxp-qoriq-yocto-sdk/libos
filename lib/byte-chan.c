@@ -27,7 +27,7 @@
  */
 
 #include <libos/chardev.h>
-#include <libos/hcalls.h>
+#include <libos/epapr_hcalls.h>
 #include <libos/byte-chan.h>
 #include <libos/interrupts.h>
 #include <libos/libos.h>
@@ -49,7 +49,7 @@ static ssize_t byte_chan_rx(chardev_t *cd, uint8_t *buf,
 	while (count > 0) {
 		unsigned int this_count = min(count, 16U);
 	
-		ret = fh_byte_channel_receive(priv->handle, &this_count, (char *)buf);
+		ret = ev_byte_channel_receive(priv->handle, &this_count, (char *)buf);
 		if (ret)
 			return total == 0 ? ret : (ssize_t)total;
 
@@ -74,9 +74,9 @@ static ssize_t byte_chan_tx(chardev_t *cd, const uint8_t *buf,
 	while (count > 0) {
 		unsigned int sent = min(count, 16U);
 
-		ret = fh_byte_channel_send(priv->handle, &sent, (const char *)buf);
+		ret = ev_byte_channel_send(priv->handle, &sent, (const char *)buf);
 
-		if (sent == 0 && !(ret == EAGAIN && (flags & CHARDEV_BLOCKING)))
+		if (sent == 0 && !(ret == EV_EAGAIN && (flags & CHARDEV_BLOCKING)))
 			break;
 
 		buf += sent;
