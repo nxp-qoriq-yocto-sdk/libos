@@ -167,6 +167,7 @@
 #define   EPCR_DMIUH      0x00400000 // Disable MAS int updates for hypervisor
 
 #define SPR_DBCR0        308  // Debug control register 0
+#define   DBCR0_EDM        0x80000000 // External debug mode
 #define   DBCR0_IDM        0x40000000 // Internal debug mode
 #define   DBCR0_RST        0x30000000 // Reset mask
 #define   DBCR0_ICMP       0x08000000 // Instruction complete debug event
