@@ -134,8 +134,11 @@
  */
 static inline unsigned int fh_send_nmi(unsigned int vcpu_mask)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_SEND_NMI);
-	register uintptr_t r3 __asm__("r3") = vcpu_mask;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_SEND_NMI);
+	r3 = vcpu_mask;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
@@ -151,13 +154,15 @@ static inline unsigned int fh_send_nmi(unsigned int vcpu_mask)
 
 /**
  * Get a property from a guest device tree.
- * @handle[in] handle of partition whose device tree is to be accessed
- * @dtpath_addr[in] physical address of device tree path to access
- * @propname_addr[in] physical address of name of property
- * @propvalue_addr[in] physical address of property value buffer
- * @propvalue_len[in,out]
+ *
+ * @param[in] handle handle of partition whose device tree is to be accessed
+ * @param[in] dtpath_addr physical address of device tree path to access
+ * @param[in] propname_addr physical address of name of property
+ * @param[in] propvalue_addr physical address of property value buffer
+ * @param[in,out] propvalue_len
  *    length of buffer on entry, length of property on return
- * @return zero on success, non-zero on error.
+ *
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_get_dtprop(int handle,
                                                    uint64_t dtpath_addr,
@@ -165,23 +170,32 @@ static inline unsigned int fh_partition_get_dtprop(int handle,
                                                    uint64_t propvalue_addr,
                                                    uint32_t *propvalue_len)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_GET_DTPROP);
-	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r6 __asm__("r6");
+	register uintptr_t r7 __asm__("r7");
+	register uintptr_t r8 __asm__("r8");
+	register uintptr_t r9 __asm__("r9");
+	register uintptr_t r10 __asm__("r10");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_GET_DTPROP);
+	r3 = handle;
 
 #ifdef CONFIG_LIBOS_PHYS_64BIT
-	register uintptr_t r4 __asm__("r4") = dtpath_addr >> 32;
-	register uintptr_t r6 __asm__("r6") = propname_addr >> 32;
-	register uintptr_t r8 __asm__("r8") = propvalue_addr >> 32;
+	r4 = dtpath_addr >> 32;
+	r6 = propname_addr >> 32;
+	r8 = propvalue_addr >> 32;
 #else
-	register uintptr_t r4 __asm__("r4") = 0;
-	register uintptr_t r6 __asm__("r6") = 0;
-	register uintptr_t r8 __asm__("r8") = 0;
+	r4 = 0;
+	r6 = 0;
+	r8 = 0;
 #endif
-	register uintptr_t r5 __asm__("r5") = (uint32_t)dtpath_addr;
-	register uintptr_t r7 __asm__("r7") = (uint32_t)propname_addr;
-	register uintptr_t r9 __asm__("r9") = (uint32_t)propvalue_addr;
-
-	register uintptr_t r10 __asm__("r10") = *propvalue_len;
+	r5 = (uint32_t)dtpath_addr;
+	r7 = (uint32_t)propname_addr;
+	r9 = (uint32_t)propvalue_addr;
+	r10 = *propvalue_len;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11),
@@ -196,13 +210,14 @@ static inline unsigned int fh_partition_get_dtprop(int handle,
 
 /**
  * Set a property in a guest device tree.
- * @handle[in] handle of partition whose device tree is to be accessed
- * @dtpath_addr[in] physical address of device tree path to access
- * @propname_addr[in] physical address of name of property
- * @propvalue_addr[in] physical address of property value
- * @propvalue_len[in] length of property
  *
- * @return zero on success, non-zero on error.
+ * @param[in] handle handle of partition whose device tree is to be accessed
+ * @param[in] dtpath_addr physical address of device tree path to access
+ * @param[in] propname_addr physical address of name of property
+ * @param[in] propvalue_addr physical address of property value
+ * @param[in] propvalue_len length of property
+ *
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_set_dtprop(int handle,
                                                    uint64_t dtpath_addr,
@@ -210,23 +225,32 @@ static inline unsigned int fh_partition_set_dtprop(int handle,
                                                    uint64_t propvalue_addr,
                                                    uint32_t propvalue_len)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_SET_DTPROP);
-	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r6 __asm__("r6");
+	register uintptr_t r8 __asm__("r8");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r7 __asm__("r7");
+	register uintptr_t r9 __asm__("r9");
+	register uintptr_t r10 __asm__("r10");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_SET_DTPROP);
+	r3 = handle;
 
 #ifdef CONFIG_LIBOS_PHYS_64BIT
-	register uintptr_t r4 __asm__("r4") = dtpath_addr >> 32;
-	register uintptr_t r6 __asm__("r6") = propname_addr >> 32;
-	register uintptr_t r8 __asm__("r8") = propvalue_addr >> 32;
+	r4 = dtpath_addr >> 32;
+	r6 = propname_addr >> 32;
+	r8 = propvalue_addr >> 32;
 #else
-	register uintptr_t r4 __asm__("r4") = 0;
-	register uintptr_t r6 __asm__("r6") = 0;
-	register uintptr_t r8 __asm__("r8") = 0;
+	r4 = 0;
+	r6 = 0;
+	r8 = 0;
 #endif
-	register uintptr_t r5 __asm__("r5") = (uint32_t)dtpath_addr;
-	register uintptr_t r7 __asm__("r7") = (uint32_t)propname_addr;
-	register uintptr_t r9 __asm__("r9") = (uint32_t)propvalue_addr;
-
-	register uintptr_t r10 __asm__("r10") = propvalue_len;
+	r5 = (uint32_t)dtpath_addr;
+	r7 = (uint32_t)propname_addr;
+	r9 = (uint32_t)propvalue_addr;
+	r10 = propvalue_len;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11),
@@ -240,14 +264,18 @@ static inline unsigned int fh_partition_set_dtprop(int handle,
 
 /**
  * Reboot the current partition.
+ *
  * @param[in] partition partition ID
  *
  * @return an error code if reboot failed.  Does not return if it succeeds.
  */
 static inline unsigned int fh_partition_restart(unsigned int partition)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_RESTART);
-	register uintptr_t r3 __asm__("r3") = partition;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_RESTART);
+	r3 = partition;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
@@ -267,6 +295,7 @@ static inline unsigned int fh_partition_restart(unsigned int partition)
 
 /**
  * Gets the status of a partition.
+ *
  * @param[in] partition partition ID
  * @param[out] status status code
  *
@@ -275,9 +304,12 @@ static inline unsigned int fh_partition_restart(unsigned int partition)
 static inline unsigned int fh_partition_get_status(unsigned int partition,
 	unsigned int *status)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_GET_STATUS);
-	register uintptr_t r3 __asm__("r3") = partition;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_GET_STATUS);
+	r3 = partition;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
@@ -291,6 +323,7 @@ static inline unsigned int fh_partition_get_status(unsigned int partition,
 
 /**
  * Boots and starts execution of the specified partition.
+ *
  * @param[in] partition partition ID
  * @param[in] entry_point guest physical address to start execution
  *
@@ -302,9 +335,13 @@ static inline unsigned int fh_partition_get_status(unsigned int partition,
 static inline unsigned int fh_partition_start(unsigned int partition,
 	uint32_t entry_point)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_START);
-	register uintptr_t r3 __asm__("r3") = partition;
-	register uintptr_t r4 __asm__("r4") = entry_point;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_START);
+	r3 = partition;
+	r4 = entry_point;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
@@ -316,14 +353,18 @@ static inline unsigned int fh_partition_start(unsigned int partition,
 
 /**
  * Stops another partition.
+ *
  * @param[in] partition partition ID
  *
  * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_stop(unsigned int partition)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_STOP);
-	register uintptr_t r3 __asm__("r3") = partition;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_STOP);
+	r3 = partition;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
@@ -334,9 +375,9 @@ static inline unsigned int fh_partition_stop(unsigned int partition)
 }
 
 /**
- * Definition of the fh_partition_memcpy S/G list.
+ * struct fh_sg_list: definition of the fh_partition_memcpy S/G list
  *
- * The scatter/gather list for fh_partition_memcpy is an array of these
+ * The scatter/gather list for fh_partition_memcpy() is an array of these
  * structures.  The array must be guest physically contiguous.
  *
  * This structure must be aligned on 32-byte boundary, so that no single
@@ -351,6 +392,7 @@ struct fh_sg_list {
 
 /**
  * Copies data from one guest to another.
+ *
  * @param[in] source the ID of the partition to copy from
  * @param[in] target the ID of the partition to copy to
  * @param[in] sg_list guest physical address of an array of fh_sg_list structures
@@ -361,16 +403,24 @@ struct fh_sg_list {
 static inline unsigned int fh_partition_memcpy(unsigned int source,
 	unsigned int target, phys_addr_t sg_list, unsigned int count)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_PARTITION_MEMCPY);
-	register uintptr_t r3 __asm__("r3") = source;
-	register uintptr_t r4 __asm__("r4") = target;
-	register uintptr_t r5 __asm__("r5") = (uint32_t) sg_list;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r6 __asm__("r6");
+	register uintptr_t r7 __asm__("r7");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_MEMCPY);
+	r3 = source;
+	r4 = target;
+	r5 = (uint32_t) sg_list;
+
 #ifdef CONFIG_LIBOS_PHYS_64BIT
-	register uintptr_t r6 __asm__("r6") = sg_list >> 32;
+	r6 = sg_list >> 32;
 #else
-	register uintptr_t r6 __asm__("r6") = 0;
+	r6 = 0;
 #endif
-	register uintptr_t r7 __asm__("r7") = count;
+	r7 = count;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11),
@@ -383,14 +433,18 @@ static inline unsigned int fh_partition_memcpy(unsigned int source,
 
 /**
  * Enable DMA for the specified device.
+ *
  * @param[in] liodn the LIODN of the I/O device for which to enable DMA
  *
  * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_dma_enable(unsigned int liodn)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_DMA_ENABLE);
-	register uintptr_t r3 __asm__("r3") = liodn;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_DMA_ENABLE);
+	r3 = liodn;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
@@ -402,14 +456,18 @@ static inline unsigned int fh_dma_enable(unsigned int liodn)
 
 /**
  * Disable DMA for the specified device.
+ *
  * @param[in] liodn the LIODN of the I/O device for which to disable DMA
  *
  * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_dma_disable(unsigned int liodn)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_DMA_DISABLE);
-	register uintptr_t r3 __asm__("r3") = liodn;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_DMA_DISABLE);
+	r3 = liodn;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
@@ -419,20 +477,22 @@ static inline unsigned int fh_dma_disable(unsigned int liodn)
 	return r3;
 }
 
-
 /**
  * fh_vmpic_get_msir - returns the MPIC-MSI register value
- * @interrupt: the interrupt number
- * @msir_val: returned MPIC-MSI register value
+ * @param[in] interrupt the interrupt number
+ * @param[out] msir_val returned MPIC-MSI register value
  *
- * Returns 0 for success, or an error code.
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_vmpic_get_msir(unsigned int interrupt,
 	unsigned int *msir_val)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_VMPIC_GET_MSIR);
-	register uintptr_t r3 __asm__("r3") = interrupt;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
+
+	r11 = FH_HCALL_TOKEN(FH_VMPIC_GET_MSIR);
+	r3 = interrupt;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
@@ -444,7 +504,6 @@ static inline unsigned int fh_vmpic_get_msir(unsigned int interrupt,
 	return r3;
 }
 
-
 /**
  * Reset the system
  *
@@ -452,8 +511,10 @@ static inline unsigned int fh_vmpic_get_msir(unsigned int interrupt,
  */
 static inline unsigned int fh_system_reset(void)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_SYSTEM_RESET);
+	register uintptr_t r11 __asm__("r11");
 	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_SYSTEM_RESET);
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "=r" (r3)
@@ -464,18 +525,39 @@ static inline unsigned int fh_system_reset(void)
 }
 
 
-static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize, uint32_t addr_hi,
-						uint32_t addr_lo, int peek)
+/**
+ * get platform error information
+ *
+ * @param[in] queue 0 - guest error queue, 1 global event queue
+ * @param[in] bufsize
+ * @param[in] addr_hi high 32-bits of the guest physical address
+ *            of the error buffer
+ * @param[in] addr_lo  low 32-bits of the guest physical address
+ *            of the error buffer
+ * @param[in] peek specifies whether to remove the entry or not
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize,
+	uint32_t addr_hi, uint32_t addr_lo, int peek)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_ERR_GET_INFO);
-	register uintptr_t r3 __asm__("r3") = queue;
-	register uintptr_t r4 __asm__("r4") = *bufsize;
-	register uintptr_t r5 __asm__("r5") = addr_hi;
-	register uintptr_t r6 __asm__("r6") = addr_lo;
-	register uintptr_t r7 __asm__("r7") = peek;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r6 __asm__("r6");
+	register uintptr_t r7 __asm__("r7");
+
+	r11 = FH_HCALL_TOKEN(FH_ERR_GET_INFO);
+	r3 = queue;
+	r4 = *bufsize;
+	r5 = addr_hi;
+	r6 = addr_lo;
+	r7 = peek;
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7)
+		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6),
+		  "+r" (r7)
 		: : FH_HCALL_CLOBBERS5
 	);
 
@@ -492,17 +574,22 @@ static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize, uint32_
 /**
  * Get the state of a vcpu.
  *
- * @handle[in] handle of partition containing the vcpu
- * @vcpu[in] vcpu number within the partition
- * @state[out] the current state of the vcpu, see FH_VCPU_*
- * @return zero on success, non-zero on error.
+ * @param[in] handle of partition containing the vcpu
+ * @param[in] vcpu number within the partition
+ * @param[out] state the current state of the vcpu, see FH_VCPU_*
+ *
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_get_core_state(unsigned int handle,
 	unsigned int vcpu, unsigned int *state)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_GET_CORE_STATE);
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4") = vcpu;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+
+	r11 = FH_HCALL_TOKEN(FH_GET_CORE_STATE);
+	r3 = handle;
+	r4 = vcpu;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
@@ -519,15 +606,20 @@ static inline unsigned int fh_get_core_state(unsigned int handle,
  * Note that though the API supports entering nap on a vcpu other
  * than the caller, this may not be implmented and may return EINVAL.
  *
- * @handle[in] handle of partition containing the vcpu
- * @vcpu[in] vcpu number within the partition
- * @return zero on success, non-zero on error.
+ * @param[in] handle of partition containing the vcpu foo
+ * @param[in] vcpu number within the partition
+ *
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_enter_nap(unsigned int handle, unsigned int vcpu)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_ENTER_NAP);
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4") = vcpu;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+
+	r11 = FH_HCALL_TOKEN(FH_ENTER_NAP);
+	r3 = handle;
+	r4 = vcpu;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
@@ -540,15 +632,20 @@ static inline unsigned int fh_enter_nap(unsigned int handle, unsigned int vcpu)
 /**
  * Exit nap on a vcpu
  *
- * @handle[in] handle of partition containing the vcpu
- * @vcpu[in] vcpu number within the partition
- * @return zero on success, non-zero on error.
+ * @param[in] handle of partition containing the vcpu
+ * @param[in] vcpu number within the partition
+ *
+ * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_exit_nap(unsigned int handle, unsigned int vcpu)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_EXIT_NAP);
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4") = vcpu;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+
+	r11 = FH_HCALL_TOKEN(FH_EXIT_NAP);
+	r3 = handle;
+	r4 = vcpu;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
@@ -557,16 +654,21 @@ static inline unsigned int fh_exit_nap(unsigned int handle, unsigned int vcpu)
 
 	return r3;
 }
+
 /**
  * Claim a "claimable" shared device
  *
  * @param[in] handle fsl,hv-device-handle of node to claim
+ *
  * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_claim_device(unsigned int handle)
 {
-	register uintptr_t r11 __asm__("r11") = FH_HCALL_TOKEN(FH_CLAIM_DEVICE);
-	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_CLAIM_DEVICE);
+	r3 = handle;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)

@@ -27,16 +27,13 @@
  */
 
 /* A "hypercall" is an "sc 1" instruction.  This header file file provides C
- * wrapper functions for the Freescale hypervisor interface.  It is inteded
+ * wrapper functions for the ePAPR hypervisor interface.  It is inteded
  * for use by Linux device drivers and other operating systems.
  *
  * The hypercalls are implemented as inline assembly, rather than assembly
  * language functions in a .S file, for optimization.  It allows
  * the caller to issue the hypercall instruction directly, improving both
  * performance and memory footprint.
- *
- * If adding a hypercall, please make sure the functions are in the same
- * order as the corresponding hypercall numbers.
  */
 
 #ifndef _EPAPR_HCALLS_H
@@ -49,29 +46,46 @@
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) cpu_from_be32(x)
 
-#define FH_API_VERSION 1
-
-
-#define  EV_BYTE_CHANNEL_SEND	      1
-#define  EV_BYTE_CHANNEL_RECEIVE      2
-#define  EV_BYTE_CHANNEL_POLL         3
-#define  EV_INT_SET_CONFIG            4
-#define  EV_INT_GET_CONFIG            5
-#define  EV_INT_SET_MASK              6
-#define	 EV_INT_GET_MASK              7
-#define  EV_INT_GET_ACTIVITY          8
-#define  EV_INT_IACK                  9
-#define  EV_INT_EOI                  10
-#define  EV_INT_SEND_IPI             11
-#define  EV_INT_SET_TASK_PRIORITY    12
-#define  EV_INT_GET_TASK_PRIORITY    13
-#define  EV_DOORBELL_SEND            14
-#define  EV_MSGSND                   15
-#define  EV_IDLE                     16
+#define EV_BYTE_CHANNEL_SEND         1
+#define EV_BYTE_CHANNEL_RECEIVE      2
+#define EV_BYTE_CHANNEL_POLL         3
+#define EV_INT_SET_CONFIG            4
+#define EV_INT_GET_CONFIG            5
+#define EV_INT_SET_MASK              6
+#define EV_INT_GET_MASK              7
+#define EV_INT_GET_ACTIVITY          8
+#define EV_INT_IACK                  9
+#define EV_INT_EOI                  10
+#define EV_INT_SEND_IPI             11
+#define EV_INT_SET_TASK_PRIORITY    12
+#define EV_INT_GET_TASK_PRIORITY    13
+#define EV_DOORBELL_SEND            14
+#define EV_MSGSND                   15
+#define EV_IDLE                     16
 
 /* vendor ID: epapr */
 #define EV_VENDOR_ID                  0
 #define EV_HCALL_TOKEN(hcall_number)  ((EV_VENDOR_ID << 16) | (hcall_number))
+
+/* epapr error codes */
+#define EV_EPERM                1       /* Operation not permitted */
+#define EV_ENOENT               2       /*  Entry Not Found */
+#define EV_EIO                  3       /* I/O error occured */
+#define EV_EAGAIN               4       /* The operation had insufficient
+					 * resources to complete and should be
+					 * retried
+					 */
+#define EV_ENOMEM               5       /* There was insufficient memory to
+					 * complete the operation */
+#define EV_EFAULT               6       /* Bad guest address */
+#define EV_ENODEV               7       /* No such device */
+#define EV_EINVAL               8       /* An argument supplied to the hcall
+					   was out of range or invalid */
+#define EV_INTERNAL             9       /* An internal error occured */
+#define EV_CONFIG              10       /* A configuration error was detected */
+#define EV_INVALID_STATE       11       /* The object is in an invalid state */
+#define EV_UNIMPLEMENTED       12       /* Unimplemented hypercall */
+#define EV_BUFFER_OVERFLOW     13       /* Caller-supplied buffer too small */
 
 /*
  * Hypercall register clobber list
@@ -129,6 +143,7 @@
 
 /**
  * Configure the specified interrupt.
+ *
  * @param[in] interrupt the interrupt number
  * @param[in] config configuration for this interrupt
  * @param[in] priority interrupt priority
@@ -139,11 +154,17 @@
 static inline unsigned int ev_int_set_config(unsigned int interrupt,
 	uint32_t config, unsigned int priority, uint32_t destination)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_SET_CONFIG);
-	register uintptr_t r3 __asm__("r3") = interrupt;
-	register uintptr_t r4 __asm__("r4") = config;
-	register uintptr_t r5 __asm__("r5") = priority;
-	register uintptr_t r6 __asm__("r6") = destination;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r6 __asm__("r6");
+
+	r11 = EV_HCALL_TOKEN(EV_INT_SET_CONFIG);
+	r3  = interrupt;
+	r4  = config;
+	r5  = priority;
+	r6  = destination;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6)
@@ -152,9 +173,9 @@ static inline unsigned int ev_int_set_config(unsigned int interrupt,
 
 	return r3;
 }
-
 /**
  * Return the config of the specified interrupt.
+ *
  * @param[in] interrupt the interrupt number
  * @param[out] config configuration for this interrupt
  * @param[out] priority interrupt priority
@@ -162,14 +183,18 @@ static inline unsigned int ev_int_set_config(unsigned int interrupt,
  *
  * @return 0 for success, or an error code.
  */
+
 static inline unsigned int ev_int_get_config(unsigned int interrupt,
 	uint32_t *config, unsigned int *priority, uint32_t *destination)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_GET_CONFIG);
-	register uintptr_t r3 __asm__("r3") = interrupt;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
 	register uintptr_t r5 __asm__("r5");
 	register uintptr_t r6 __asm__("r6");
+
+	r11 = EV_HCALL_TOKEN(EV_INT_GET_CONFIG);
+	r3 = interrupt;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4), "=r" (r5), "=r" (r6)
@@ -183,7 +208,6 @@ static inline unsigned int ev_int_get_config(unsigned int interrupt,
 	return r3;
 }
 
-
 /**
  * Sets the mask for the specified interrupt source.
  * @param[in] interrupt the interrupt number
@@ -194,9 +218,13 @@ static inline unsigned int ev_int_get_config(unsigned int interrupt,
 static inline unsigned int ev_int_set_mask(unsigned int interrupt,
 	unsigned int mask)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_SET_MASK);
-	register uintptr_t r3 __asm__("r3") = interrupt;
-	register uintptr_t r4 __asm__("r4") = mask;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+
+	r11 = EV_HCALL_TOKEN(EV_INT_SET_MASK);
+	r3 = interrupt;
+	r4 = mask;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
@@ -216,9 +244,12 @@ static inline unsigned int ev_int_set_mask(unsigned int interrupt,
 static inline unsigned int ev_int_get_mask(unsigned int interrupt,
 	unsigned int *mask)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_GET_MASK);
-	register uintptr_t r3 __asm__("r3") = interrupt;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
+
+	r11 = EV_HCALL_TOKEN(EV_INT_GET_MASK);
+	r3 = interrupt;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
@@ -243,9 +274,12 @@ static inline unsigned int ev_int_get_mask(unsigned int interrupt,
 static inline unsigned int ev_int_get_activity(unsigned int interrupt,
 	unsigned int *activity)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_GET_ACTIVITY);
-	register uintptr_t r3 __asm__("r3") = interrupt;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
+
+	r11 = EV_HCALL_TOKEN(EV_INT_GET_ACTIVITY);
+	r3 = interrupt;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
@@ -259,6 +293,7 @@ static inline unsigned int ev_int_get_activity(unsigned int interrupt,
 
 /**
  * Signal the end of interrupt processing.
+ *
  * @param[in] interrupt the interrupt number
  *
  * This function signals the end of processing for the the specified
@@ -269,8 +304,11 @@ static inline unsigned int ev_int_get_activity(unsigned int interrupt,
  */
 static inline unsigned int ev_int_eoi(unsigned int interrupt)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_EOI);
-	register uintptr_t r3 __asm__("r3") = interrupt;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = EV_HCALL_TOKEN(EV_INT_EOI);
+	r3 = interrupt;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
@@ -279,7 +317,6 @@ static inline unsigned int ev_int_eoi(unsigned int interrupt)
 
 	return r3;
 }
-
 
 /**
  * Send characters to a byte stream.
@@ -297,15 +334,22 @@ static inline unsigned int ev_int_eoi(unsigned int interrupt)
 static inline unsigned int ev_byte_channel_send(unsigned int handle,
 	unsigned int *count, const char buffer[16])
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_BYTE_CHANNEL_SEND);
-
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r6 __asm__("r6");
+	register uintptr_t r7 __asm__("r7");
+	register uintptr_t r8 __asm__("r8");
 	const uint32_t *p = (const uint32_t *) buffer;
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4") = *count;
-	register uintptr_t r5 __asm__("r5") = be32_to_cpu(p[0]);
-	register uintptr_t r6 __asm__("r6") = be32_to_cpu(p[1]);
-	register uintptr_t r7 __asm__("r7") = be32_to_cpu(p[2]);
-	register uintptr_t r8 __asm__("r8") = be32_to_cpu(p[3]);
+
+	r11 = EV_HCALL_TOKEN(EV_BYTE_CHANNEL_SEND);
+	r3 = handle;
+	r4 = *count;
+	r5 = be32_to_cpu(p[0]);
+	r6 = be32_to_cpu(p[1]);
+	r7 = be32_to_cpu(p[2]);
+	r8 = be32_to_cpu(p[3]);
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3),
@@ -334,15 +378,18 @@ static inline unsigned int ev_byte_channel_send(unsigned int handle,
 static inline unsigned int ev_byte_channel_receive(unsigned int handle,
 	unsigned int *count, char buffer[16])
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_BYTE_CHANNEL_RECEIVE);
-	register uintptr_t r3 __asm__("r3") = handle;
-	register uintptr_t r4 __asm__("r4") = *count;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
 	register uintptr_t r5 __asm__("r5");
 	register uintptr_t r6 __asm__("r6");
 	register uintptr_t r7 __asm__("r7");
 	register uintptr_t r8 __asm__("r8");
-
 	uint32_t *p = (uint32_t *) buffer;
+
+	r11 = EV_HCALL_TOKEN(EV_BYTE_CHANNEL_RECEIVE);
+	r3 = handle;
+	r4 = *count;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4),
@@ -370,10 +417,13 @@ static inline unsigned int ev_byte_channel_receive(unsigned int handle,
 static inline unsigned int ev_byte_channel_poll(unsigned int handle,
 	unsigned int *rx_count,	unsigned int *tx_count)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_BYTE_CHANNEL_POLL);
-	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
 	register uintptr_t r5 __asm__("r5");
+
+	r11 = EV_HCALL_TOKEN(EV_BYTE_CHANNEL_POLL);
+	r3 = handle;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4), "=r" (r5)
@@ -398,11 +448,15 @@ static inline unsigned int ev_byte_channel_poll(unsigned int handle,
  *
  * @return 0 for success, or an error code.
  */
-static inline unsigned int ev_int_iack(unsigned int handle, unsigned int *vector)
+static inline unsigned int ev_int_iack(unsigned int handle,
+	unsigned int *vector)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_INT_IACK);
-	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
+
+	r11 = EV_HCALL_TOKEN(EV_INT_IACK);
+	r3 = handle;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
@@ -414,7 +468,6 @@ static inline unsigned int ev_int_iack(unsigned int handle, unsigned int *vector
 	return r3;
 }
 
-
 /**
  * Send a doorbell to another partition.
  * @param[in] handle doorbell send handle
@@ -423,8 +476,11 @@ static inline unsigned int ev_int_iack(unsigned int handle, unsigned int *vector
  */
 static inline unsigned int ev_doorbell_send(unsigned int handle)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_DOORBELL_SEND);
-	register uintptr_t r3 __asm__("r3") = handle;
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = EV_HCALL_TOKEN(EV_DOORBELL_SEND);
+	r3 = handle;
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
@@ -434,7 +490,6 @@ static inline unsigned int ev_doorbell_send(unsigned int handle)
 	return r3;
 }
 
-
 /**
  * Idle -- wait for next interrupt on this core
  *
@@ -442,8 +497,10 @@ static inline unsigned int ev_doorbell_send(unsigned int handle)
  */
 static inline unsigned int ev_idle(void)
 {
-	register uintptr_t r11 __asm__("r11") = EV_HCALL_TOKEN(EV_IDLE);
+	register uintptr_t r11 __asm__("r11");
 	register uintptr_t r3 __asm__("r3");
+
+	r11 = EV_HCALL_TOKEN(EV_IDLE);
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "=r" (r3)
