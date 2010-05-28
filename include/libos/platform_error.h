@@ -67,6 +67,16 @@ typedef struct cpc_error {
 	uint32_t cpccaptecc;
 } cpc_error_t;
 
+typedef struct ddr_error {
+	uint32_t ddrerrdet;
+	uint32_t ddrerrdis;
+	uint32_t ddrerrinten;
+	uint32_t ddrerrattr;
+	uint64_t ddrerraddr;
+	uint32_t ddrsbeccmgmt;
+	uint32_t ddrcaptecc;
+} ddr_error_t;
+
 typedef struct hv_error {
 	char domain[32];
 	char error[128];
@@ -78,6 +88,7 @@ typedef struct hv_error {
 		pamu_error_t pamu;
 		ccf_error_t ccf;
 		cpc_error_t cpc;
+		ddr_error_t ddr;
 	};
 } hv_error_t;
 
