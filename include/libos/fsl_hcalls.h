@@ -27,7 +27,7 @@
  */
 
 /* A "hypercall" is an "sc 1" instruction.  This header file file provides C
- * wrapper functions for the Freescale hypervisor interface.  It is inteded
+ * wrapper functions for the Freescale hypervisor interface.  It is intended
  * for use by Linux device drivers and other operating systems.
  *
  * The hypercalls are implemented as inline assembly, rather than assembly
@@ -45,73 +45,33 @@
 #include <libos/hcall-errors.h>
 #include <libos/endian.h>
 #include <libos/types.h>
+#include <libos/epapr_hcalls.h>
 
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) cpu_from_be32(x)
 
-#define FH_API_VERSION 1
+#define FH_API_VERSION			1
 
-#define FH_ERR_GET_INFO                 1
-#define FH_PARTITION_GET_DTPROP         2
-#define FH_PARTITION_SET_DTPROP         3
-#define FH_PARTITION_RESTART            4
-#define FH_PARTITION_GET_STATUS         5
-#define FH_PARTITION_START              6
-#define FH_PARTITION_STOP               7
-#define FH_PARTITION_MEMCPY             8
-#define FH_DMA_ENABLE                   9
-#define FH_DMA_DISABLE                  10
-#define FH_SEND_NMI                     11
-#define FH_VMPIC_GET_MSIR               12
-#define FH_SYSTEM_RESET                 13
-#define FH_GET_CORE_STATE               14
-#define FH_ENTER_NAP                    15
-#define FH_EXIT_NAP                     16
-#define FH_CLAIM_DEVICE                 17
+#define FH_ERR_GET_INFO			1
+#define FH_PARTITION_GET_DTPROP		2
+#define FH_PARTITION_SET_DTPROP		3
+#define FH_PARTITION_RESTART		4
+#define FH_PARTITION_GET_STATUS		5
+#define FH_PARTITION_START		6
+#define FH_PARTITION_STOP		7
+#define FH_PARTITION_MEMCPY		8
+#define FH_DMA_ENABLE			9
+#define FH_DMA_DISABLE			10
+#define FH_SEND_NMI			11
+#define FH_VMPIC_GET_MSIR		12
+#define FH_SYSTEM_RESET			13
+#define FH_GET_CORE_STATE		14
+#define FH_ENTER_NAP			15
+#define FH_EXIT_NAP			16
+#define FH_CLAIM_DEVICE			17
 
 /* vendor ID: Freescale Semiconductor */
-#define FH_VENDOR_ID                  1
-#define FH_HCALL_TOKEN(hcall_number)  ((FH_VENDOR_ID << 16) | (hcall_number))
-
-/*
- * Hypercall register clobber list
- *
- * These macros are used to define the list of clobbered registers during a
- * hypercall.  Technically, registers r0 and r3-r12 are always clobbered,
- * but the gcc inline assembly syntax does not allow us to specify registers
- * on the clobber list that are also on the input/output list.  Therefore,
- * the lists of clobbered registers depends on the number of register
- * parmeters ("+r" and "=r") passed to the hypercall.
- *
- * Each assembly block should use one of the HCALL_CLOBBERSx macros.  As a
- * general rule, 'x' is the number of parameters passed to the assembly
- * block *except* for r11.
- *
- * If you're not sure, just use the smallest value of 'x' that does not
- * generate a compilation error.  Because these are static inline functions,
- * the compiler will only check the clobber list for a function if you
- * compile code that calls that function.
- *
- * r3 and r11 are not included in any clobbers list because they are always
- * listed as output registers.
- *
- * XER, CTR, and LR are currently listed as clobbers because it's uncertain
- * whether they will be clobbered.
- *
- * Note that r11 can be used as an output parameter.
-*/
-
-/* List of common clobbered registers.  Do not use this macro. */
-#define FH_HCALL_CLOBBERS "r0", "r12", "xer", "ctr", "lr", "cc"
-
-#define FH_HCALL_CLOBBERS8 FH_HCALL_CLOBBERS
-#define FH_HCALL_CLOBBERS7 FH_HCALL_CLOBBERS8, "r10"
-#define FH_HCALL_CLOBBERS6 FH_HCALL_CLOBBERS7, "r9"
-#define FH_HCALL_CLOBBERS5 FH_HCALL_CLOBBERS6, "r8"
-#define FH_HCALL_CLOBBERS4 FH_HCALL_CLOBBERS5, "r7"
-#define FH_HCALL_CLOBBERS3 FH_HCALL_CLOBBERS4, "r6"
-#define FH_HCALL_CLOBBERS2 FH_HCALL_CLOBBERS3, "r5"
-#define FH_HCALL_CLOBBERS1 FH_HCALL_CLOBBERS2, "r4"
+#define FH_HCALL_TOKEN(num)		_EV_HCALL_TOKEN(EV_FSL_VENDOR_ID, num)
 
 /*
  * We use "uintptr_t" to define a register because it's guaranteed to be a
@@ -142,7 +102,7 @@ static inline unsigned int fh_send_nmi(unsigned int vcpu_mask)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : FH_HCALL_CLOBBERS1
+		: : EV_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -201,7 +161,7 @@ static inline unsigned int fh_partition_get_dtprop(int handle,
 		: "+r" (r11),
 		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7),
 		  "+r" (r8), "+r" (r9), "+r" (r10)
-		: : FH_HCALL_CLOBBERS8
+		: : EV_HCALL_CLOBBERS8
 	);
 
 	*propvalue_len = r4;
@@ -220,10 +180,10 @@ static inline unsigned int fh_partition_get_dtprop(int handle,
  * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_set_dtprop(int handle,
-                                                   uint64_t dtpath_addr,
-                                                   uint64_t propname_addr,
-                                                   uint64_t propvalue_addr,
-                                                   uint32_t propvalue_len)
+						   uint64_t dtpath_addr,
+						   uint64_t propname_addr,
+						   uint64_t propvalue_addr,
+						   uint32_t propvalue_len)
 {
 	register uintptr_t r11 __asm__("r11");
 	register uintptr_t r3 __asm__("r3");
@@ -256,7 +216,7 @@ static inline unsigned int fh_partition_set_dtprop(int handle,
 		: "+r" (r11),
 		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7),
 		  "+r" (r8), "+r" (r9), "+r" (r10)
-		: : FH_HCALL_CLOBBERS8
+		: : EV_HCALL_CLOBBERS8
 	);
 
 	return r3;
@@ -279,19 +239,19 @@ static inline unsigned int fh_partition_restart(unsigned int partition)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : FH_HCALL_CLOBBERS1
+		: : EV_HCALL_CLOBBERS1
 	);
 
 	return r3;
 }
 
-#define FH_PARTITION_STOPPED  0
-#define FH_PARTITION_RUNNING  1
-#define FH_PARTITION_STARTING 2
-#define FH_PARTITION_STOPPING 3
-#define FH_PARTITION_PAUSING  4
-#define FH_PARTITION_PAUSED   5
-#define FH_PARTITION_RESUMING 6
+#define FH_PARTITION_STOPPED	0
+#define FH_PARTITION_RUNNING	1
+#define FH_PARTITION_STARTING	2
+#define FH_PARTITION_STOPPING	3
+#define FH_PARTITION_PAUSING	4
+#define FH_PARTITION_PAUSED	5
+#define FH_PARTITION_RESUMING	6
 
 /**
  * Gets the status of a partition.
@@ -313,7 +273,7 @@ static inline unsigned int fh_partition_get_status(unsigned int partition,
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
-		: : FH_HCALL_CLOBBERS2
+		: : EV_HCALL_CLOBBERS2
 	);
 
 	*status = r4;
@@ -345,7 +305,7 @@ static inline unsigned int fh_partition_start(unsigned int partition,
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : FH_HCALL_CLOBBERS2
+		: : EV_HCALL_CLOBBERS2
 	);
 
 	return r3;
@@ -368,7 +328,7 @@ static inline unsigned int fh_partition_stop(unsigned int partition)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : FH_HCALL_CLOBBERS1
+		: : EV_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -425,7 +385,7 @@ static inline unsigned int fh_partition_memcpy(unsigned int source,
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11),
 		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6), "+r" (r7)
-		: : FH_HCALL_CLOBBERS5
+		: : EV_HCALL_CLOBBERS5
 	);
 
 	return r3;
@@ -448,7 +408,7 @@ static inline unsigned int fh_dma_enable(unsigned int liodn)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : FH_HCALL_CLOBBERS1
+		: : EV_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -471,7 +431,7 @@ static inline unsigned int fh_dma_disable(unsigned int liodn)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : FH_HCALL_CLOBBERS1
+		: : EV_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -496,7 +456,7 @@ static inline unsigned int fh_vmpic_get_msir(unsigned int interrupt,
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "=r" (r4)
-		: : FH_HCALL_CLOBBERS2
+		: : EV_HCALL_CLOBBERS2
 	);
 
 	*msir_val = r4;
@@ -518,7 +478,7 @@ static inline unsigned int fh_system_reset(void)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "=r" (r3)
-		: : FH_HCALL_CLOBBERS1
+		: : EV_HCALL_CLOBBERS1
 	);
 
 	return r3;
@@ -558,7 +518,7 @@ static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize,
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6),
 		  "+r" (r7)
-		: : FH_HCALL_CLOBBERS5
+		: : EV_HCALL_CLOBBERS5
 	);
 
 	*bufsize = r4;
@@ -567,9 +527,9 @@ static inline unsigned int fh_err_get_info(int queue, uint32_t *bufsize,
 }
 
 
-#define FH_VCPU_RUN       0
-#define	FH_VCPU_IDLE      1
-#define FH_VCPU_NAP       2
+#define FH_VCPU_RUN	0
+#define FH_VCPU_IDLE	1
+#define FH_VCPU_NAP	2
 
 /**
  * Get the state of a vcpu.
@@ -593,7 +553,7 @@ static inline unsigned int fh_get_core_state(unsigned int handle,
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : FH_HCALL_CLOBBERS2
+		: : EV_HCALL_CLOBBERS2
 	);
 
 	*state = r4;
@@ -623,7 +583,7 @@ static inline unsigned int fh_enter_nap(unsigned int handle, unsigned int vcpu)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : FH_HCALL_CLOBBERS2
+		: : EV_HCALL_CLOBBERS2
 	);
 
 	return r3;
@@ -649,7 +609,7 @@ static inline unsigned int fh_exit_nap(unsigned int handle, unsigned int vcpu)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : FH_HCALL_CLOBBERS2
+		: : EV_HCALL_CLOBBERS2
 	);
 
 	return r3;
@@ -672,7 +632,7 @@ static inline unsigned int fh_claim_device(unsigned int handle)
 
 	__asm__ __volatile__ ("sc 1"
 		: "+r" (r11), "+r" (r3)
-		: : FH_HCALL_CLOBBERS1
+		: : EV_HCALL_CLOBBERS1
 	);
 
 	return r3;

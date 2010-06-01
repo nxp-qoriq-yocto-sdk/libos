@@ -27,7 +27,7 @@
  */
 
 /* A "hypercall" is an "sc 1" instruction.  This header file file provides C
- * wrapper functions for the ePAPR hypervisor interface.  It is inteded
+ * wrapper functions for the ePAPR hypervisor interface.  It is intended
  * for use by Linux device drivers and other operating systems.
  *
  * The hypercalls are implemented as inline assembly, rather than assembly
@@ -46,46 +46,38 @@
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) cpu_from_be32(x)
 
-#define EV_BYTE_CHANNEL_SEND         1
-#define EV_BYTE_CHANNEL_RECEIVE      2
-#define EV_BYTE_CHANNEL_POLL         3
-#define EV_INT_SET_CONFIG            4
-#define EV_INT_GET_CONFIG            5
-#define EV_INT_SET_MASK              6
-#define EV_INT_GET_MASK              7
-#define EV_INT_GET_ACTIVITY          8
-#define EV_INT_IACK                  9
-#define EV_INT_EOI                  10
-#define EV_INT_SEND_IPI             11
-#define EV_INT_SET_TASK_PRIORITY    12
-#define EV_INT_GET_TASK_PRIORITY    13
-#define EV_DOORBELL_SEND            14
-#define EV_MSGSND                   15
-#define EV_IDLE                     16
+#define FH_API_VERSION 1
+
+#define EV_BYTE_CHANNEL_SEND		1
+#define EV_BYTE_CHANNEL_RECEIVE		2
+#define EV_BYTE_CHANNEL_POLL		3
+#define EV_INT_SET_CONFIG		4
+#define EV_INT_GET_CONFIG		5
+#define EV_INT_SET_MASK			6
+#define EV_INT_GET_MASK			7
+#define EV_INT_GET_ACTIVITY		8
+#define EV_INT_IACK			9
+#define EV_INT_EOI			10
+#define EV_INT_SEND_IPI			11
+#define EV_INT_SET_TASK_PRIORITY	12
+#define EV_INT_GET_TASK_PRIORITY	13
+#define EV_DOORBELL_SEND		14
+#define EV_MSGSND			15
+#define EV_IDLE				16
 
 /* vendor ID: epapr */
-#define EV_VENDOR_ID                  0
-#define EV_HCALL_TOKEN(hcall_number)  ((EV_VENDOR_ID << 16) | (hcall_number))
+#define EV_VENDOR_ID			0
+#define EV_LOCAL_VENDOR_ID		1	/* for private use */
+#define EV_FSL_VENDOR_ID		2	/* Freescale Semiconductor */
+#define EV_IBM_VENDOR_ID		3	/* IBM */
+#define EV_GHS_VENDOR_ID		4	/* Green Hills Software */
+#define EV_ENEA_VENDOR_ID		5	/* Enea */
+#define EV_WR_VENDOR_ID			6	/* Wind River Systems */
+#define EV_AMCC_VENDOR_ID		7	/* Applied  Micro Circuits */
 
-/* epapr error codes */
-#define EV_EPERM                1       /* Operation not permitted */
-#define EV_ENOENT               2       /*  Entry Not Found */
-#define EV_EIO                  3       /* I/O error occured */
-#define EV_EAGAIN               4       /* The operation had insufficient
-					 * resources to complete and should be
-					 * retried
-					 */
-#define EV_ENOMEM               5       /* There was insufficient memory to
-					 * complete the operation */
-#define EV_EFAULT               6       /* Bad guest address */
-#define EV_ENODEV               7       /* No such device */
-#define EV_EINVAL               8       /* An argument supplied to the hcall
-					   was out of range or invalid */
-#define EV_INTERNAL             9       /* An internal error occured */
-#define EV_CONFIG              10       /* A configuration error was detected */
-#define EV_INVALID_STATE       11       /* The object is in an invalid state */
-#define EV_UNIMPLEMENTED       12       /* Unimplemented hypercall */
-#define EV_BUFFER_OVERFLOW     13       /* Caller-supplied buffer too small */
+#define _EV_HCALL_TOKEN(id, num)	(((id) << 16) | (num))
+#define EV_HCALL_TOKEN(hcall_num)	_EV_HCALL_TOKEN(EV_VENDOR_ID, hcall_num)
+
 
 /*
  * Hypercall register clobber list
@@ -173,6 +165,7 @@ static inline unsigned int ev_int_set_config(unsigned int interrupt,
 
 	return r3;
 }
+
 /**
  * Return the config of the specified interrupt.
  *
@@ -183,7 +176,6 @@ static inline unsigned int ev_int_set_config(unsigned int interrupt,
  *
  * @return 0 for success, or an error code.
  */
-
 static inline unsigned int ev_int_get_config(unsigned int interrupt,
 	uint32_t *config, unsigned int *priority, uint32_t *destination)
 {
