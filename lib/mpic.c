@@ -225,20 +225,26 @@ static uint32_t mpic_msi_get_msir(interrupt_t *irq)
  */
 void mpic_reset_core(void)
 {
-	int i, vector;
+	int i, vector = 0;
+	int num_irqs = (mpic_read(MPIC_FRR) & MPIC_FRR_NIRQ_MASK) >>
+	               MPIC_FRR_NIRQ_SHIFT;
+
 	mpic_irq_set_ctpr(0);
 
-	for (i = 0; i < 1000; i++) {
-		/* FIXME: Is this still valid with coreint, or do we need to read EPR? */
-		vector = mpic_iack();
+	for (i = 0; i < num_irqs; i++) {
+		if (!mpic_coreint) {
+			vector = mpic_iack();
 		
-		if (vector == 0xffff)
-			return;
+			if (vector == 0xffff)
+				return;
+		}
 
 		mpic_eoi(NULL);
 	}
-	
-	printf("mpic_reset_core(): too many interrupts, vector %x\n", vector);
+
+	if (!mpic_coreint)
+		printf("mpic_reset_core(): too many interrupts, vector %x\n",
+		       vector);
 }
 
 static int error_int_p4080_rev1(void *arg)

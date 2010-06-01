@@ -174,12 +174,14 @@ static inline register_t disable_mchk_save(void)
 {
 	register_t ret = mfmsr();
 	mtmsr(ret & ~(MSR_CE | MSR_EE | MSR_ME));
+	isync();
 	return ret;
 }
 
 static inline void restore_mchk(register_t saved)
 {
 	mtmsr(saved);
+	isync();
 }
 
 #ifdef CONFIG_LIBOS_CRITICAL_INTS
@@ -250,11 +252,13 @@ static inline void enable_critint(void)
 static inline void disable_mcheck(void)
 {
 	mtmsr(mfmsr() & ~MSR_ME);
+	isync();
 }
 
 static inline void enable_mcheck(void)
 {
 	mtmsr(mfmsr() | MSR_ME);
+	isync();
 }
 
 /* Deprecated legacy names -- "external" is a bad name,

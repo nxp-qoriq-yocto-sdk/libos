@@ -31,6 +31,9 @@
 #define MPIC_CTPR 0x0080
 #define MPIC_EOI  0x00B0
 #define MPIC_IACK 0x00A0
+#define MPIC_FRR  0x1000
+#define   MPIC_FRR_NIRQ_MASK  0x07ff0000
+#define   MPIC_FRR_NIRQ_SHIFT 16
 #define MPIC_GCR  0x1020
 
 #define MPIC_EXT_CRIT_SUMMARY 0x3b00
