@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,12 +39,14 @@ static ome_t *omt;
 static unsigned long fspi;
 
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
-			void  *mem, unsigned long memsize)
+			void  *mem, unsigned long memsize, uint8_t pamu_enable_ints)
 {
 	uintptr_t pamu_offset;
 	uint32_t *pc;
 	phys_addr_t phys;
 	void *ptr = mem;
+	uint32_t pics_val = 0;
+	uint32_t ecc_val = 0;
 
 	printlog(LOGTYPE_MISC, LOGLEVEL_DEBUG, "Starting PAMU init\n");
 
@@ -94,9 +96,22 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
 	 * plus allow ppaact and spaact to be cached
 	 * & enable PAMU access violation interrupts.
 	 */
+	if (pamu_enable_ints & (1 << pamu_int_av))
+		pics_val |= PAMU_ACCESS_VIOLATION_ENABLE;
+	if (pamu_enable_ints & (1 << pamu_int_operation))
+		pics_val |= PAMU_OPERATION_ERROR_INT_ENABLE;
+	if (pamu_enable_ints & (1 << pamu_int_singlebit)) {
+		ecc_val |= PAMU_SB_ECC_ERR;
+		out32((uint32_t *)(pamu_offset + PAMU_EECTL),
+			0x8 << PAMU_EECTL_THR_SHIFT);
+	}
+	if (pamu_enable_ints & (1 << pamu_int_multibit))
+		ecc_val |= PAMU_MB_ECC_ERR;
 
-	out32((uint32_t *)(pamu_offset + PAMU_PICS), 
-			PAMU_ACCESS_VIOLATION_ENABLE);
+	out32((uint32_t *)(pamu_offset + PAMU_PICS), pics_val);
+	out32((uint32_t *)(pamu_offset + PAMU_EEINTEN), ecc_val);
+	out32((uint32_t *)(pamu_offset + PAMU_EEDIS), ~ecc_val & PAMU_ECC_ERR_MASK);
+
 	out32(pc, PAMU_PC_PE | PAMU_PC_OCE | PAMU_PC_SPCC | PAMU_PC_PPCC);
 	return 0;
 }

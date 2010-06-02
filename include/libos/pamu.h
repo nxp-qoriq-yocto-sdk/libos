@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,7 +56,6 @@ typedef struct pamu_mmap_regs {
 
 /* PAMU Error Registers */
 #define PAMU_POES1 0x0040
-#define PAMU_POES2 0x0044
 #define PAMU_POEAH 0x0048
 #define PAMU_POEAL 0x004C
 #define PAMU_AVS1  0x0050
@@ -72,6 +71,8 @@ typedef struct pamu_mmap_regs {
 #define PAMU_AVS1_LIODN_SHIFT 16
 #define PAMU_LAV_LIODN_NOT_IN_PPAACT 0x400
 
+#define PAMU_POES1_POED 0x1
+
 #define PAMU_AVS2  0x0054
 #define PAMU_AVAH  0x0058
 #define PAMU_AVAL  0x005C
@@ -84,7 +85,27 @@ typedef struct pamu_mmap_regs {
 #define PAMU_EEALO 0x0078
 #define PAMU_EEDHI 0X007C
 #define PAMU_EEDLO 0x0080
-#define PAMU_EECC  0x0084
+
+#define PAMU_SB_ECC_ERR 0x4
+#define PAMU_MB_ECC_ERR 0x8
+#define PAMU_ECC_ERR_MASK (PAMU_SB_ECC_ERR | PAMU_MB_ECC_ERR)
+
+#define PAMU_ECC_ERR_ATTR_VAL 0x1
+
+#define PAMU_EECTL_CNT_MASK 0xff
+#define PAMU_EECTL_THR_SHIFT 16
+
+typedef struct pamu_ecc_err_reg {
+	uint32_t eccctl;
+	uint32_t eccdis;
+	uint32_t eccinten;
+	uint32_t eccdet;
+	uint32_t eccattr;
+	uint32_t eccaddrhi;
+	uint32_t eccaddrlo;
+	uint32_t eccdatahi;
+	uint32_t eccdatalo;
+} pamu_ecc_err_reg_t;
 
 /* PAMU Revision Registers */
 #define PAMU_PR1 0x0BF8
@@ -112,10 +133,20 @@ peripheral access, 0 : may allow peripheral access */
 #define PAMU_PFA1 0x0C14
 #define PAMU_PFA2 0x0C18
 
+typedef enum pamu_ints {
+	pamu_int_operation,
+	pamu_int_singlebit,
+	pamu_int_multibit,
+	pamu_int_av,
+	num_pamu_ints,
+} pamu_ints_t;
+
 /* PAMU Interrupt control and Status Register */
 #define PAMU_PICS 0x0C1C
 #define PAMU_ACCESS_VIOLATION_STAT   0x8
 #define PAMU_ACCESS_VIOLATION_ENABLE 0x4
+#define PAMU_OPERATION_ERROR_INT_STAT 0x2
+#define PAMU_OPERATION_ERROR_INT_ENABLE 0x1
 
 /* PAMU Debug Registers */
 #define PAMU_PD1 0x0F00
@@ -477,7 +508,7 @@ typedef struct ome_t {
 #define EOE_VALID       0x80
 
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
-			void *mem, unsigned long memsize);
+			void *mem, unsigned long memsize, uint8_t pamu_enable_ints);
 ppaace_t *pamu_get_ppaace(uint32_t liodn);
 ome_t *pamu_get_ome(uint8_t omi);
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);

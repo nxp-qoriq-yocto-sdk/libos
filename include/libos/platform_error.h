@@ -38,6 +38,15 @@ typedef struct pamu_error{
 	uint32_t avs1;
 	uint32_t avs2;
 	uint32_t liodn_handle;
+	uint32_t eccctl;
+	uint32_t eccdis;
+	uint32_t eccinten;
+	uint32_t eccdet;
+	uint32_t eccattr;
+	uint64_t eccaddr;
+	uint64_t eccdata;
+	uint32_t poes1;
+	uint64_t poeaddr;
 } pamu_error_t;
 
 typedef struct ccf_error {
