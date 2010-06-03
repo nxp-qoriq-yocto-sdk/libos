@@ -57,50 +57,33 @@ void queue_destroy(queue_t *q)
 	q->buf = NULL;
 }
 
+void queue_read_at(queue_t *q, uint8_t *buf, size_t off, size_t len)
+{
+	off = queue_wrap(q, q->head + off);
+	size_t first = min(len, q->size - off);
+
+	memcpy(buf, &q->buf[off], first);
+	len -= first;
+
+	if (len > 0)
+		memcpy(buf + first, &q->buf[0], len);
+}
+
 ssize_t queue_read(queue_t *q, uint8_t *buf, size_t len, int peek)
 {
-	size_t orig_len = len;
 	size_t head = q->head;
 	size_t tail = raw_in32(&q->tail);
+	size_t avail = queue_wrap(q, tail - head);
 
-	if (q->head == tail)
-		/* queue is empty */
-		return 0;
+	len = min(avail, len);
+	queue_read_at(q, buf, 0, len);
 
-	if (tail < head) {
-		size_t chunk = q->size - head;
-		if (chunk > len)
-			chunk = len;
-
-		memcpy(buf, &q->buf[head], chunk);
-
-		head = queue_wrap(q, head + chunk);
-		buf += chunk;
-		len -= chunk;
-
-		if (!peek) {
-			smp_lwsync();
-			raw_out32(&q->head, head);
-		}
+	if (!peek) {
+		smp_lwsync();
+		raw_out32(&q->head, queue_wrap(q, head + len));
 	}
 
-	if (len > 0) {
-		size_t chunk = tail - q->head;
-		if (chunk > len)
-			chunk = len;
-
-		memcpy(buf, &q->buf[head], chunk);
-
-		head = queue_wrap(q, head + chunk);
-		len -= chunk;
-
-		if (!peek) {
-			smp_lwsync();
-			raw_out32(&q->head, head);
-		}
-	}
-
-	return orig_len - len;
+	return len;	
 }
 
 #ifdef CONFIG_LIBOS_SCHED_API
@@ -161,43 +144,31 @@ int queue_readchar(queue_t *q, int peek)
 	return ret;
 }
 
+static void queue_write_at(queue_t *q, const uint8_t *buf,
+                           size_t off, size_t len)
+{
+	size_t first = min(len, q->size - off);
+
+	memcpy(&q->buf[off], buf, first);
+	len -= first;
+
+	if (len > 0)
+		memcpy(&q->buf[0], buf + first, len);
+}
+
 ssize_t queue_write(queue_t *q, const uint8_t *buf, size_t len)
 {
-	size_t orig_len = len;
-	size_t end = queue_wrap(q, raw_in32(&q->head) - 1);
+	size_t tail = q->tail;
+	size_t head = raw_in32(&q->head);
+	size_t space = queue_wrap(q, head - tail - 1);
 
-	if (q->tail == end)
-		/* queue is full */
-		return 0;
-	
-	if (end < q->tail) {
-		size_t chunk = q->size - q->tail;
-		if (chunk > len)
-			chunk = len;
+	len = min(space, len);
+	queue_write_at(q, buf, tail, len);
 
-		memcpy(&q->buf[q->tail], buf, chunk);
+	smp_lwsync();
+	raw_out32(&q->tail, queue_wrap(q, tail + len));
 
-		smp_lwsync();
-		raw_out32(&q->tail, queue_wrap(q, q->tail + chunk));
-
-		buf += chunk;
-		len -= chunk;
-	}
-
-	if (len > 0) {
-		size_t chunk = end - q->tail;
-		if (chunk > len)
-			chunk = len;
-
-		memcpy(&q->buf[q->tail], buf, chunk);
-
-		smp_lwsync();
-		raw_out32(&q->tail, q->tail + chunk);
-
-		len -= chunk;
-	}
-
-	return orig_len - len;
+	return len;	
 }
 
 #ifdef CONFIG_LIBOS_SCHED_API

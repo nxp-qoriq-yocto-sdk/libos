@@ -83,10 +83,78 @@ typedef struct queue {
 int queue_init(queue_t *q, size_t size);
 
 void queue_destroy(queue_t *q);
+
+/** Read from a specific offset in the queue.
+ *
+ * This requires consumer synchronization.  Reads "len" bytes from the
+ * specified offset from the queue head.  The caller must ensure that at
+ * least "off + len" bytes are available in the queue.  The data will not be
+ * removed from the queue.
+ *
+ * @param[in] q address of the queue to read from.
+ * @param[out] buf buffer to fill
+ * @param[in] off offset from head to read from
+ * @param[in] len maximum number of bytes to read
+ * @return number of bytes read, or zero if queue is empty
+ */
+void queue_read_at(queue_t *q, uint8_t *buf, size_t off, size_t len);
+
+/** Read from a queue.
+ *
+ * This requires consumer synchronization.  Reads up to "len" bytes from
+ * the queue.
+ *
+ * @param[in] q address of the queue to read from.
+ * @param[out] buf buffer to fill
+ * @param[in] len maximum number of bytes to read
+ * @param[in] peek If non-zero, copy rather than move the bytes from
+ *                 the queue.
+ * @return number of bytes read, or zero if queue is empty
+ */
 ssize_t queue_read(queue_t *q, uint8_t *buf, size_t len, int peek);
+
+/** Read from a queue, blocking until all requested bytes are available.
+ *
+ * This requires consumer synchronization.  Reads "len" bytes from the
+ * queue.  This must be called from a thread context which can block, and
+ * will not return until all requested bytes have been read.
+ *
+ * @param[in] q address of the queue to read from.
+ * @param[out] buf buffer to fill
+ * @param[in] len maximum number of bytes to read
+ * @param[in] peek If non-zero, copy rather than move the bytes from
+ *                 the queue.  This can deadlock if "len" is larger
+ *                 than q->size - 1, or possibly less if the queue
+ *                 is not written to with byte granularity.
+ * @return number of bytes read
+ */
 ssize_t queue_read_blocking(queue_t *q, uint8_t *buf, size_t len, int peek);
+
+/** Write to a queue.
+ *
+ * This requires producer synchronization.  Writes up to "len" bytes to
+ * the queue.
+ *
+ * @param[in] q address of the queue to write to.
+ * @param[in] buf buffer to read from
+ * @param[in] len maximum number of bytes to write
+ * @return number of bytes written, or zero if queue is full
+ */
 ssize_t queue_write(queue_t *q, const uint8_t *buf, size_t len);
+
+/** Write to a queue, blocking until all provided bytes are written.
+ *
+ * This requires producer synchronization.  Writes "len" bytes to
+ * the queue.  This must be called from a thread context which can
+ * block, and will not return until all requested bytes have been written.
+ *
+ * @param[in] q address of the queue to write to.
+ * @param[in] buf buffer to read from
+ * @param[in] len maximum number of bytes to write
+ * @return number of bytes written
+ */
 ssize_t queue_write_blocking(queue_t *q, const uint8_t *buf, size_t len);
+
 int queue_readchar(queue_t *q, int peek);
 int queue_readchar_blocking(queue_t *q, int peek);
 int queue_writechar(queue_t *q, uint8_t c);
@@ -96,8 +164,8 @@ size_t qprintf(queue_t *q, int blocking, const char *str, ...)
 
 /** Find a character in a queue.
  *
- * This must be called by a consumer.  The caller must ensure that there
- * are at least "start" bytes on the queue.
+ * This requires consumer synchronization.  The caller must ensure that
+ * there are at least "start" bytes on the queue.
  *
  * @param[in] q address of the queue to search.
  * @param[in] c byte to search for
@@ -135,7 +203,7 @@ static inline size_t queue_get_avail(const queue_t *q)
 
 static inline size_t queue_get_space(const queue_t *q)
 {
-	return q->size - queue_get_avail(q) - 1;
+	return queue_wrap(q, raw_in32(&q->head) - raw_in32(&q->tail) - 1);
 }
 
 static inline int queue_empty(const queue_t *q)
@@ -145,12 +213,24 @@ static inline int queue_empty(const queue_t *q)
 
 static inline int queue_full(const queue_t *q)
 {
-	return queue_wrap(q, raw_in32(&q->tail) + 1) == raw_in32(&q->head);
+	return queue_get_space(q) == 0;
 }
 
 static inline ssize_t queue_writestr(queue_t *q, const char *str)
 {
 	return queue_write(q, (const uint8_t *)str, strlen(str));
+}
+
+/** Purge all data from a queue.
+ *
+ * This requires consumer synchronization.  Consumes all available
+ * data without needing a buffer to copy it to.
+ *
+ * @param[in] q address of the queue to purge.
+ */
+static inline void queue_purge(queue_t *q)
+{
+	raw_out32(&q->head, raw_in32(&q->tail));
 }
 
 struct chardev;
