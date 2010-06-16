@@ -38,8 +38,10 @@ static spaace_t *spaact;
 static ome_t *omt;
 static unsigned long fspi;
 
+/*The MSB of pamu_enable_ints is used to store the single bit ecc threshold*/
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
-			void  *mem, unsigned long memsize, uint8_t pamu_enable_ints)
+			void  *mem, unsigned long memsize, uint8_t pamu_enable_ints,
+			uint32_t threshold)
 {
 	uintptr_t pamu_offset;
 	uint32_t *pc;
@@ -103,7 +105,7 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
 	if (pamu_enable_ints & (1 << pamu_int_singlebit)) {
 		ecc_val |= PAMU_SB_ECC_ERR;
 		out32((uint32_t *)(pamu_offset + PAMU_EECTL),
-			0x8 << PAMU_EECTL_THR_SHIFT);
+			threshold << PAMU_EECTL_THR_SHIFT);
 	}
 	if (pamu_enable_ints & (1 << pamu_int_multibit))
 		ecc_val |= PAMU_MB_ECC_ERR;

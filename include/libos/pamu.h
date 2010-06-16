@@ -508,7 +508,8 @@ typedef struct ome_t {
 #define EOE_VALID       0x80
 
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
-			void *mem, unsigned long memsize, uint8_t pamu_enable_ints);
+			void *mem, unsigned long memsize, uint8_t pamu_enable_ints,
+			uint32_t threshold);
 ppaace_t *pamu_get_ppaace(uint32_t liodn);
 ome_t *pamu_get_ome(uint8_t omi);
 void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);
