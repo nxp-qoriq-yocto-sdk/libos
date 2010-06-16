@@ -92,7 +92,4 @@ typedef struct hv_error {
 	};
 } hv_error_t;
 
-#define GUEST_ERROR_EVENT_QUEUE  0
-#define GLOBAL_ERROR_EVENT_QUEUE 1
-
 #endif
