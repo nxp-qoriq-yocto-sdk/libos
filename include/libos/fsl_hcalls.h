@@ -69,6 +69,7 @@
 #define FH_ENTER_NAP			15
 #define FH_EXIT_NAP			16
 #define FH_CLAIM_DEVICE			17
+#define FH_PARTITION_STOP_DMA		18
 
 /* vendor ID: Freescale Semiconductor */
 #define FH_HCALL_TOKEN(num)		_EV_HCALL_TOKEN(EV_FSL_VENDOR_ID, num)
@@ -628,6 +629,33 @@ static inline unsigned int fh_claim_device(unsigned int handle)
 	register uintptr_t r3 __asm__("r3");
 
 	r11 = FH_HCALL_TOKEN(FH_CLAIM_DEVICE);
+	r3 = handle;
+
+	__asm__ __volatile__ ("sc 1"
+		: "+r" (r11), "+r" (r3)
+		: : EV_HCALL_CLOBBERS1
+	);
+
+	return r3;
+}
+
+/**
+ * Run deferred DMA disabling on a partition's private devices
+ *
+ * This applies to devices which a partition owns either privately,
+ * or which are claimable and still actively owned by that partition,
+ * and which do not have the no-dma-disable property.
+ *
+ * @param[in] handle partition (must be stopped) whose DMA is to be disabled
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_partition_stop_dma(unsigned int handle)
+{
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+
+	r11 = FH_HCALL_TOKEN(FH_PARTITION_STOP_DMA);
 	r3 = handle;
 
 	__asm__ __volatile__ ("sc 1"
