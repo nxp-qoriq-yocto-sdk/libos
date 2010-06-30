@@ -294,19 +294,21 @@ static inline unsigned int fh_partition_get_status(unsigned int partition,
  * @return 0 for success, or an error code.
  */
 static inline unsigned int fh_partition_start(unsigned int partition,
-	uint32_t entry_point)
+	uint32_t entry_point, int load)
 {
 	register uintptr_t r11 __asm__("r11");
 	register uintptr_t r3 __asm__("r3");
 	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
 
 	r11 = FH_HCALL_TOKEN(FH_PARTITION_START);
 	r3 = partition;
 	r4 = entry_point;
+	r5 = load;
 
 	__asm__ __volatile__ ("sc 1"
-		: "+r" (r11), "+r" (r3), "+r" (r4)
-		: : EV_HCALL_CLOBBERS2
+		: "+r" (r11), "+r" (r3), "+r" (r4), "+r" (r5)
+		: : EV_HCALL_CLOBBERS3
 	);
 
 	return r3;
