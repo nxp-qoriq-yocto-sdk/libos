@@ -109,11 +109,6 @@ typedef struct error_interrupt {
 	uint32_t  *eisr0, *eimr0;
 } error_interrupt_t;
 
-typedef struct error_sub_int {
-	interrupt_t dev_err_irq;
-	int subintnum;
-} error_sub_int_t;
-
 #define MPIC_NUM_EXT_SRCS	12
 #define MPIC_NUM_INT_SRCS	128
 #define MPIC_NUM_MSG_SRCS	8

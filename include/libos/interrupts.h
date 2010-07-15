@@ -56,6 +56,11 @@ typedef struct interrupt {
 	struct interrupt *parent;
 } interrupt_t;
 
+typedef struct error_sub_int {
+	interrupt_t dev_err_irq;
+	int subintnum;
+} error_sub_int_t;
+
 typedef struct int_ops {
 	interrupt_t *(*get_irq)(device_t *dev,
 	                        const uint32_t *intspec,

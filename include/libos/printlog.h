@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,6 +69,11 @@
  * Use for informational output, progress indicators, etc.
  */
 #define LOGLEVEL_NORMAL   4
+
+/** Normal log messages w/ some extra info.
+ * Has a bit more info than normal, but less than debug.
+ */
+#define LOGLEVEL_EXTRA    6
 
 /** Debug log message.
  * Use for output that is useful in debugging, but would be distracting,
