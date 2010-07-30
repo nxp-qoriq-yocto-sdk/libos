@@ -50,7 +50,8 @@
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) cpu_from_be32(x)
 
-#define FH_API_VERSION			1
+#define FH_API_VERSION			2
+#define FH_API_COMPAT_VERSION		2
 
 #define FH_ERR_GET_INFO			1
 #define FH_PARTITION_GET_DTPROP		2

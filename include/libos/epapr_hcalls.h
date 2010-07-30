@@ -46,8 +46,6 @@
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) cpu_from_be32(x)
 
-#define FH_API_VERSION 1
-
 #define EV_BYTE_CHANNEL_SEND		1
 #define EV_BYTE_CHANNEL_RECEIVE		2
 #define EV_BYTE_CHANNEL_POLL		3
