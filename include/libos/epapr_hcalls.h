@@ -66,8 +66,8 @@
 #define EV_IDLE				16
 
 /* vendor ID: epapr */
-#define EV_VENDOR_ID			0
-#define EV_LOCAL_VENDOR_ID		1	/* for private use */
+#define EV_LOCAL_VENDOR_ID		0	/* for private use */
+#define EV_VENDOR_ID			1
 #define EV_FSL_VENDOR_ID		2	/* Freescale Semiconductor */
 #define EV_IBM_VENDOR_ID		3	/* IBM */
 #define EV_GHS_VENDOR_ID		4	/* Green Hills Software */
