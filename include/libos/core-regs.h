@@ -202,7 +202,7 @@
 #define SPR_MSRP         311  // MSR Protect
 #define   MSRP_UCLEP     0x04000000 // Protect MSR[UCLE]
 #define   MSRP_DEP       0x00000200 // Protect MSR[DE]
-#define   MSRP_PMMP      0x00000040 // Protect MSR[PMM]
+#define   MSRP_PMMP      0x00000004 // Protect MSR[PMM]
 
 #define SPR_IAC1         312  // Instruction address compare register 1
 #define SPR_IAC2         313  // Instruction address compare register 2
