@@ -448,6 +448,7 @@
 #define SPR_L2CSR0       1017 // L2 Cache Control and Status Register 0
 #define   L2CSR0_L2E       0x80000000 // L2 Enable
 #define   L2CSR0_L2PE      0x40000000 // L2 Parity Enable
+#define   L2CSR0_L2WP      0x1c000000 // L2 Way Partitioning
 #define   L2CSR0_L2FI      0x00200000 // L2 Flash Invalidate
 #define   L2CSR0_L2IO      0x00100000 // L2 Instruction Only
 #define   L2CSR0_L2DO      0x00010000 // L2 Data Only
