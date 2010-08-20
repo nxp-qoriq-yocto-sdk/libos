@@ -80,7 +80,7 @@ static void core_init(void)
 static void tlb1_init(void)
 {
 	tlb1_set_entry(0, CCSRBAR_VA, CCSRBAR_PA, CCSRBAR_SIZE, TLB_MAS2_IO,
-	               TLB_MAS3_KERN, 0, 0, 0);
+	               TLB_MAS3_KDATA, 0, 0, 0);
 }
 
 void start(unsigned long devtree_ptr)
