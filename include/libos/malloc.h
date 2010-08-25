@@ -416,6 +416,13 @@ typedef void* mspace;
  */
 void malloc_add_segment(void *start, void *end);
 
+/** Allocate a segment of memory to be excluded from malloc_init().
+ *
+ * @param start[in] first byte of the segment
+ * @param end[in] last byte of the segment
+ */
+void *malloc_alloc_segment(size_t size, size_t align);
+
 /** Exclude a segment of memory from the current list.
  *
  * Any portions of already added segments that overlap the

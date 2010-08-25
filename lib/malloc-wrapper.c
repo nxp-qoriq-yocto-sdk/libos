@@ -1,7 +1,7 @@
 /*
  * Memory allocation using dlmalloc
  *
- * Copyright (C) 2008,2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
  * Author: Scott Wood <scottwood@freescale.com>
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,33 @@ typedef struct {
 
 static segment_t segments[NUM_SEGMENTS];
 static int nextseg = 0;
+
+void *malloc_alloc_segment(size_t size, size_t align)
+{
+	for (int i = 0; i < nextseg; i++) {
+		segment_t *s = &segments[i];
+		uintptr_t start = (uintptr_t)s->start;
+		uintptr_t end = (uintptr_t)s->end;
+
+		if (align) {
+			start += align - 1;
+			start &= ~(align - 1);
+
+			if (start < (uintptr_t)s->start)
+				continue;
+		}
+
+		if (start + size > end || start + size < start)
+			continue;
+
+		malloc_exclude_segment((void *)start,
+		                       (void *)(start + size - 1));
+
+		return (void *)start;
+	}
+
+	return NULL;
+}
 
 void malloc_add_segment(void *start, void *end)
 {
