@@ -125,10 +125,12 @@ typedef struct pamu_ecc_err_reg {
 #define PAMU_PC_PGC 0x80000000 /* 1 = PAMU Gate Closed : block all 
 peripheral access, 0 : may allow peripheral access */
 
-#define PAMU_PC_PE   0x40000000 /* 0 = PAMU disabled, 1 = PAMU enabled */   
+#define PAMU_PC_PE   0x40000000 /* 0 = PAMU disabled, 1 = PAMU enabled */
 #define PAMU_PC_SPCC 0x00000010 /* sPAACE cache enable */
 #define PAMU_PC_PPCC 0x00000001 /* pPAACE cache enable */
 #define PAMU_PC_OCE  0x00001000 /* OMT cache enable */
+
+#define PAMU_PC3_MWCE(X) (((X) >> 21) & 0xf)
 
 #define PAMU_PFA1 0x0C14
 #define PAMU_PFA2 0x0C18
@@ -257,9 +259,9 @@ typedef struct pfa1_t {
 
 #define PAACE_NUMBER_ENTRIES    0xFF
 /*
- * SPAACT table size assumption : 8 devices * 8 partitions * 16 subwindows * 2
+ * SPAACT table size assumption : 8 devices * 8 partitions * 256 subwindows * 2
  */
-#define SPAACE_NUMBER_ENTRIES   0x800
+#define SPAACE_NUMBER_ENTRIES   0x8000
 #define	OME_NUMBER_ENTRIES      16   /* based on P4080 2.0 silicon plan */
 
 /* PAMU Data Structures */
@@ -516,5 +518,6 @@ void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);
 spaace_t *pamu_get_spaace(unsigned long fspi_index, uint32_t wnum);
 unsigned long get_fspi_and_increment(uint32_t subwindow_cnt);
 void setup_default_xfer_to_host_spaace(spaace_t *spaace);
+unsigned int pamu_get_max_subwindow_count(void);
 
 #endif  /* __PAMU_H */

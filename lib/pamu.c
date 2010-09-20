@@ -37,6 +37,7 @@ static ppaace_t *ppaact;
 static spaace_t *spaact;
 static ome_t *omt;
 static unsigned long fspi;
+static unsigned int max_subwindow_count;
 
 /*The MSB of pamu_enable_ints is used to store the single bit ecc threshold*/
 int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
@@ -49,6 +50,7 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
 	void *ptr = mem;
 	uint32_t pics_val = 0;
 	uint32_t ecc_val = 0;
+	uint32_t reg_val;
 
 	printlog(LOGTYPE_MISC, LOGLEVEL_DEBUG, "Starting PAMU init\n");
 
@@ -69,6 +71,16 @@ int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
 	pamu_offset = CCSRBAR_VA + pamu_reg_base;
 	pc = (uint32_t *) (pamu_offset + PAMU_PC);
 	pamu_regs = (pamu_mmap_regs_t *) (pamu_offset + PAMU_MMAP_REGS_BASE);
+
+	/* Check the version of the PAMU */
+	reg_val = in32((uint32_t *)(pamu_offset + PAMU_PC3));
+	max_subwindow_count = 1 << (1 + PAMU_PC3_MWCE(reg_val));
+	/* FIXME: simics returns MWCE=3 even for Rev 2 so read PVR to clarify */
+	reg_val = mfspr(SPR_PVR) & 0xfffffff0;
+	/* FIXME: P4080RM r.H says PVR=0xnnnnn1nn, but is 0 for sim&HW rev1&2 */
+	if ((reg_val >> 12) == 0x00080230 && (reg_val & 0xf0) != 0x10 &&
+	    max_subwindow_count == 16)
+		max_subwindow_count = 256;
 
 	/* set up pointers to corenet control blocks */
 
@@ -165,4 +177,9 @@ unsigned long get_fspi_and_increment(uint32_t subwindow_cnt)
 	} while (!compare_and_swap(&fspi, tmp, tmp + subwindow_cnt));
 
 	return tmp;
+}
+
+unsigned int pamu_get_max_subwindow_count(void)
+{
+	return max_subwindow_count;
 }
