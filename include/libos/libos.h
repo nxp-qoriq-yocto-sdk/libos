@@ -29,6 +29,7 @@
 
 #include <libos/types.h>
 #include <libos/printlog.h>
+#include <libos/errors.h>
 
 #define to_container(memberinstance, containertype, membername) ({ \
 	typeof(&((containertype *)0)->membername) _ptr = (memberinstance); \
@@ -131,6 +132,15 @@ void libos_client_entry(unsigned long devtree_ptr);
 #else
 #define __force
 #define __bitwise
+#endif
+
+#ifdef CONFIG_LIBOS_HCALL_INSTRUCTIONS
+int setup_hcall_instructions(uint8_t *opcodes, size_t len);
+#else
+static inline int setup_hcall_instructions(uint8_t *opcodes, size_t len)
+{
+	return ERR_INVALID;
+}
 #endif
 
 #endif

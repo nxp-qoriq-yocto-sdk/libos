@@ -1,6 +1,6 @@
 # LibOS Makefile
 #
-# Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+# Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -70,6 +70,7 @@ libos-src-$(CONFIG_LIBOS_READLINE) += readline.c
 libos-src-$(CONFIG_LIBOS_MALLOC) += malloc.c malloc-wrapper.c
 libos-src-$(CONFIG_LIBOS_PAMU) += pamu.c
 libos-src-y += printlog.c interrupts.c
+libos-src-$(CONFIG_LIBOS_HCALL_INSTRUCTIONS) += hcall-instructions.S hcall.c
 libos-src-$(CONFIG_LIBOS_DRIVER_MODEL) += driver.c
 libos-src-$(CONFIG_LIBOS_THREADS) += thread.S
 libos-src-$(CONFIG_LIBOS_BYTE_CHAN) += byte-chan.c
