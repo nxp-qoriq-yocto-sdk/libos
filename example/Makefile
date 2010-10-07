@@ -22,16 +22,19 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-LIBFDT_DIR := ../../../dtc/libfdt
-LIBOS_DIR := ../lib
-LIBOS_INC := ../include
+export src = $(realpath ../../)/
+KCONFIG_DIR := $(src)/kconfig
+LIBFDT_DIR := $(src)../dtc/libfdt
+LIBOS := $(realpath ../)
+LIBOS_DIR := $(LIBOS)/lib
+LIBOS_INC := $(LIBOS)/include
 LIBOS_BIN := bin/libos
-LIBOS_CLIENT_H := src/libos-client.h
+LIBOS_CLIENT_H := $(LIBOS)/example/src/libos-client.h
 
 CC=$(CROSS_COMPILE)gcc
 GCCINCDIR := $(shell $(CC) -print-file-name=include)
 CC_OPTS=-m32 -Wa,-me500 -nostdinc -I $(GCCINCDIR) -I $(GCCINCDIR)-fixed -Isrc -I$(LIBFDT_DIR) -I$(LIBOS_INC) -g \
-        -std=gnu99  -include $(LIBOS_CLIENT_H)
+        -std=gnu99 -include $(LIBOS_CLIENT_H) -include $(LIBOS)/example/include/config/autoconf.h -I$(LIBOS)/include-libc
 
 CC_OPTS_C= -Wall \
   -Wundef \
@@ -40,7 +43,6 @@ CC_OPTS_C= -Wall \
   -fno-strict-aliasing \
   -fno-common \
   -O2 \
-  -msoft-float \
   -pipe \
   -ffixed-r2 \
   -mmultiple \
@@ -56,17 +58,16 @@ LD_OPTS=-Wl,-m -Wl,elf32ppc -Wl,-Bstatic -nostdlib
 GENASSYM=$(LIBOS_DIR)/tools/genassym.sh
 MKDIR=mkdir -p
 
-all: bin/example.uImage bin/example.map
+all: include/config/auto.conf bin/example.uImage bin/example.map
 
 LIBFDT_objdir := src
 include $(LIBFDT_DIR)/Makefile.libfdt
-CONFIG_LIBOS_QUEUE=y
-CONFIG_LIBOS_NS16550=y
+include include/config/auto.conf
 include $(LIBOS_DIR)/Makefile.libos
 
 LIBOS_SRCS := $(LIBOS_STARTUP) $(LIBOS_FSL_BOOKE_TLB) $(LIBOS_EXCEPTION) \
-              $(LIBOS_LIB) $(LIBOS_CONSOLE) $(libos-src-y)
-SRCS := $(LIBOS_SRCS:%=libos/%) src/init.c \
+              $(LIBOS_LIB) $(LIBOS_CONSOLE) $(libos-src-first-y) $(libos-src-early-y) $(libos-src-y)
+SRCS := $(LIBOS_SRCS:%=libos/%) src/init.c
 
 OBJS := $(basename $(SRCS))
 OBJS := $(OBJS:%=%.o) $(LIBFDT_OBJS:%=libfdt/%)
@@ -84,7 +85,7 @@ bin/example.bin: bin/example
 bin/example: $(OBJS)
 	$(CC) $(LD_OPTS) -Wl,-Texample.lds -o $@ $(OBJS) -lgcc
 
-# compile and gen dependecy file
+# compile, and generate dependecy files
 bin/src/%.o : src/%.c
 	@$(MKDIR) `dirname $@`
 	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C) -c -o $@ $<
@@ -101,5 +102,9 @@ bin/libfdt/%.o : $(LIBFDT_DIR)/%.c
 bin/example.map: bin/example
 	nm -n bin/example > $@
 
+include/config/auto.conf: $(LIBOS_DIR)/Kconfig
+	cp -f config .config
+	$(MAKE) -f $(KCONFIG_DIR)/Makefile Kconfig=$(PWD)/Kconfig silentoldconfig
+
 clean:
-	rm -rf bin
+	rm -rf bin include
