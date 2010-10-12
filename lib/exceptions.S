@@ -238,7 +238,7 @@
 .global ret_from_\type
 ret_from_\type:
 	mfmsr	%r10
-	\disable %r10
+	\disable %r10, %r3
 	mtmsr	%r10
 
 #ifdef LIBOS_RET_HOOK
@@ -309,12 +309,13 @@ ret_from_\type:
 2:
 	.endm
 
-	.macro	critdisable, reg
-	andis.	\reg, \reg, ~(MSR_CE|MSR_EE)@h
-	andi.	\reg, \reg, ~(MSR_CE|MSR_EE)@l
+	.macro  critdisable, reg, regtmp
+	lis     \regtmp, (MSR_CE|MSR_EE)@h
+	ori     \regtmp, \regtmp, (MSR_CE|MSR_EE)@l
+	andc    \reg, \reg, \regtmp
 	.endm
 
-	.macro	basedisable, reg
+	.macro	basedisable, reg, regtmp
 	rlwinm	\reg, \reg, 0, ~MSR_EE
 	.endm
 
@@ -350,9 +351,10 @@ ret_from_\type:
 #endif
 	.endm
 
-	.macro	mcdisable, reg
-	andis.	\reg, \reg, ~(MSR_ME|MSR_DE|MSR_CE|MSR_EE)@h
-	andi.	\reg, \reg, ~(MSR_ME|MSR_DE|MSR_CE|MSR_EE)@l
+	.macro	mcdisable, reg, regtmp
+	lis	\regtmp, (MSR_ME|MSR_DE|MSR_CE|MSR_EE)@h
+	ori	\regtmp, \regtmp, (MSR_ME|MSR_DE|MSR_CE|MSR_EE)@l
+	andc	\reg, \reg, \regtmp
 	.endm
 
 	.macro	machinecheck, exc, name, handler
@@ -366,9 +368,10 @@ ret_from_\type:
 	addi	%r1, PERCPU_REG, CPU_DEBUGSTACK + KSTACK_SIZE - FRAMELEN
 	.endm
 
-	.macro	debugdisable, reg
-	andis.	\reg, \reg, ~(MSR_DE|MSR_CE|MSR_EE)@h
-	andi.	\reg, \reg, ~(MSR_DE|MSR_CE|MSR_EE)@l
+	.macro	debugdisable, reg, regtmp
+	lis	\regtmp, (MSR_DE|MSR_CE|MSR_EE)@h
+	ori	\regtmp, \regtmp, (MSR_DE|MSR_CE|MSR_EE)@l
+	andc	\reg, \reg, \regtmp
 	.endm
 
 	.macro	debugexception, exc, name, handler
