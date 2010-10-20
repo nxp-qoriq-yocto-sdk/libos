@@ -103,6 +103,7 @@ _start:
 2:	bdnz	2b
 	b	1b
 
+#ifdef CONFIG_LIBOS_MP
 	.global secondary_start
 secondary_start:
 
@@ -129,6 +130,7 @@ secondary_start:
 	mtctr	%r3
 2:	bdnz	2b
 	b	1b
+#endif
 
 fixup_mmu:
 	mflr	%r23
