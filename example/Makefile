@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009 Freescale Semiconductor, Inc.
+# Copyright (C) 2010 Freescale Semiconductor, Inc.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -23,88 +23,46 @@
 #
 
 export src = $(realpath ../../)/
-KCONFIG_DIR := $(src)/kconfig
-LIBFDT_DIR := $(src)../dtc/libfdt
-LIBOS := $(realpath ../)
-LIBOS_DIR := $(LIBOS)/lib
-LIBOS_INC := $(LIBOS)/include
-LIBOS_BIN := bin/libos
-LIBOS_CLIENT_H := $(LIBOS)/example/src/libos-client.h
-
-CC=$(CROSS_COMPILE)gcc
-GCCINCDIR := $(shell $(CC) -print-file-name=include)
-CC_OPTS=-m32 -Wa,-me500 -nostdinc -I $(GCCINCDIR) -I $(GCCINCDIR)-fixed -Isrc -I$(LIBFDT_DIR) -I$(LIBOS_INC) -g \
-        -std=gnu99 -include $(LIBOS_CLIENT_H) -include $(LIBOS)/example/include/config/autoconf.h -I$(LIBOS)/include-libc
-
-CC_OPTS_C= -Wall \
-  -Wundef \
-  -Wstrict-prototypes \
-  -Wno-trigraphs \
-  -fno-strict-aliasing \
-  -fno-common \
-  -O2 \
-  -pipe \
-  -ffixed-r2 \
-  -mmultiple \
-  -mno-altivec \
-  -funit-at-a-time \
-  -mno-string \
-  -fomit-frame-pointer \
-  -Wno-unused \
-  -Werror
-CC_OPTS_ASM=-D_ASM -Ibin/src -include $(LIBOS_BIN)/assym.s
-LD=$(CROSS_COMPILE)ld
-LD_OPTS=-Wl,-m -Wl,elf32ppc -Wl,-Bstatic -nostdlib
-GENASSYM=$(LIBOS_DIR)/tools/genassym.sh
+export KCONFIG_DIR := $(src)kconfig
+export LIBOS := $(realpath ../)
+export LIBOS_DIR := $(LIBOS)/lib
 MKDIR=mkdir -p
 
-all: include/config/auto.conf bin/example.uImage bin/example.map
+export VERSION=0
+export SUBVERSION=1
+export PROJECTVERSION=$(VERSION).$(SUBVERSION)$(EXTRAVERSION)$(LOCALVERSION)
 
-LIBFDT_objdir := src
-include $(LIBFDT_DIR)/Makefile.libfdt
-include include/config/auto.conf
-include $(LIBOS_DIR)/Makefile.libos
+.PHONY: all
+all:
 
-LIBOS_SRCS := $(LIBOS_STARTUP) $(LIBOS_FSL_BOOKE_TLB) $(LIBOS_EXCEPTION) \
-              $(LIBOS_LIB) $(LIBOS_CONSOLE) $(libos-src-first-y) $(libos-src-early-y) $(libos-src-y)
-SRCS := $(LIBOS_SRCS:%=libos/%) src/init.c
+# auto.conf.cmd makes sure the config is rebuilt if Kconfig is changed
+include/config/auto.conf.cmd: ;
+-include include/config/auto.conf.cmd
 
-OBJS := $(basename $(SRCS))
-OBJS := $(OBJS:%=%.o) $(LIBFDT_OBJS:%=libfdt/%)
-OBJS := $(OBJS:%=bin/%)
+CONFIGS1 := config xconfig gconfig menuconfig oldconfig silentoldconfig randconfig defconfig allyesconfig allnoconfig
+CONFIGS2 := %_defconfig
+CONFIGS   = $(CONFIGS1) $(CONFIGS2)
 
-bin/example.uImage: bin/example.bin
-	mkimage -A ppc -O linux -T kernel -C none -a 00000000 -e 00000000 -d $< $@
+include/config/auto.conf: myconfig
+	cp -f myconfig .config
+	$(MAKE) -f $(src)kconfig/Makefile Kconfig=$(PWD)/Kconfig silentoldconfig
 
-bin/example.bin.gz: bin/example.bin
-	gzip -f $<
+.PHONY: FORCE
+help $(CONFIGS1): FORCE
+	$(MKDIR) bin/
+	$(MAKE) -C $(PWD) Kconfig=$(PWD)/Kconfig -f $(KCONFIG_DIR)/Makefile $@
+$(CONFIGS2): FORCE
+	$(MKDIR) bin/
+	$(MAKE) -C $(PWD) Kconfig=$(PWD)/Kconfig -f $(KCONFIG_DIR)/Makefile $@
 
-bin/example.bin: bin/example
-	$(CROSS_COMPILE)objcopy -O binary $< $@
+non-config := $(filter-out $(CONFIGS) clean, $(MAKECMDGOALS))
+ifeq ($(MAKECMDGOALS),)
+	non-config := all
+endif
 
-bin/example: $(OBJS)
-	$(CC) $(LD_OPTS) -Wl,-Texample.lds -o $@ $(OBJS) -lgcc
-
-# compile, and generate dependecy files
-bin/src/%.o : src/%.c
-	@$(MKDIR) `dirname $@`
-	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C) -c -o $@ $<
-
-bin/libfdt/%.o : $(LIBFDT_DIR)/%.c
-	@$(MKDIR) `dirname $@`
-	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C) \
-	-include src/libfdt_env.h -c -o $@ $<
-
-# include the dependecy files
--include bin/src/genassym.d
--include $(OBJS:.o=.d)
-
-bin/example.map: bin/example
-	nm -n bin/example > $@
-
-include/config/auto.conf: $(LIBOS_DIR)/Kconfig
-	cp -f config .config
-	$(MAKE) -f $(KCONFIG_DIR)/Makefile Kconfig=$(PWD)/Kconfig silentoldconfig
+$(non-config): include/config/auto.conf FORCE
+	$(MKDIR) bin/
+	$(MAKE) -f Makefile.build $@
 
 clean:
-	rm -rf bin include
+	rm -rf bin/ include/ .config

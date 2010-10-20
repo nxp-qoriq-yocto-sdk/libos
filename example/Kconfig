@@ -22,12 +22,11 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-source "libos/lib/Kconfig"
+source "../lib/Kconfig"
 
 config LIBOS_DEPS
 	bool
 	default y
-	select LIBOS_HV_GUEST
 	select LIBOS_INIT
 	select LIBOS_EXCEPTION
 	select LIBOS_LIBC
@@ -35,8 +34,5 @@ config LIBOS_DEPS
 	select LIBOS_VIRT_ALLOC
 	select LIBOS_FSL_BOOKE_TLB
 	select LIBOS_CONSOLE
-	select LIBOS_MP
-	select LIBOS_VIRT_ALLOC
 	select LIBOS_NS16550
 	select LIBOS_QUEUE
-	select LIBOS_BYTE_CHAN

@@ -33,7 +33,6 @@
 #include <libos/ns16550.h>
 #include <libos/errors.h>
 #include <libos/alloc.h>
-#include <libos/byte-chan.h>
 #include <libfdt.h>
 #include <libos/io.h>
 #include <libos/chardev.h>
@@ -47,8 +46,6 @@ cpu_t cpu0 = {
 	.client = 0,
 };
 
-
-int coreint = 1;
 void *fdt;
 
 #define PAGE_SIZE 4096
@@ -386,7 +383,7 @@ int dt_get_reg(const void *tree, int node, int res,
 }
 
 phys_addr_t uart_addr;
-uint8_t *uart_virt;
+void *uart_virt;
 
 static void tlb1_init(void)
 {
@@ -433,20 +430,6 @@ chardev_t *test_init_uart(int node)
 	return ns16550_init(uart_virt, NULL, freq, 16, baud);
 }
 
-static chardev_t *test_init_byte_chan(int node)
-{
-	const uint32_t *prop;
-	int len;
-
-	tlb1_init();
-
-	prop = fdt_getprop(fdt, node, "reg", &len);
-	if (prop && len == 4)
-		return byte_chan_init(*prop, NULL, NULL);
-
-	return NULL;
-}
-
 void init(unsigned long devtree_ptr)
 {
 	chardev_t *stdout;
@@ -465,9 +448,6 @@ void init(unsigned long devtree_ptr)
 	if (node >= 0) {
 		if (!fdt_node_check_compatible(fdt, node, "ns16550"))
 			stdout = test_init_uart(node);
-		else if (!fdt_node_check_compatible(fdt, node,
-						    "epapr,hv-byte-channel"))
-			stdout = test_init_byte_chan(node);
 		else {
 			printf("Unrecognized stdout compatible.\n");
 			stdout = NULL;
@@ -481,10 +461,6 @@ void init(unsigned long devtree_ptr)
 	} else {
 		printf("No stdout found.\n");
 	}
-
-	node = fdt_subnode_offset(fdt, 0, "hypervisor");
-	if (node >= 0)
-		coreint = !fdt_get_property(fdt, node, "fsl,hv-pic-legacy", NULL);
 }
 
 void libos_client_entry(unsigned long devtree_ptr)
