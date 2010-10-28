@@ -138,9 +138,13 @@ fixup_mmu:
 	bl	1f
 	/* Find entry that maps current address */
 1:	mflr	%r19
+	li	%r16, 0			/* Start invalidate from Entry 0 */
 	mfspr	%r17, SPR_PID
+#ifdef HYPERVISOR
+	mtspr	SPR_MAS5, %r16		/* SGS = SLPID = 0 */
+#endif
 	slwi	%r17, %r17, MAS6_SPID_SHIFT
-	mtspr	SPR_MAS6, %r17
+	mtspr	SPR_MAS6, %r17		/* SPID = PID, SAS = 0 */
 	isync
 	tlbsx	0, %r19
 
@@ -152,7 +156,6 @@ fixup_mmu:
 
 	mfspr	%r17, SPR_TLB1CFG	/* Get number of entries */
 	andi.	%r17, %r17, TLBCFG_NENTRY_MASK@l
-	li	%r16, 0			/* Start from Entry 0 */
 
 2:	lis	%r15, MAS0_TLBSEL1@h	/* Select TLB1 */
 	rlwimi	%r15, %r16, 16, 4, 15
