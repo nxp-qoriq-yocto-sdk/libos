@@ -26,6 +26,7 @@
 
 #include <libos/core-regs.h>
 #include <libos/fsl-booke-tlb.h>
+#include <libos/asm-macros.S>
 
 #ifndef CONFIG_LIBOS_64BIT
 /* 32-bit */
@@ -65,35 +66,27 @@ _start:
 /*
  * Use tlbsx to locate the TLB1 entry that maps kernel code
  */
- 	lis	%r16, 1f@h
- 	ori	%r16, %r16, 1f@l
- 	mtlr	%r16
+	li	%r23, fixup_mmu_end - 1f
 	b	fixup_mmu
 
-#ifndef CONFIG_LIBOS_64BIT
-1:	lis	%r2, cpu0@ha
-	addi	%r2, %r2, cpu0@l
+1:	LOADIMM	%r2, cpu0
 	mtsprg0	%r2
-#else
-1:	lis	%r13, cpu0@ha
-	addi	%r13, %r13, cpu0@l
-	mtsprg0	%r13
+#ifdef CONFIG_LIBOS_64BIT
+	mr	%r13, %r2
 	/* Setup %r2 to toc_start + 0x8000 as expected by the 64-bit ABI */
-	lis	%r2, (toc_start + 0x8000)@h
-	ori	%r2, %r2, (toc_start + 0x8000)@l
+	LOADIMM	%r2, toc_start + 0x8000
 #endif
 
 	bl	clear_bss
 
-	mfspr	%r16, SPR_L1CFG0
-	li	%r17, 32
-	lis	%r18, cache_block_size@ha
+	mfspr	%r16, SPR_L1CFG0	/* Read CBSIZE */
+	li	%r17, 32		/* Compute cache block as 32*2^CBSIZE */
+	LOADIMM	%r18, cache_block_size
 	rlwinm	%r16, %r16, 9, 3
 	slw	%r17, %r17, %r16
-	stw	%r17, cache_block_size@l(%r18)
+	stw	%r17, 0(%r18)
 
-	lis	%r1, (init_stack_top - 16)@ha
-	addi	%r1, %r1, (init_stack_top - 16)@l
+	LOADIMM	%r1, init_stack_top - 16
 
 	bl	ivor_setup
 	bl	libos_client_entry
@@ -107,9 +100,7 @@ _start:
 	.global secondary_start
 secondary_start:
 
- 	lis	%r16, 1f@h
- 	ori	%r16, %r16, 1f@l
- 	mtlr	%r16
+	li	%r23, fixup_mmu_end - 1f
 	b	fixup_mmu
 
 #ifndef CONFIG_LIBOS_64BIT
@@ -117,8 +108,7 @@ secondary_start:
 #else
 1:	mr	%r13, %r3
 	/* Setup %r2 to toc_start + 0x8000 as expected by the 64-bit ABI */
-	lis	%r2, (toc_start + 0x8000)@h
-	ori	%r2, %r2, (toc_start + 0x8000)@l
+	LOADIMM	%r2, toc_start + 0x8000
 #endif
 	mtsprg0	%r3
 	LOAD	%r1, CPU_KSTACK(%r3)
@@ -133,8 +123,6 @@ secondary_start:
 #endif
 
 fixup_mmu:
-	mflr	%r23
-
 	bl	1f
 	/* Find entry that maps current address */
 1:	mflr	%r19
@@ -207,6 +195,9 @@ fixup_mmu:
 	mfmsr	%r16
 	ori	%r16, %r16, 0x30	/* Switch to AS 1. */
 
+#if defined(CONFIG_LIBOS_64BIT)
+	oris	%r16, %r16, MSR_CM@h	/* Switch to 64 bit */
+#endif
 	mflr	%r15
 	addi	%r15, %r15, 4f - 1b	/* Increment to instruction after rfi */
 	mtspr	SPR_SRR0, %r15
@@ -243,7 +234,7 @@ fixup_mmu:
 	 * 1MiB region they are running at (we know the hv will
 	 * be covered by the boot mapping).
 	 */
-	lis	%r15, PHYSBASE@h
+	LOADIMM	%r15, PHYSBASE
 	ori	%r15, %r15, MAS2_M
 	mtspr	SPR_MAS2, %r15		/* Set final EPN, **M** */
 	isync
@@ -264,8 +255,7 @@ fixup_mmu:
 	msync
 
 	/* Switch to the above TLB1[BASE_TLB_ENTRY] mapping */
-	lis	%r20, 6f@h
-	ori	%r20, %r20, 6f@l
+	LOADIMM	%r20, 6f
 	li	%r21, MSR_RI@l
 #ifdef CONFIG_LIBOS_64BIT
 	oris	%r21, %r21, MSR_CM@h
@@ -280,7 +270,10 @@ fixup_mmu:
 6:	mr	%r22, %r11
 	bl	tlb1_inval_entry
 
+	LOADIMM	%r16, fixup_mmu_end
+	subf	%r23, %r23, %r16
 	mtlr	%r23
+fixup_mmu_end:
 	blr
 
 tlb1_inval_entry:
@@ -304,7 +297,9 @@ ivor_setup:
 	mtspr	SPR_EPCR, %r21
 #endif
 	/* Set base address of interrupt handler routines */
-	lis	%r21, interrupt_vector_base@h
+	lis	%r23, 0xffff		/* Sign extension on 32/64 bits */
+	LOADIMM	%r21, interrupt_vector_base
+	and	%r21, %r21, %r23	/* Skip the reserved low 16 bits */
 	mtspr	SPR_IVPR, %r21
 
 	/* Assign interrupt handler routines offsets */
@@ -358,10 +353,8 @@ ivor_setup:
 	blr
 
 clear_bss:
-	lis	%r23, (bss_start - 1)@h
-	lis	%r24, (bss_end - 1)@h
-	ori	%r23, %r23, (bss_start - 1)@l
-	ori	%r24, %r24, (bss_end - 1)@l
+	LOADIMM	%r23, bss_start - 1
+	LOADIMM	%r24, bss_end - 1
 
 	sub	%r25, %r24, %r23
 	mtctr	%r25

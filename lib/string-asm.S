@@ -22,6 +22,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <libos/asm-macros.S>
+
 #define ASSERT
 
 /* void *memset(void *s, int c, size_t n) */
@@ -29,9 +31,9 @@
 .global memset
 	/* OPT 64-bit */
 memset:
-	lis	%r9, cache_block_size@ha
+	LOADIMM	%r9, cache_block_size
 	cmpwi	%r4, 0
-	lwz	%r9, cache_block_size@l(%r9)
+	lwz	%r9, 0(%r9)
 	bne-	memset_byte_tail   // if value != 0 do it by byte
 
 	andi.	%r8, %r3, 3

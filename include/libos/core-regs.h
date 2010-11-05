@@ -105,7 +105,7 @@
 
 
 #define SPR_IVPR         63   // Interrupt Vector Prefix Register
-#define IVPR_MASK        0xffff0000
+#define IVPR_MASK        (~0xffff)
 
 #define SPR_TBL          268  // Timebase Lower
 #define SPR_TBU          269  // Timebase Upper

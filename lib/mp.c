@@ -40,7 +40,20 @@ int start_secondary_spin_table(struct boot_spin_table *table, int num,
 	         "table %p addr %x pir %x entry %llx\n",
 	         table, table->addr_lo, table->pir, entry);
 
-	table->r3_lo = (unsigned long)newcpu;
+#ifdef CONFIG_LIBOS_64BIT
+	/*
+	 * NOTE:
+	 * HV spin table and trampoline code supports filling and restoring
+	 * the entire 64-bit value of R3, as demanded by ePAPR for 64-bit
+	 * chip implementation (regardless of MSR[CM] setting).
+	 * U-Boot did not and may not support in the future full 64-bit R3.
+	 * So, running these HV unit tests under U-Boot must be done while
+	 * making sure the PHYSBASE is set in the 32-bit adress range, unlike
+	 * running them under HV, where PHYSBASE is set in the 64-bit space.
+	 */
+	table->r3_hi = (uint32_t)((uintptr_t)newcpu >> 32);
+#endif
+	table->r3_lo = (uint32_t)(uintptr_t)newcpu;
 	table->pir = num;
 
 	out32((uint32_t *)&table->addr_hi, entry >> 32);

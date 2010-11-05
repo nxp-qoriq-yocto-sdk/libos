@@ -28,6 +28,7 @@
 #include <libos/core-regs.h>
 #include <libos/percpu.h>
 #include <libos/trap_booke.h>
+#include <libos/asm-macros.S>
 
 /* SPRG allocation:
  * SPRG0: per-CPU data pointer
@@ -79,8 +80,7 @@
 	.endr
 
 	/* Setup %r2 to toc_start + 0x8000 as expected by the 64-bit ABI */
-	lis	%r2, (toc_start + 0x8000)@h
-	ori	%r2, %r2, (toc_start + 0x8000)@l
+	LOADIMM	%r2, toc_start + 0x8000
 	.endm
 
 	.macro RESTORE_GPRs
