@@ -50,7 +50,7 @@ void *mpic_virt;
 void *fdt;
 
 // Timestamps
-static volatile unsigned long t1, t2, t3;
+static volatile unsigned long t1, t3;
 
 #define PAGE_SIZE 4096
 
@@ -62,10 +62,20 @@ static volatile unsigned long t1, t2, t3;
 
 #define CELL_SIZE 4
 
-#define MPIC_CTPR 0x0080
-#define MPIC_EOI  0x00B0
-#define MPIC_IACK 0x00A0
-#define MPIC_IPIVPR_BASE 0x10A0
+#define MPIC_CTPR	0x0080
+#define MPIC_EOI	0x00B0
+#define MPIC_IACK	0x00A0
+#define MPIC_IPIVPR0	0x10A0
+#define MPIC_TFRRA	0x10F0
+#define MPIC_GTBCRA0 	0x1110
+#define MPIC_GTVPRA0	0x1120
+#define MPIC_TCRA	0x1300
+
+/* Must be a power of 2 */
+#define NUM_TIMESTAMPS	16
+
+static volatile unsigned long t[NUM_TIMESTAMPS];
+static volatile unsigned int index;
 
 static inline void mpic_write(uint32_t reg, uint32_t val)
 {
@@ -80,7 +90,8 @@ static inline register_t mpic_read(uint32_t reg)
 void ext_int_handler(trapframe_t *frameptr)
 {
 	mpic_read(MPIC_IACK);
-	t2 = mfspr(SPR_TBL);
+	t[index] = mfspr(SPR_TBL);
+	index = (index + 1) & (NUM_TIMESTAMPS - 1);
 	mpic_write(MPIC_EOI, 0);
 }
 
@@ -504,6 +515,9 @@ void init(unsigned long devtree_ptr)
 
 void libos_client_entry(unsigned long devtree_ptr)
 {
+	volatile unsigned long t1, t3;
+	volatile unsigned long t2[NUM_TIMESTAMPS];
+	unsigned int i;
 	unsigned int count = 20;
 
 	init(devtree_ptr);
@@ -515,18 +529,38 @@ void libos_client_entry(unsigned long devtree_ptr)
 	enable_int();
 
 	mpic_write(MPIC_CTPR, 0);
-	mpic_write(MPIC_IPIVPR_BASE, 0xF0004);
+	mpic_write(MPIC_IPIVPR0, 0xF0004);
 
+	index = 0;
 	while (--count) {
+		i = index;
 		sync();
-		t2 = t3 = 0;
+		t3 = 0;
+		t[i] = 0;
 		t1 = mfspr(SPR_TBL);
 		isync(); // We want the mpic_write() to occur after the mfspr()
 		mpic_write(0x40, 1); // Trigger an interrupt
-		while (!t2);
+		while (t[i] == 0);
 		t3 = mfspr(SPR_TBL);
-		printf("L1=%lu L2=%lu\n", t2 - t1, t3 - t1);
+		printf("L1=%lu L2=%lu\n", t[i] - t1, t3 - t1);
 	}
+	mpic_write(MPIC_IPIVPR0, 0);
+
+	printf("Interrupt jitter measurement tool %s %s\n", __DATE__, __TIME__);
+
+	index = 0;
+	mpic_write(MPIC_GTVPRA0, 0xF0004);
+	mpic_write(MPIC_GTBCRA0, 10000);
+	while (index < (NUM_TIMESTAMPS - 1)) {
+		i = index;
+		sync();
+		while (i == index); /* Wait until ISR runs and then exits */
+		t2[i] = mfspr(SPR_TBL);
+	}
+	mpic_write(MPIC_GTBCRA0, 0x80000000);
+
+	for (i = 1; i < NUM_TIMESTAMPS - 1; i++)
+		printf("%lu %lu\n", t[i] - t[i - 1], t2[i] - t2[i - 1]);
 }
 
 static void core_init(void)
