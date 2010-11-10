@@ -133,10 +133,14 @@ int32_t mpic_irq_get_ctpr(void)
 	 return mpic_read(MPIC_CTPR);
 }
 
-static void mpic_irq_set_priority(interrupt_t *irq, int priority)
+static int mpic_irq_set_priority(interrupt_t *irq, int priority)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	vpr_t vpr;
+
+	/* do not allow changing the interrupt priority while the interrupt is active */
+	if (mpic_irq_get_activity(irq))
+		return ERR_INVALID;
 
 	register_t saved = spin_lock_intsave(&mpic_lock);
 
@@ -145,6 +149,8 @@ static void mpic_irq_set_priority(interrupt_t *irq, int priority)
 	out32(&mirq->hw->vecpri, vpr.data);
 
 	spin_unlock_intsave(&mpic_lock, saved);
+
+	return 0;
 }
 
 static int mpic_irq_get_priority(interrupt_t *irq)
@@ -167,11 +173,16 @@ static void __mpic_irq_set_config(interrupt_t *irq, int config)
 	out32(&mirq->hw->vecpri, vpr.data);
 }
 
-static void mpic_irq_set_config(interrupt_t *irq, int config)
+static int mpic_irq_set_config(interrupt_t *irq, int config)
 {
+	/* do not allow changing the interrupt configuration while the interrupt is active */
+	if (mpic_irq_get_activity(irq))
+		return ERR_INVALID;
+
 	register_t saved = spin_lock_intsave(&mpic_lock);
 	__mpic_irq_set_config(irq, config);
 	spin_unlock_intsave(&mpic_lock, saved);
+	return 0;
 }
 
 static int mpic_irq_get_config(interrupt_t *irq)
@@ -180,10 +191,16 @@ static int mpic_irq_get_config(interrupt_t *irq)
 	return (in32(&mirq->hw->vecpri) >> MPIC_IVPR_CONFIG_SHIFT) & 3;
 }
 
-static void mpic_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
+static int mpic_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
+
+	/* do not allow changing the interrupt destination while the interrupt is active */
+	if (mpic_irq_get_activity(irq))
+		return ERR_INVALID;
+
 	out32(&mirq->hw->destcpu, destcpu);
+	return 0;
 }
 
 static uint32_t mpic_irq_get_destcpu(interrupt_t *irq)
@@ -202,10 +219,16 @@ static uint32_t mpic_irq_get_destcpu(interrupt_t *irq)
  *
  */
 
-static void mpic_irq_set_delivery_type(interrupt_t *irq, int inttype)
+static int mpic_irq_set_delivery_type(interrupt_t *irq, int inttype)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
+
+	/* do not allow changing the interrupt destination while the interrupt is active */
+	if (mpic_irq_get_activity(irq))
+		return ERR_INVALID;
+
 	out32(&mirq->hw->intlevel, inttype);
+	return 0;
 }
 
 static int mpic_irq_get_delivery_type(interrupt_t *irq)
@@ -546,12 +569,13 @@ int_ops_t error_int_ops = {
 	.is_disabled = error_int_get_mask,
 };
 
-static void ipi_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
+static int ipi_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
 {
 	register_t saved = spin_lock_intsave(&mpic_lock);
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
 	mirq->ipi.dispatch_cpu_mask |= destcpu;
 	spin_unlock_intsave(&mpic_lock, saved);
+	return 0;
 }
 
 void mpic_set_ipi_dispatch_register(interrupt_t *irq)

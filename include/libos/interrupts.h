@@ -72,11 +72,11 @@ typedef struct int_ops {
 	void (*enable)(interrupt_t *irq);
 	void (*disable)(interrupt_t *irq);
 	int (*is_disabled)(interrupt_t *irq);
-	void (*set_delivery_type)(interrupt_t *irq, int type);
+	int (*set_delivery_type)(interrupt_t *irq, int type);
 	int (*get_delivery_type)(interrupt_t *irq);
-	void (*set_priority)(interrupt_t *irq, int priority);
-	void (*set_cpu_dest_mask)(interrupt_t *irq, uint32_t cpu_dest_mask);
-	void (*set_config)(interrupt_t *irq, int config);
+	int (*set_priority)(interrupt_t *irq, int priority);
+	int (*set_cpu_dest_mask)(interrupt_t *irq, uint32_t cpu_dest_mask);
+	int (*set_config)(interrupt_t *irq, int config);
 	int (*get_priority)(interrupt_t *irq);
 	int (*get_config)(interrupt_t *irq);
 	uint32_t (*get_cpu_dest_mask)(interrupt_t *irq);

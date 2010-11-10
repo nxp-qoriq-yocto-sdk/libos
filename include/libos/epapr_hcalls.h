@@ -53,7 +53,6 @@
 #define EV_INT_GET_CONFIG		5
 #define EV_INT_SET_MASK			6
 #define EV_INT_GET_MASK			7
-#define EV_INT_GET_ACTIVITY		8
 #define EV_INT_IACK			9
 #define EV_INT_EOI			10
 #define EV_INT_SEND_IPI			11
@@ -252,36 +251,6 @@ static inline unsigned int ev_int_get_mask(unsigned int interrupt,
 	);
 
 	*mask = r4;
-
-	return r3;
-}
-
-/**
- * Returns the activity status of an interrupt source.
- * @param[in] interrupt the interrupt number
- * @param[out] activity activity status.
- *
- * The activity status is a value that indicates whether an interrupt has
- * been requested (i.e. is in service).
- *
- * @return 0 for success, or an error code.
- */
-static inline unsigned int ev_int_get_activity(unsigned int interrupt,
-	unsigned int *activity)
-{
-	register uintptr_t r11 __asm__("r11");
-	register uintptr_t r3 __asm__("r3");
-	register uintptr_t r4 __asm__("r4");
-
-	r11 = EV_HCALL_TOKEN(EV_INT_GET_ACTIVITY);
-	r3 = interrupt;
-
-	__asm__ __volatile__ (EV_HCALL_RESOLVER
-		: "+r" (r11), "+r" (r3), "=r" (r4)
-		: : EV_HCALL_CLOBBERS2
-	);
-
-	*activity = r4;
 
 	return r3;
 }
