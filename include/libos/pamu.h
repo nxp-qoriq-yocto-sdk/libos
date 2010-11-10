@@ -37,6 +37,9 @@
 /* PAMU_OFFSET to the next pamu space in ccsr */
 #define PAMU_OFFSET 0x1000	
 
+#define PAMU_IDX(x)     ((x) >> 12)                 /* x = PAMU offset from base */
+#define PAMU_BYP_BIT(x) (0x80000000 >> PAMU_IDX(x)) /* x = PAMU index -- valid x: 0-15 */
+
 #define PAMU_MMAP_REGS_BASE 0
 
 typedef struct pamu_mmap_regs {
@@ -264,29 +267,49 @@ typedef struct pfa1_t {
 #define SPAACE_NUMBER_ENTRIES   0x8000
 #define	OME_NUMBER_ENTRIES      16   /* based on P4080 2.0 silicon plan */
 
-/* PAMU Data Structures */
+/* PAACE Bit Field Defines */
+#define PPAACE_AF_WBAL			0xfffff000
+#define PPAACE_AF_WBAL_SHIFT		12
+#define PPAACE_AF_WSE			0x00000fc0
+#define PPAACE_AF_WSE_SHIFT		6
+#define PPAACE_AF_MW			0x00000020
+#define PPAACE_AF_MW_SHIFT		5
 
-typedef struct ppaace_t {
+#define SPAACE_AF_LIODN			0xffff0000
+#define SPAACE_AF_LIODN_SHIFT		16
+
+#define PAACE_AF_AP			0x00000018
+#define PAACE_AF_AP_SHIFT		3
+#define PAACE_AF_DD			0x00000004
+#define PAACE_AF_DD_SHIFT		2
+#define PAACE_AF_PT			0x00000002
+#define PAACE_AF_PT_SHIFT		1
+#define PAACE_AF_V			0x00000001
+#define PAACE_AF_V_SHIFT		0
+
+#define PAACE_DA_HOST_CR		0x80
+#define PAACE_DA_HOST_CR_SHIFT		7
+
+#define PAACE_IA_CID			0x00FF0000
+#define PAACE_IA_CID_SHIFT		16
+#define PAACE_IA_WCE			0x000000F0
+#define PAACE_IA_WCE_SHIFT		4
+#define PAACE_IA_ATM			0x0000000C
+#define PAACE_IA_ATM_SHIFT		2
+#define PAACE_IA_OTM			0x00000003
+#define PAACE_IA_OTM_SHIFT		0
+
+#define PAACE_WIN_TWBAL			0xfffff000
+#define PAACE_WIN_TWBAL_SHIFT		12
+#define PAACE_WIN_SWSE			0x00000fc0
+#define PAACE_WIN_SWSE_SHIFT		6
+
+/* PAMU Data Structures */
+/* primary / secondary paact structure */
+typedef struct paace_t {
 	/* PAACE Offset 0x00 */
-	/* Window Base Address */
-	uint32_t        wbah;
-	unsigned int    wbal : 20;
-	/* Window Size, 2^(N+1), N must be > 10 */
-	unsigned int    wse : 6;
-	/* 1 Means there are secondary windows, wce is count */
-	unsigned int    mw : 1;
-	/* Permissions, see PAACE_AP_PERMS_* defines */
-	unsigned int    ap : 2;
-	/* 
-	 * Destination Domain, see PAACE_DD_* defines,
-	 * defines data structure reference for ingress ops into 
-	 * host/coherency domain or ingress ops into I/O domain
-	 */
-	unsigned int    dd : 1;
-	/* PAACE Type, see PAACE_PT_* defines */
-	unsigned int    pt : 1;
-	/* PAACE Valid, 0 is invalid */
-	unsigned int    v : 1;
+	uint32_t wbah;				/* only valid for Primary PAACE */
+	uint32_t addr_bitfields;		/* See P/S PAACE_AF_* */
 
 	/* PAACE Offset 0x08 */
 	/* Interpretation of first 32 bits dependent on DD above */
@@ -298,38 +321,28 @@ typedef struct ppaace_t {
 			uint8_t pid;
 			/* Snoop ID */
 			uint8_t snpid;
-			unsigned int coherency_required : 1;
-			unsigned int reserved : 7;
+			/* coherency_required : 1 reserved : 7 */
+			uint8_t coherency_required; /* See PAACE_DA_* */
 		} to_host;
 		struct {
 			/* Destination ID, see PAACE_DID_* defines */
-			uint8_t did;
-			unsigned int __reserved : 24;
+			uint8_t  did; 
+			uint8_t  reserved1;
+			uint16_t reserved2;
 		} to_io;
-	} __attribute__ ((packed)) domain_attr;
-	/* Implementation attributes */
-	struct {
-		unsigned int reserved1 : 8;
-		unsigned int cid : 8;
-		unsigned int reserved2 : 8;
-	} __attribute__ ((packed)) impl_attr;
-	/* Window Count; 2^(N+1) sub-windows; only valid for primary PAACE */
-	unsigned int wce : 4;
-	/* Address translation mode, see PAACE_ATM_* defines */
-	unsigned int atm : 2;
-	/* Operation translation mode, see PAACE_OTM_* defines */
-	unsigned int otm : 2;
+	} domain_attr;
+
+	/* Implementation attributes + window count + address & operation translation modes */
+	uint32_t impl_attr;			/* See PAACE_IA_* */
 
 	/* PAACE Offset 0x10 */
 	/* Translated window base address */
 	uint32_t twbah;
-	unsigned int twbal : 20;
-	/* Subwindow size encoding; 2^(N+1), N > 10 */
-	unsigned int swse : 6;
-	unsigned int reserved4 : 6;
+	uint32_t win_bitfields;			/* See PAACE_WIN_* */
 
 	/* PAACE Offset 0x18 */
-	uint32_t fspi;
+	/* first secondary paace entry */
+	uint32_t fspi;				/* only valid for Primary PAACE */
 	union {
 		struct {
 			uint8_t ioea;
@@ -341,115 +354,21 @@ typedef struct ppaace_t {
 			uint16_t reserved;
 			uint16_t omi;
 		} index_ot;
-	} __attribute__ ((packed)) op_encode;
+	} op_encode;
 
 	/* PAACE Offset 0x20 */
-	uint32_t sbah;
-	unsigned int sbal : 20;
-	unsigned int sse : 6;
-	unsigned int reserved5 : 6;
+	uint32_t reserved1[2];			/* not currently implemented */
 
 	/* PAACE Offset 0x28 */
-	uint32_t tctbah;
-	unsigned int tctbal : 20;
-	unsigned int pse : 6;
-	unsigned int tcef :1;
-	unsigned int reserved6 : 5;
+	uint32_t reserved2[2];			/* not currently implemented */
 
 	/* PAACE Offset 0x30 */
-	uint32_t reserved7[2];
+	uint32_t reserved3[2];			/* not currently implemented */
 
 	/* PAACE Offset 0x38 */
-	uint32_t reserved8[2];
-} __attribute__ ((packed)) ppaace_t;
+	uint32_t reserved4[2];			/* not currently implemented */
 
-typedef struct spaace_t {
-	/* SPAACE Offset 0x00 */
-	uint32_t reserved1;
-	uint16_t liodn;
-	unsigned int reserved2 : 11;
-	/* Permissions, see PAACE_AP_PERMS_* defines */
-	unsigned int ap : 2;
-	/* Destination Domain, see PAACE_DD_* defines */
-	unsigned int dd : 1;
-	/* SPAACE Type, see PAACE_PT_* defines */
-	unsigned int pt : 1;
-	
-	/* SPAACE Valid, 0 is invalid */
-	unsigned int v : 1;
-	/* SPAACE Offset 0x08 */
-	/* Interpretation of first 32 bits dependent on DD above */
-	union {
-		struct {
-			/* Destination ID, see PAACE_DID_* defines */
-			uint8_t did;  
-			/* Partition ID */
-			uint8_t pid;
-			/* Snoop ID */
-			uint8_t snpid;
-			unsigned int coherency_required : 1;
-			unsigned int reserved : 7;
-		} to_host;
-		struct {
-			/* Destination ID, see PAACE_DID_* defines */
-			uint8_t did;
-			unsigned int reserved : 24;
-		} to_io;
-	} __attribute__ ((packed)) domain_attr;
-	/* Implementation attributes, from VSSA */
-	struct {
-		unsigned int reserved1 : 8;
-		unsigned int cid : 8;
-		unsigned int reserved2 : 8;
-	} __attribute__ ((packed)) impl_attr;
-	unsigned int reserved3 : 4;
-	/* Address translation mode, see PAACE_ATM_* defines */
-	unsigned int atm : 2;
-	/* Operation translation mode, see PAACE_OTM_* defines */
-	unsigned int otm : 2;
-
-	/* SPAACE Offset 0x10 */
-	/* Translated window base address */
-	uint32_t twbah;
-	unsigned int twbal : 20;
-	/* Subwindow size encoding; 2^(N+1), N > 10 */
-	unsigned int swse : 6;
-	unsigned int reserved4 : 6;
-
-	/* SPAACE Offset 0x18 */
-	uint32_t reserved5;
-	union {
-		struct {
-			uint8_t ioea;
-			uint8_t moea;
-			uint8_t ioeb;
-			uint8_t moeb;
-		}immed_ot;
-		struct {
-			uint16_t reserved;
-			uint16_t omi;
-		} index_ot;
-	} __attribute__ ((packed)) op_encode;
-
-	/* SPAACE Offset 0x20 */
-	uint32_t sbah;
-	unsigned int sbal : 20;
-	unsigned int sse : 6;
-	unsigned int reserved6 : 6;
-
-	/* SPAACE Offset 0x28 */
-	uint32_t tctbah;
-	unsigned int tctbal : 20;
-	unsigned int pse : 6;
-	unsigned int tcef : 1;
-	unsigned int reserved7 : 5;
-
-	/* SPAACE Offset 0x30 */
-	uint32_t reserved8[2];
-
-	/* SPAACE Offset 0x38 */
-	uint32_t reserved9[2];
-} spaace_t;
+} paace_t;
 
 /* MOE : Mapped Operation Encodings */
 #define NUM_MOE 128
@@ -457,9 +376,11 @@ typedef struct ome_t {
 	uint8_t moe[NUM_MOE];
 } __attribute__((packed)) ome_t;
 
-#define PAACT_SIZE              (sizeof(ppaace_t) * PAACE_NUMBER_ENTRIES)
-#define SPAACT_SIZE             (sizeof(spaace_t) * SPAACE_NUMBER_ENTRIES)
+#define PPAACT_SIZE             (sizeof(paace_t) * PAACE_NUMBER_ENTRIES)
+#define SPAACT_SIZE             (sizeof(paace_t) * SPAACE_NUMBER_ENTRIES)
 #define OMT_SIZE                (sizeof(ome_t) * OME_NUMBER_ENTRIES)
+#define PAMU_PAGE_SHIFT 12
+#define PAMU_PAGE_SIZE  4096U
 
 #define IOE_READ        0x00
 #define IOE_READ_IDX    0x00
@@ -509,15 +430,28 @@ typedef struct ome_t {
 #define EOE_WWSAOL      0x1e    /* Write with stash allocate only and lock */
 #define EOE_VALID       0x80
 
-int pamu_hw_init(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
-			void *mem, unsigned long memsize, uint8_t pamu_enable_ints,
-			uint32_t threshold);
-ppaace_t *pamu_get_ppaace(uint32_t liodn);
+int32_t pamu_enable_liodn(uint32_t liodn);
+int32_t pamu_disable_liodn(uint32_t liodn);
+int32_t pamu_hw_init(void *pamu_reg_vbase, size_t reg_space_size,
+		     void *pamubypenr_vaddr, void *pamu_tbl_vbase,
+		     size_t pamu_tbl_size);
+void pamu_enable_interrupts(void *pamu_reg_vaddr, uint8_t pamu_enable_ints,
+			    uint32_t threshold);
+int32_t pamu_config_ppaace(uint32_t liodn, phys_addr_t win_addr, phys_addr_t win_size,
+			   uint32_t omi, unsigned long rpn, uint32_t snoopid,
+			   uint32_t stashid, uint32_t subwin_cnt);
+int32_t pamu_config_spaace(uint32_t liodn, uint32_t subwin_cnt, phys_addr_t subwin_addr,
+			   phys_addr_t subwin_size, uint32_t omi, unsigned long rpn,
+			   uint32_t snoopid, uint32_t stash_dest);
+int32_t pamu_reconfig_subwin(uint32_t liodn,  uint32_t subwin, unsigned long rpn);
+int32_t pamu_reconfig_liodn(uint32_t liodn, unsigned long rpn);
+paace_t *pamu_get_ppaace(uint32_t liodn);
+paace_t *pamu_get_spaace(uint32_t fspi_index, uint32_t wnum);
 ome_t *pamu_get_ome(uint8_t omi);
-void setup_default_xfer_to_host_ppaace(ppaace_t *ppaace);
-spaace_t *pamu_get_spaace(unsigned long fspi_index, uint32_t wnum);
-unsigned long get_fspi_and_increment(uint32_t subwindow_cnt);
-void setup_default_xfer_to_host_spaace(spaace_t *spaace);
+unsigned long pamu_get_fspi_and_allocate(uint32_t subwindow_cnt);
+void pamu_setup_default_xfer_to_host_ppaace(paace_t *ppaace);
+void pamu_setup_default_xfer_to_host_spaace(paace_t *spaace);
 unsigned int pamu_get_max_subwindow_count(void);
 
 #endif  /* __PAMU_H */
+

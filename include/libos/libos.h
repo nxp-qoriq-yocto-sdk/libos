@@ -79,6 +79,12 @@ extern void set_crashing(int crashing);
 
 #define P4080REV1 0x82080010 /* SVR value for P4080 Rev1 */
 
+/* Bit Field macros
+ * 	v = bit field variable; m = mask, m##_SHIFT = shift, x = value to load
+ */
+#define set_bf(v, m, x)		(v = ((v) & ~(m)) | (((x) << (m##_SHIFT)) & (m)))
+#define get_bf(v, m)		(((v) & (m)) >> (m##_SHIFT))
+
 #ifndef HAVE_VIRT_TO_PHYS
 static inline phys_addr_t virt_to_phys(void *ptr)
 {
