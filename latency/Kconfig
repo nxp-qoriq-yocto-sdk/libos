@@ -36,3 +36,5 @@ config LIBOS_DEPS
 	select LIBOS_CONSOLE
 	select LIBOS_NS16550
 	select LIBOS_QUEUE
+	select LIBOS_ALLOC_IMPL
+	select LIBOS_PHYS_64BIT

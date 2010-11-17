@@ -132,6 +132,12 @@ config LIBOS_PHYS_64BIT
 	bool
 	default y
 
+config LIBOS_POWERISA206
+	bool "Enable support for Power ISA 2.06"
+	help
+		Enabling this option will compile support for additional
+		features of a Power ISA 2.06 core, such as the Freescale e500mc.
+
 menu "Platform Support"
 
 endmenu

@@ -65,4 +65,4 @@ $(non-config): include/config/auto.conf FORCE
 	$(MAKE) -f Makefile.build $@
 
 clean:
-	rm -rf bin/ include/ .config
+	rm -rf bin/ include/ .config .config.old

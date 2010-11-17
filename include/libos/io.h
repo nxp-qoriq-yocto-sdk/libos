@@ -117,7 +117,11 @@ static inline void sync(void)
 
 static inline void lwsync(void)
 {
+#ifdef CONFIG_LIBOS_POWERISA206
 	asm volatile("lwsync" : : : "memory");
+#else
+	asm volatile("sync" : : : "memory");
+#endif
 }
 
 static inline void mbar(int mo)
