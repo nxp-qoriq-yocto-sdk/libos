@@ -193,7 +193,7 @@ int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 		out32(&pamu_regs->olal, (uint32_t)phys);
 
 		/* Disable PAMU bypass for this PAMU */
-		pamubypenr &= ~(PAMU_BYP_BIT(pamu_reg_base - pamu_reg_space_vaddr));
+		pamubypenr &= ~(PAMU_BYP_BIT(pamu_offset - pamu_reg_space_vaddr));
 		out32(pamubypenreg_vaddr, pamubypenr);
 
 	}
