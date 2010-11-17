@@ -38,13 +38,11 @@ typedef int client_cpu_t;
 
 #include <libos/trapframe.h>
 void ext_int_handler(struct trapframe *regs);
-void dec_handler(trapframe_t *regs);
 
 extern unsigned long CCSRBAR_VA;
 
 #endif
 
 #define EXC_EXT_INT_HANDLER ext_int_handler
-#define EXC_DECR_HANDLER dec_handler
 
 #endif

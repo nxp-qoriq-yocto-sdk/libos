@@ -95,10 +95,6 @@ void ext_int_handler(trapframe_t *frameptr)
 	mpic_write(MPIC_EOI, 0);
 }
 
-void dec_handler(trapframe_t *regs)
-{
-}
-
 static int get_stdout(void)
 {
 	const char *path;
@@ -526,10 +522,15 @@ void libos_client_entry(unsigned long devtree_ptr)
 	printf("L1: time from trigger to ISR.\n");
 	printf("L2: time from trigger to return from ISR.\n");
 
+	/* We must clear DIS before enabling interrupts, because there could
+	 * be a pending decrementer interrupt (from U-Boot?), and we don't
+	 * have a decremnter ISR installed.
+	 */
+	mtspr(SPR_TSR, TSR_DIS);
 	enable_int();
 
 	mpic_write(MPIC_CTPR, 0);
-	mpic_write(MPIC_IPIVPR0, 0xF0004);
+	mpic_write(MPIC_IPIVPR0, 0xF0000);
 
 	index = 0;
 	while (--count) {
@@ -549,7 +550,7 @@ void libos_client_entry(unsigned long devtree_ptr)
 	printf("Interrupt jitter measurement tool %s %s\n", __DATE__, __TIME__);
 
 	index = 0;
-	mpic_write(MPIC_GTVPRA0, 0xF0004);
+	mpic_write(MPIC_GTVPRA0, 0xF0000);
 	mpic_write(MPIC_GTBCRA0, 10000);
 	while (index < (NUM_TIMESTAMPS - 1)) {
 		i = index;
