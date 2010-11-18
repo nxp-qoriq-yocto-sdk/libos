@@ -42,6 +42,21 @@ static unsigned long pamu_reg_space_vaddr;
 static unsigned long pamu_fspi;
 static unsigned int max_subwindow_count;
 
+
+static unsigned int map_addrspace_size_to_wse(phys_addr_t addrspace_size)
+{
+	assert(!(addrspace_size & (addrspace_size - 1)));
+
+	/* window size is 2^(WSE+1) bytes */
+	return count_lsb_zeroes(addrspace_size >> PAMU_PAGE_SHIFT) + PAMU_PAGE_SHIFT - 1;
+}
+static unsigned int map_subwindow_cnt_to_wce(uint32_t subwindow_cnt)
+{
+       /* window count is 2^(WCE+1) bytes */
+       return count_lsb_zeroes_32(subwindow_cnt) - 1;
+}
+
+
 /**  Sets validation bit of PACCE
  *
  * @parm[in] liodn PAACT index for desired PAACE
@@ -300,7 +315,7 @@ int32_t pamu_config_ppaace(uint32_t liodn, phys_addr_t win_addr,
 
 	/* window size is 2^(WSE+1) bytes */
 	set_bf(ppaace->addr_bitfields, PPAACE_AF_WSE,
-	       count_lsb_zeroes(win_size) - 1);
+           map_addrspace_size_to_wse(win_size));
 	spin_unlock_intsave(&pamu_lock, saved);
 
 	pamu_setup_default_xfer_to_host_ppaace(ppaace);
@@ -338,7 +353,7 @@ int32_t pamu_config_ppaace(uint32_t liodn, phys_addr_t win_addr,
 
 		/* window count is 2^(WCE+1) bytes */
 		set_bf(ppaace->impl_attr, PAACE_IA_WCE,
-		       count_lsb_zeroes(subwin_cnt) - 1);
+		       map_subwindow_cnt_to_wce(subwin_cnt));
 		set_bf(ppaace->addr_bitfields, PPAACE_AF_MW, 0x1);
 		ppaace->fspi = pamu_fspi;
 	} else {
@@ -400,7 +415,7 @@ int32_t pamu_config_spaace(uint32_t liodn, uint32_t subwin_cnt,
 
 		/* window size is 2^(WSE+1) bytes */
 		set_bf(paace->win_bitfields, PAACE_WIN_SWSE,
-		       count_lsb_zeroes(subwin_size) - 1);
+		       map_addrspace_size_to_wse(subwin_size));
 
 		set_bf(paace->impl_attr, PAACE_IA_ATM, PAACE_ATM_WINDOW_XLATE);
 		paace->twbah = rpn >> 20;
