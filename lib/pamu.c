@@ -288,6 +288,7 @@ int32_t pamu_config_ppaace(uint32_t liodn, phys_addr_t win_addr,
 {
 	paace_t *ppaace;
 	register_t saved;
+	unsigned long fspi;
 
 	if ((win_size & (win_size - 1)) || win_size < PAMU_PAGE_SIZE) {
 		printlog(LOGTYPE_PAMU, LOGLEVEL_ERROR,
@@ -344,8 +345,8 @@ int32_t pamu_config_ppaace(uint32_t liodn, phys_addr_t win_addr,
 
 	if (subwin_cnt) {
 		/* The first entry is in the primary PAACE instead */
-		pamu_fspi = pamu_get_fspi_and_allocate(subwin_cnt - 1);
-		if (pamu_fspi == ULONG_MAX) {
+		fspi = pamu_get_fspi_and_allocate(subwin_cnt - 1);
+		if (fspi == ULONG_MAX) {
 			printlog(LOGTYPE_PAMU, LOGLEVEL_ERROR,
 				"%s: spaace indexes exhausted\n", __func__);
 			return ERR_INVALID;
@@ -355,7 +356,7 @@ int32_t pamu_config_ppaace(uint32_t liodn, phys_addr_t win_addr,
 		set_bf(ppaace->impl_attr, PAACE_IA_WCE,
 		       map_subwindow_cnt_to_wce(subwin_cnt));
 		set_bf(ppaace->addr_bitfields, PPAACE_AF_MW, 0x1);
-		ppaace->fspi = pamu_fspi;
+		ppaace->fspi = fspi;
 	} else {
 		set_bf(ppaace->impl_attr, PAACE_IA_ATM, PAACE_ATM_WINDOW_XLATE);
 		ppaace->twbah = rpn >> 20;
@@ -387,13 +388,15 @@ int32_t pamu_config_spaace(uint32_t liodn, uint32_t subwin_cnt,
 			   uint32_t stashid)
 {
 	paace_t *paace;
+	unsigned long fspi;
 
 	/* setup sub-windows */
 	if (subwin_cnt) {
-		if (subwin_addr == 0) {
-			paace = pamu_get_ppaace(liodn);
-		} else {
-			paace = pamu_get_spaace(pamu_fspi, subwin_addr - 1);
+		paace = pamu_get_ppaace(liodn);
+		if (subwin_addr > 0 && paace) {
+			fspi = paace->fspi;
+			paace = pamu_get_spaace(fspi, subwin_addr - 1);
+
 			pamu_setup_default_xfer_to_host_spaace(paace);
 			set_bf(paace->addr_bitfields, SPAACE_AF_LIODN, liodn);
 		}
