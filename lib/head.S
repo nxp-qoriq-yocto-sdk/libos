@@ -335,10 +335,12 @@ ivor_setup:
 	mtspr	SPR_IVOR15, %r21
 	li	%r21, int_perf_mon@l
 	mtspr	SPR_IVOR35, %r21
+#ifdef CONFIG_LIBOS_POWERISA_E_PC
 	li	%r21, int_doorbell@l
 	mtspr	SPR_IVOR36, %r21
 	li	%r21, int_doorbell_critical@l
 	mtspr	SPR_IVOR37, %r21
+#endif
 #ifdef HYPERVISOR
 	li	%r21, int_guest_doorbell@l
 	mtspr	SPR_IVOR38, %r21
