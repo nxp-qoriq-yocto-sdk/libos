@@ -76,7 +76,7 @@ bin/$(APP).bin.gz: bin/$(APP).bin
 bin/$(APP).bin: bin/$(APP)
 	$(CROSS_COMPILE)objcopy -O binary $< $@
 
-bin/$(APP): include/config/auto.conf $(OBJS) $(OBJS_NOCHECK)
+bin/$(APP): include/config/auto.conf $(OBJS) $(OBJS_NOCHECK) $(APP).lds
 	$(CC) $(LD_OPTS) -Wl,-T$(APP).lds -o $@ $(OBJS) -lgcc
 
 # compile, and generate dependecy files
