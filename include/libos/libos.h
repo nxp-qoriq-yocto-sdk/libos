@@ -86,9 +86,12 @@ extern void set_crashing(int crashing);
 #define get_bf(v, m)		(((v) & (m)) >> (m##_SHIFT))
 
 #ifndef HAVE_VIRT_TO_PHYS
+ /* FIXME loading 32-bit images above 4 GiB */
+extern unsigned long physbase_phys;
+
 static inline phys_addr_t virt_to_phys(void *ptr)
 {
-	return (uintptr_t)ptr - PHYSBASE;
+	return (uintptr_t)ptr - PHYSBASE + physbase_phys;
 }
 #endif
 

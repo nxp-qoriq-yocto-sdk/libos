@@ -56,6 +56,28 @@
 .globl _start
 _start:
 
+	/* Translate the device tree address to physical.
+	 * FIXME: 36-bit physical
+	 */
+
+	mfmsr	%r16		
+	mfspr	%r17, SPR_PID
+	rlwinm	%r17, %r17, 16, 0x3fff0000 /* turn PID into MAS6[SPID] */
+	rlwimi	%r17, %r16, 28, 0x00000001 /* turn MSR[DS] into MAS6[SAS] */
+	mtspr	SPR_MAS6, %r17
+
+	tlbsx	0, %r3			/* must succeed */
+	mfspr	%r16, SPR_MAS1
+	rlwinm	%r17, %r16, 25, 0x1e	/* r17 = tsize*2 */
+	li	%r18, 1024
+	slw	%r18, %r18, %r17	/* r18 = page size */
+	addi	%r18, %r18, -1
+	and	%r19, %r3, %r18		/* r19 = page offset */
+	mr	%r30, %r3
+	andc	%r3, %r3, %r18		/* r3 = page base */
+	or	%r3, %r3, %r19		/* r3 = devtree phys addr */
+	subf	%r30, %r30, %r3		/* IMA effective + %r30 = physcial */
+	
 	/* Issue INV_ALL Invalidate on TLB0 */
 	li      %r16, 0x04
 	tlbivax	0, %r16
@@ -239,16 +261,11 @@ fixup_mmu:
 	mtspr	SPR_MAS2, %r15		/* Set final EPN, **M** */
 	isync
 
-	/* r7 contains the size of the IMA as per ePAPR */
-	mfspr	%r17, SPR_MAS3
-	addi	%r16, %r7, -1
-	and	%r18, %r19, %r16 // extract IMA offset
-	andc	%r17, %r17, %r16 // extract IMA base
-	rlwinm	%r18, %r18, 0, ~MAP_MASK
+	/* We assume that we're loaded at a multiple of PHYSMAPSIZE */ 
+	add	%r17, %r19, %r30	/* phys addr of return address */
 	rlwinm	%r17, %r17, 0, ~MAP_MASK
-	or	%r17, %r17, %r18
-	ori	%r17, %r17, (MAS3_SX | MAS3_SW | MAS3_SR)@l
-	mtspr	SPR_MAS3, %r17		/* Set RPN and protection */
+	ori	%r18, %r17, (MAS3_SX | MAS3_SW | MAS3_SR)@l
+	mtspr	SPR_MAS3, %r18		/* Set RPN and protection */
 	isync
 	tlbwe
 	isync
@@ -264,10 +281,14 @@ fixup_mmu:
 	mtspr   SPR_SRR1, %r21
 	rfi
 
+6:
+	LOADIMM	%r18, physbase_phys
+	stw	%r17, 0(%r18)
+
 /*
  * Invalidate temp mapping
  */
-6:	mr	%r22, %r11
+	mr	%r22, %r11
 	bl	tlb1_inval_entry
 
 	LOADIMM	%r16, fixup_mmu_end
@@ -367,8 +388,15 @@ clear_bss:
 
 	blr
 
+	/* This is written before the BSS is cleared, so put in .data */
+	.section .data, "aw"
+	.balign 4
+	.global physbase_phys
+physbase_phys:
+	.space 4
+
 	.section .stack, "aw", @nobits
-	.align 4
+	.balign 16
 	/* Initial boot stack */
 	.space KSTACK_SIZE
 	.global init_stack_top
@@ -376,5 +404,6 @@ init_stack_top:
 
 	.section .bss
 	.global cache_block_size
+	.balign 4
 cache_block_size:
 	.space 4
