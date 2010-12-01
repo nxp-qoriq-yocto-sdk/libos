@@ -425,8 +425,9 @@ void *uart_virt;
 static void tlb1_init(void)
 {
 	if (uart_virt)
-		tlb1_set_entry(0, (uintptr_t)uart_virt, uart_addr, TLB_TSIZE_4K,
-			       TLB_MAS2_IO, TLB_MAS3_KERN, 0, 0, 0);
+		tlb1_set_entry(UART_TLB_ENTRY, (uintptr_t)uart_virt,
+		               uart_addr, TLB_TSIZE_4K, TLB_MAS2_IO,
+		               TLB_MAS3_KDATA, 0, 0, 0);
 
 	cpu->console_ok = 1;
 }
@@ -469,13 +470,24 @@ chardev_t *test_init_uart(int node)
 
 void init(unsigned long devtree_ptr)
 {
+	int dtmap_tsize = TLB_TSIZE_4M;
+	unsigned long dtmap_size = tsize_to_pages(dtmap_tsize) * 4096;
+	unsigned long dtmap_base = 0x80000000;
 	phys_addr_t mpic_addr;
 	chardev_t *stdout;
 	int node;
 
-	/* alloc the heap */
-	fdt = (void *)(devtree_ptr + PHYSBASE);
+	/* We may be running at a physical address other than zero,
+	 * so create a separate device tree mapping.  Assume it doesn't
+	 * cross a 4M boundary for now.
+	 */
+	tlb1_set_entry(DEVTREE_TLB_ENTRY, dtmap_base,
+	               devtree_ptr & ~(dtmap_size - 1), dtmap_tsize,
+	               TLB_MAS2_MEM, TLB_MAS3_KDATA, 0, 0, 0);
 
+	fdt = (void *)(dtmap_base + (devtree_ptr & (dtmap_size - 1)));
+
+	/* alloc the heap */
 	uintptr_t heap = (unsigned long)fdt + fdt_totalsize(fdt);
 	heap = (heap + 15) & ~15;
 
@@ -505,8 +517,8 @@ void init(unsigned long devtree_ptr)
 
 	mpic_virt = valloc(4 * PAGE_SIZE, 4 * PAGE_SIZE);
 
-	tlb1_set_entry(1, (uintptr_t)mpic_virt, mpic_addr, TLB_TSIZE_16K,
-		       TLB_MAS2_IO, TLB_MAS3_KERN, 0, 0, 0);
+	tlb1_set_entry(MPIC_TLB_ENTRY, (uintptr_t)mpic_virt, mpic_addr,
+	               TLB_TSIZE_16K, TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0);
 }
 
 void libos_client_entry(unsigned long devtree_ptr)

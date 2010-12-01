@@ -30,18 +30,14 @@
 // PHYSBASE must match the starting address in the .lds file
 #define PHYSBASE 0x40000000
 
+#define UART_TLB_ENTRY 0
+#define DEVTREE_TLB_ENTRY 1
 #define BASE_TLB_ENTRY 15
 #define KSTACK_SIZE 4096
 
+#define PHYSMAPSIZE TLB_TSIZE_4M
+
 #ifndef _ASM
-#include <stdint.h>
-
-#define HAVE_VIRT_TO_PHYS
-static uint64_t virt_to_phys(void *ptr)
-{
-	return (uintptr_t)ptr - PHYSBASE;
-}
-
 typedef int client_cpu_t;
 #endif
 
