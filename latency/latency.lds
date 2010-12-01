@@ -51,6 +51,7 @@ SECTIONS
     .bss : {
         *(.sbss)
         *(.bss)
+        *(.stack)
     }
     bss_end = .;
     _end = .;
