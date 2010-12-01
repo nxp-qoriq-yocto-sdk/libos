@@ -558,11 +558,10 @@ void libos_client_entry(unsigned long devtree_ptr)
 	printf("L1: time from trigger to ISR.\n");
 	printf("L2: time from trigger to return from ISR.\n");
 
-	/* We must clear DIS before enabling interrupts, because there could
-	 * be a pending decrementer interrupt (from U-Boot?), and we don't
-	 * have a decremnter ISR installed.
+	/* Disable all core timer interrupts -- we don't have a handler,
+	 * and we don't know what state the loader left them in.
 	 */
-	mtspr(SPR_TSR, TSR_DIS);
+	mtspr(SPR_TCR, 0);
 	enable_int();
 
 	mpic_write(MPIC_CTPR, 0);
