@@ -31,6 +31,8 @@
 #define UART_TLB_ENTRY 0
 #define DEVTREE_TLB_ENTRY 1
 #define MPIC_TLB_ENTRY 2
+#define IPI_TLB_ENTRY 3
+#define TIMER_TLB_ENTRY 4
 #define BASE_TLB_ENTRY 15
 #define KSTACK_SIZE 4096
 

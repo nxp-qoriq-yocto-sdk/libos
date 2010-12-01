@@ -46,13 +46,14 @@ cpu_t cpu0 = {
 	.client = 0,
 };
 
-void *mpic_virt;
+void *mpic_regs;
+void *ipi_regs, *timer_regs; /* may be from a different MPIC than mpic_regs */
 void *fdt;
 
 // Timestamps
 static volatile unsigned long t1, t3;
 
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096UL
 
 #define MAX_DT_PATH 256
 
@@ -66,10 +67,10 @@ static volatile unsigned long t1, t3;
 #define MPIC_EOI	0x00B0
 #define MPIC_IACK	0x00A0
 #define MPIC_IPIVPR0	0x10A0
-#define MPIC_TFRRA	0x10F0
-#define MPIC_GTBCRA0 	0x1110
 #define MPIC_GTVPRA0	0x1120
-#define MPIC_TCRA	0x1300
+
+/* Offset from timer base */
+#define MPIC_TIMER_BCR0 0x10
 
 /* Must be a power of 2 */
 #define NUM_TIMESTAMPS	16
@@ -79,12 +80,12 @@ static volatile unsigned int index;
 
 static inline void mpic_write(uint32_t reg, uint32_t val)
 {
-	out32(mpic_virt + reg, val);
+	out32(mpic_regs + reg, val);
 }
 
 static inline register_t mpic_read(uint32_t reg)
 {
-	return in32(mpic_virt + reg);
+	return in32(mpic_regs + reg);
 }
 
 void ext_int_handler(trapframe_t *frameptr)
@@ -473,7 +474,7 @@ void init(unsigned long devtree_ptr)
 	int dtmap_tsize = TLB_TSIZE_4M;
 	unsigned long dtmap_size = tsize_to_pages(dtmap_tsize) * 4096;
 	unsigned long dtmap_base = 0x80000000;
-	phys_addr_t mpic_addr;
+	phys_addr_t mpic_paddr, ipi_paddr, timer_paddr;
 	chardev_t *stdout;
 	int node;
 
@@ -513,12 +514,35 @@ void init(unsigned long devtree_ptr)
 	}
 
 	node = fdt_node_offset_by_compatible(fdt, 0, "chrp,open-pic");
-	dt_get_reg(fdt, node, 0, &mpic_addr, NULL);
+	dt_get_reg(fdt, node, 0, &mpic_paddr, NULL);
 
-	mpic_virt = valloc(4 * PAGE_SIZE, 4 * PAGE_SIZE);
+	node = fdt_node_offset_by_compatible(fdt, 0, "fsl,mpic-ipi");
+	if (node >= 0)
+		dt_get_reg(fdt, node, 0, &ipi_paddr, NULL);
+	else
+		ipi_paddr = mpic_paddr + 0x40;
 
-	tlb1_set_entry(MPIC_TLB_ENTRY, (uintptr_t)mpic_virt, mpic_addr,
+	node = fdt_path_offset(fdt, "timer0");
+	if (node >= 0)
+		dt_get_reg(fdt, node, 0, &timer_paddr, NULL);
+	else
+		timer_paddr = mpic_paddr + 0x1100;
+
+	mpic_regs = valloc(4 * PAGE_SIZE, 4 * PAGE_SIZE);
+	ipi_regs = valloc(PAGE_SIZE, PAGE_SIZE);
+	timer_regs = valloc(PAGE_SIZE, PAGE_SIZE);
+
+	tlb1_set_entry(MPIC_TLB_ENTRY, (uintptr_t)mpic_regs, mpic_paddr,
 	               TLB_TSIZE_16K, TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0);
+	tlb1_set_entry(IPI_TLB_ENTRY, (uintptr_t)ipi_regs,
+	               ipi_paddr & ~(PAGE_SIZE - 1), TLB_TSIZE_4K,
+	               TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0);
+	tlb1_set_entry(TIMER_TLB_ENTRY, (uintptr_t)timer_regs,
+	               timer_paddr & ~(PAGE_SIZE - 1), TLB_TSIZE_4K,
+	               TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0);
+
+	ipi_regs += ipi_paddr & (PAGE_SIZE - 1);
+	timer_regs += timer_paddr & (PAGE_SIZE - 1);
 }
 
 void libos_client_entry(unsigned long devtree_ptr)
@@ -552,7 +576,7 @@ void libos_client_entry(unsigned long devtree_ptr)
 		t[i] = 0;
 		t1 = mfspr(SPR_TBL);
 		isync(); // We want the mpic_write() to occur after the mfspr()
-		mpic_write(0x40, 1); // Trigger an interrupt
+		out32(ipi_regs, 1); // Trigger an interrupt
 		while (t[i] == 0);
 		t3 = mfspr(SPR_TBL);
 		printf("L1=%lu L2=%lu\n", t[i] - t1, t3 - t1);
@@ -563,14 +587,14 @@ void libos_client_entry(unsigned long devtree_ptr)
 
 	index = 0;
 	mpic_write(MPIC_GTVPRA0, 0xF0000);
-	mpic_write(MPIC_GTBCRA0, 10000);
+	out32(timer_regs + MPIC_TIMER_BCR0, 100000);
 	while (index < (NUM_TIMESTAMPS - 1)) {
 		i = index;
 		sync();
 		while (i == index); /* Wait until ISR runs and then exits */
 		t2[i] = mfspr(SPR_TBL);
 	}
-	mpic_write(MPIC_GTBCRA0, 0x80000000);
+	out32(timer_regs + MPIC_TIMER_BCR0, 0x80000000);
 
 	for (i = 1; i < NUM_TIMESTAMPS - 1; i++)
 		printf("%lu %lu\n", t[i] - t[i - 1], t2[i] - t2[i - 1]);
