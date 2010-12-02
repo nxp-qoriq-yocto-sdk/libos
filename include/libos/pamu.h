@@ -434,7 +434,7 @@ int32_t pamu_enable_liodn(uint32_t liodn);
 int32_t pamu_disable_liodn(uint32_t liodn);
 int32_t pamu_hw_init(void *pamu_reg_vbase, size_t reg_space_size,
 		     void *pamubypenr_vaddr, void *pamu_tbl_vbase,
-		     size_t pamu_tbl_size);
+		     size_t pamu_tbl_size, int hw_ready);
 void pamu_enable_interrupts(void *pamu_reg_vaddr, uint8_t pamu_enable_ints,
 			    uint32_t threshold);
 int32_t pamu_config_ppaace(uint32_t liodn, phys_addr_t win_addr, phys_addr_t win_size,

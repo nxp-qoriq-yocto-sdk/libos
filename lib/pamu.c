@@ -113,12 +113,14 @@ int32_t pamu_disable_liodn(uint32_t liodn)
  * @param[in] pamubypenr_vaddr pointer to virtual address of PAMU Bypass Enable Reg
  * @param[in] pamu_tbl_vbase   pointer to virtual base address of PAMU tables
  * @param[in] pamu_tbl_size    size of the allocated PAMU table space
+ * @param[in] hw_ready         true if PAMU HW was already enabled, tables set,
+ *			       and PAMUBYPENR set
  *
  * @return Returns 0 upon success else error code < 0 returned
  */
 int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 		     void *pamubypenr_vaddr, void *pamu_tbl_vbase,
-		     size_t pamu_tbl_size)
+		     size_t pamu_tbl_size, int hw_ready)
 {
 	void *ptr;
 	pamu_mmap_regs_t *pamu_regs;
@@ -169,6 +171,9 @@ int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 	if ((reg_val >> 12) == 0x00080230 && (reg_val & 0xf0) != 0x10 &&
 	    max_subwindow_count == 16)
 		max_subwindow_count = 256;
+
+	if (hw_ready)
+		return 0;
 
 	for (pamu_reg_off = 0; pamu_reg_off < pamu_reg_space_size; pamu_reg_off += PAMU_OFFSET) {
 		pamu_offset = pamu_reg_base + pamu_reg_off;
