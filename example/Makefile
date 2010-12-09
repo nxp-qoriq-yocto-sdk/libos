@@ -22,8 +22,10 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-export src = $(realpath ../../)/
-export KCONFIG_DIR := $(src)kconfig
+export src := $(CURDIR)
+override src := $(src)/
+export KCONFIG_DIR := $(src)../../kconfig
+override KCONFIG_DIR := $(KCONFIG_DIR)/
 export LIBOS := $(realpath ../)
 export LIBOS_DIR := $(LIBOS)/lib
 MKDIR=mkdir -p
@@ -45,15 +47,15 @@ CONFIGS   = $(CONFIGS1) $(CONFIGS2)
 
 include/config/auto.conf: myconfig
 	cp -f myconfig .config
-	$(MAKE) -f $(src)kconfig/Makefile Kconfig=$(PWD)/Kconfig silentoldconfig
+	$(MAKE) kcsrc=$(KCONFIG_DIR) -f $(KCONFIG_DIR)Makefile silentoldconfig
 
 .PHONY: FORCE
 help $(CONFIGS1): FORCE
 	$(MKDIR) bin/
-	$(MAKE) -C $(PWD) Kconfig=$(PWD)/Kconfig -f $(KCONFIG_DIR)/Makefile $@
+	$(MAKE) kcsrc=$(KCONFIG_DIR) -f $(KCONFIG_DIR)Makefile $@
 $(CONFIGS2): FORCE
 	$(MKDIR) bin/
-	$(MAKE) -C $(PWD) Kconfig=$(PWD)/Kconfig -f $(KCONFIG_DIR)/Makefile $@
+	$(MAKE) kcsrc=$(KCONFIG_DIR) -f $(KCONFIG_DIR)Makefile $@
 
 non-config := $(filter-out $(CONFIGS) clean, $(MAKECMDGOALS))
 ifeq ($(MAKECMDGOALS),)

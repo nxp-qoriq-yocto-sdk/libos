@@ -24,9 +24,9 @@
 
 APP=latency
 
-LIBFDT_DIR := $(realpath $(src)/../dtc)/libfdt
-LIBOS := $(realpath ../)
-LIBOS_INC := $(LIBOS)/include
+LIBFDT_DIR := $(realpath $(src)/../../../dtc)/libfdt
+libos := $(realpath ..)/
+LIBOS_INC := $(libos)/include
 LIBOS_BIN := bin/libos
 LIBOS_CLIENT_H := $(PWD)/src/libos-client.h
 
@@ -35,7 +35,7 @@ export CC=$(CROSS_COMPILE)gcc
 export GCCINCDIR := $(shell $(CC) -print-file-name=include)
 CC_OPTS=-Wa,-me500 -nostdinc -I $(GCCINCDIR) -I $(GCCINCDIR)-fixed \
 	-Isrc -Ibin/include -I$(LIBOS_INC) -I$(LIBFDT_DIR) \
-	-I$(LIBOS)/include-libc -std=gnu99 -include $(LIBOS_CLIENT_H)
+	-I$(libos)/include-libc -std=gnu99 -include $(LIBOS_CLIENT_H)
 
 export CC_OPTS_NODEP := -include $(PWD)/include/config/autoconf.h
 
@@ -60,7 +60,7 @@ include $(LIBOS_DIR)/Makefile.libos
 OBJS := $(basename $(libos-src-first-y:%=libos/%) \
                    $(libos-src-early-y:%=libos/%) \
                    $(hv-src-early-y) $(LIBFDT_SRCS:%=libfdt/%) \
-                   $(libos-src-y:%=libos/%) src/init.c)
+                   $(libos-src-y:%=libos/%) init.c)
 
 OBJS_NOCHECK := $(basename $(hv-src-nocheck-y))
 
@@ -80,10 +80,6 @@ bin/$(APP): include/config/auto.conf $(OBJS) $(OBJS_NOCHECK) $(APP).lds
 	$(CC) $(LD_OPTS) -Wl,-T$(APP).lds -o $@ $(OBJS) -lgcc
 
 # compile, and generate dependecy files
-bin/src/%.o : src/%.c
-	@$(MKDIR) `dirname $@`
-	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C) $(CC_OPTS_NODEP) -c -o $@ $<
-
 bin/%.d : $(src)src/%.c
 	$(call mkdep,REAL_CC,$(CC_OPTS) $(CC_OPTS_C))
 
@@ -103,11 +99,10 @@ bin/libfdt/%.d : $(LIBFDT_DIR)/%.c
 	$(call mkdep,REAL_CC,$(CC_OPTS) $(CC_OPTS_C))
 
 bin/libfdt/%.o : $(LIBFDT_DIR)/%.c
-	@$(MKDIR) `dirname $@`
-	$(CC) -MD $(CC_OPTS) $(CC_OPTS_C) -include src/libfdt_env.h -c -o $@ $<
+	$(call build,REAL_CC,$(CC_OPTS_NODEP) $(CC_OPTS) $(CC_OPTS_C))
 
 # include the dependecy files
--include bin/src/genassym.d
+-include bin/genassym.d
 -include $(OBJS:%.o=%.d)
 
 bin/$(APP).map: bin/$(APP)
