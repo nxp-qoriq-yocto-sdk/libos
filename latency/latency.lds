@@ -31,9 +31,11 @@ SECTIONS
 {
     . = 0x40000000;
 
+    text_start = .;
     .text : {
         *(.text)
     }
+    text_end = .;
 
     . = ALIGN(4096);
     .rodata : {

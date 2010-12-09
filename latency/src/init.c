@@ -33,11 +33,15 @@
 #include <libos/ns16550.h>
 #include <libos/errors.h>
 #include <libos/alloc.h>
-#include <libfdt.h>
+#include <libos/core-regs.h>
+#include <libos/bitops.h>
 #include <libos/io.h>
 #include <libos/chardev.h>
 #include <libos/console.h>
+#include <libos/epapr_hcalls.h>
+
 #include <malloc.h>
+#include <libfdt.h>
 
 extern uint8_t init_stack_top;
 
@@ -88,9 +92,15 @@ static inline register_t mpic_read(uint32_t reg)
 	return in32(mpic_regs + reg);
 }
 
+static int coreint;
+
 void ext_int_handler(trapframe_t *frameptr)
 {
-	mpic_read(MPIC_IACK);
+	if (coreint)
+		mfspr(SPR_EPR);
+	else
+		mpic_read(MPIC_IACK);
+
 	t[index] = mfspr(SPR_TBL);
 	index = (index + 1) & (NUM_TIMESTAMPS - 1);
 	mpic_write(MPIC_EOI, 0);
@@ -497,6 +507,234 @@ chardev_t *test_init_uart(int node)
 	return ns16550_init(uart_virt, NULL, freq, 16, baud);
 }
 
+#define KVM_HC_FEATURES            3
+#define KVM_HC_PPC_MAP_MAGIC_PAGE  4
+
+static inline unsigned int kvm_get_features(uint32_t *features)
+{
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+
+	r11 = _EV_HCALL_TOKEN(EV_KVM_VENDOR_ID, KVM_HC_FEATURES);
+
+	__asm__ __volatile__ (EV_HCALL_RESOLVER
+		: "+r" (r11), "=r" (r3), "=r" (r4)
+		: : EV_HCALL_CLOBBERS2
+	);
+
+	*features = r4;
+
+	return r3;
+}
+
+static inline unsigned int kvmppc_map_magic_page(unsigned long addr,
+                                                 uint32_t *features)
+{
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+
+	r11 = _EV_HCALL_TOKEN(EV_KVM_VENDOR_ID, KVM_HC_PPC_MAP_MAGIC_PAGE);
+	r3 = addr;
+	r4 = addr;
+
+	__asm__ __volatile__ (EV_HCALL_RESOLVER
+		: "+r" (r11), "+r" (r3), "+r" (r4)
+		: : EV_HCALL_CLOBBERS2
+	);
+
+	*features = r4;
+
+	return r3;
+}
+
+#define CELL_SIZE 4
+
+static int have_kvm;
+static uint32_t kvm_features, kvm_magic_features;
+
+#define KVM_FEATURE_MAGIC_PAGE       0x2
+#define KVM_MAGIC_FEAT_SR            0x1
+#define KVM_MAGIC_FEAT_MAS0_TO_SPRG7 0x2
+#define KVM_MAGIC_FEAT_EPR           0x4
+
+#define MAGIC_ADDR 0xfffff000
+#define MAGIC_OFFSET(x) (((x) + MAGIC_ADDR) & 0xffff)
+
+typedef struct spr_patch {
+	uint32_t insn;
+	int offset;
+	int bits32;
+	uint32_t features;
+} spr_patch_t;
+
+#define KVM_MAGIC_OFF_SPRG0    32
+#define KVM_MAGIC_OFF_SPRG1    40
+#define KVM_MAGIC_OFF_SPRG2    48
+#define KVM_MAGIC_OFF_SPRG3    56
+#define KVM_MAGIC_OFF_SPRG4    208
+#define KVM_MAGIC_OFF_SPRG5    216
+#define KVM_MAGIC_OFF_SPRG6    224
+#define KVM_MAGIC_OFF_SPRG7    232
+#define KVM_MAGIC_OFF_DEAR     80
+#define KVM_MAGIC_OFF_ESR      200
+#define KVM_MAGIC_OFF_SRR0     64
+#define KVM_MAGIC_OFF_SRR1     72
+#define KVM_MAGIC_OFF_PIR      204
+#define KVM_MAGIC_OFF_EPR      240
+#define KVM_MAGIC_OFF_MAS0     168
+#define KVM_MAGIC_OFF_MAS1     172
+#define KVM_MAGIC_OFF_MAS2     184
+#define KVM_MAGIC_OFF_MAS3     180
+#define KVM_MAGIC_OFF_MAS4     192
+#define KVM_MAGIC_OFF_MAS6     196
+#define KVM_MAGIC_OFF_MAS7     176
+
+extern uint32_t text_start, text_end;
+
+#define SPR_TO 0x100
+
+#define SPR_INST(spr) (0x7c0002a6 | \
+                       (((spr) & 0x1f) << 16) | \
+                       (((spr) & 0x3e0) << 6))
+
+static struct spr_patch spr_patches[] = {
+	{ .insn = SPR_INST(SPR_SPRG0), .offset = KVM_MAGIC_OFF_SPRG0, },
+	{ .insn = SPR_INST(SPR_SPRG1), .offset = KVM_MAGIC_OFF_SPRG1, },
+	{ .insn = SPR_INST(SPR_SPRG2), .offset = KVM_MAGIC_OFF_SPRG2, },
+	{ .insn = SPR_INST(SPR_SPRG3), .offset = KVM_MAGIC_OFF_SPRG3, },
+	{ .insn = SPR_INST(SPR_SPRG4), .offset = KVM_MAGIC_OFF_SPRG4,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_SPRG5), .offset = KVM_MAGIC_OFF_SPRG5,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_SPRG6), .offset = KVM_MAGIC_OFF_SPRG6,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_SPRG7), .offset = KVM_MAGIC_OFF_SPRG7,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_USPRG4), .offset = KVM_MAGIC_OFF_SPRG4,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_USPRG5), .offset = KVM_MAGIC_OFF_SPRG5,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_USPRG6), .offset = KVM_MAGIC_OFF_SPRG6,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_USPRG7), .offset = KVM_MAGIC_OFF_SPRG7,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_DEAR), .offset = KVM_MAGIC_OFF_DEAR,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_ESR), .offset = KVM_MAGIC_OFF_ESR,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_SRR0), .offset = KVM_MAGIC_OFF_SRR0,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_SRR1), .offset = KVM_MAGIC_OFF_SRR1,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_PIR), .offset = KVM_MAGIC_OFF_PIR,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_EPR), .offset = KVM_MAGIC_OFF_EPR,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_EPR },
+	{ .insn = SPR_INST(SPR_MAS0), .offset = KVM_MAGIC_OFF_MAS0,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_MAS1), .offset = KVM_MAGIC_OFF_MAS1,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_MAS2), .offset = KVM_MAGIC_OFF_MAS2,
+	  .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_MAS3), .offset = KVM_MAGIC_OFF_MAS3,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_MAS4), .offset = KVM_MAGIC_OFF_MAS4,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_MAS6), .offset = KVM_MAGIC_OFF_MAS6,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+	{ .insn = SPR_INST(SPR_MAS7), .offset = KVM_MAGIC_OFF_MAS7,
+	  .bits32 = 1, .features = KVM_MAGIC_FEAT_MAS0_TO_SPRG7 },
+};
+
+#define SPR_REG_MASK  0x03e00000
+
+#define LWZ    0x80000000
+#define STW    0x90000000
+
+/* FIXME 64-bit chip */
+static void patch_spr(struct spr_patch *p, uint32_t *insn)
+{
+	/* reg is in same location for load/store as mfspr/mtspr */
+	uint32_t new_insn = *insn & SPR_REG_MASK;
+
+	if (p->bits32) {
+		if (*insn & SPR_TO)
+			new_insn |= STW | MAGIC_OFFSET(p->offset);
+		else
+			new_insn |= LWZ | MAGIC_OFFSET(p->offset);
+	} else {
+		if (*insn & SPR_TO)
+			new_insn |= STW | MAGIC_OFFSET(p->offset + 4);
+		else
+			new_insn |= LWZ | MAGIC_OFFSET(p->offset + 4);
+	}
+
+	*insn = new_insn;
+	icache_block_sync(insn);
+}
+
+static void init_kvm_magic(void)
+{
+	uint32_t *insn;
+
+	if (kvmppc_map_magic_page(MAGIC_ADDR, &kvm_magic_features))
+		return;
+
+	for (insn = &text_start; insn < &text_end; insn++) {
+		int i;
+
+		for (i = 0; i < sizeof(spr_patches) / sizeof(spr_patch_t);
+		     i++) {
+			spr_patch_t *p = &spr_patches[i];
+
+			if ((*insn & ~(SPR_REG_MASK | SPR_TO)) == p->insn)
+				patch_spr(p, insn);
+		}
+	}
+
+	coreint = 1;
+
+	printf("KVM: paravirt on\n");
+}
+
+static void init_kvm(void)
+{
+	have_kvm = 1;
+
+	if (kvm_get_features(&kvm_features))
+		return;
+
+	if (kvm_features & KVM_FEATURE_MAGIC_PAGE)
+		init_kvm_magic();
+}
+
+static void init_hv(int node)
+{
+	const struct fdt_property *pdata;
+	uint32_t hcall_opcode[4] = {};
+	int size, ret, i;
+
+	pdata = fdt_get_property(fdt, node, "hcall-instructions", &size);
+	if (!pdata || size > 4 * CELL_SIZE || size % CELL_SIZE) {
+		/* no hcalls */
+		return;
+	}
+
+	/* Read all opcodes, at most 4 */
+	for (i = 0; i < size / CELL_SIZE; i++)
+		hcall_opcode[i] = *((uint32_t *)pdata->data + i);
+
+	ret = setup_hcall_instructions((uint8_t *)hcall_opcode, size);
+	if (ret < 0)
+		return;
+
+	/* hcall mechanism OK, now check for hv type */
+	if (!fdt_node_check_compatible(fdt, node, "linux,kvm"))
+		init_kvm();
+}
+
 void init(unsigned long devtree_ptr)
 {
 	int dtmap_tsize = TLB_TSIZE_4M;
@@ -540,6 +778,10 @@ void init(unsigned long devtree_ptr)
 	} else {
 		printf("No stdout found.\n");
 	}
+
+	node = fdt_path_offset(fdt, "/hypervisor");
+	if (node >= 0)
+		init_hv(node );
 
 	node = fdt_node_offset_by_compatible(fdt, 0, "chrp,open-pic");
 	dt_get_reg(fdt, node, 0, &mpic_paddr, NULL);

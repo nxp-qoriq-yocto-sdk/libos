@@ -71,6 +71,7 @@
 #define EV_ENEA_VENDOR_ID		5	/* Enea */
 #define EV_WR_VENDOR_ID			6	/* Wind River Systems */
 #define EV_AMCC_VENDOR_ID		7	/* Applied  Micro Circuits */
+#define EV_KVM_VENDOR_ID		42	/* Linux KVM */
 
 #define _EV_HCALL_TOKEN(id, num)	(((id) << 16) | (num))
 #define EV_HCALL_TOKEN(hcall_num)	_EV_HCALL_TOKEN(EV_VENDOR_ID, hcall_num)

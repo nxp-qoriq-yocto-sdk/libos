@@ -301,13 +301,13 @@ static inline int ilog2_roundup_32(unsigned long val)
  * instructions.  This follows the recommended sequence
  * in the EREF for self modifying code.
  */
-static inline void icache_block_sync(char *ptr)
+static inline void icache_block_sync(void *ptr)
 {
 	asm volatile("dcbf %y0;"
 	             "msync;"
 	             "icbi %y0;"
 	             "msync;"
-	             "isync;" : : "Z" (*ptr) : "memory");
+	             "isync;" : : "Z" (*(char *)ptr) : "memory");
 }
 
 static inline void dcache_block_flush(char *ptr)
