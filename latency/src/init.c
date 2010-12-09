@@ -116,6 +116,34 @@ static int get_stdout(void)
 	return node;
 }
 
+uint32_t dt_get_timebase_freq(void)
+{
+	int node;
+	int len;
+
+	node = fdt_node_offset_by_prop_value(fdt, -1, "device_type", "cpu", strlen("cpu")+1);
+
+	if (node == -FDT_ERR_NOTFOUND) {
+		printf("cpu node not found\n");
+		return -1;
+	}
+
+        const uint32_t *tb = fdt_getprop(fdt, node, "timebase-frequency", &len);
+	if (!tb) {
+		printf("timebase not found\n");
+		return -1;
+	}
+
+	return (uint32_t)*tb;
+}
+
+unsigned long tb_to_nsec(uint64_t freq, unsigned long ticks)
+{
+
+	return ticks * 1000000000ULL / freq;
+}
+
+
 int get_addr_format(const void *tree, int node,
 		    uint32_t *naddr, uint32_t *nsize)
 {
@@ -554,14 +582,17 @@ void libos_client_entry(unsigned long devtree_ptr)
 
 	init(devtree_ptr);
 
+	uint32_t tb_freq = dt_get_timebase_freq();
+
 	printf("Interrupt latency measurement tool %s %s\n", __DATE__, __TIME__);
-	printf("L1: time from trigger to ISR.\n");
-	printf("L2: time from trigger to return from ISR.\n");
+	printf("L1: time (ns) from trigger to ISR.\n");
+	printf("L2: time (ns) from trigger to return from ISR.\n");
 
 	/* Disable all core timer interrupts -- we don't have a handler,
 	 * and we don't know what state the loader left them in.
 	 */
 	mtspr(SPR_TCR, 0);
+	isync();
 	enable_int();
 
 	mpic_write(MPIC_CTPR, 0);
@@ -578,11 +609,16 @@ void libos_client_entry(unsigned long devtree_ptr)
 		out32(ipi_regs, 1); // Trigger an interrupt
 		while (t[i] == 0);
 		t3 = mfspr(SPR_TBL);
-		printf("L1=%lu L2=%lu\n", t[i] - t1, t3 - t1);
+		printf("L1=%lu L2=%lu\n",
+		       tb_to_nsec(tb_freq,t[i] - t1),
+		       tb_to_nsec(tb_freq, t3 - t1));
 	}
 	mpic_write(MPIC_IPIVPR0, 0);
 
-	printf("Interrupt jitter measurement tool %s %s\n", __DATE__, __TIME__);
+	printf("\nInterrupt jitter measurement tool %s %s\n", __DATE__, __TIME__);
+	printf("T1 is based on timestamp in ISR.\n");
+	printf("T2 is based on timestamp after return from ISR.\n");
+	printf("Results are difference in timestamps (ns) between interrupts.\n");
 
 	index = 0;
 	mpic_write(MPIC_GTVPRA0, 0xF0000);
@@ -596,7 +632,9 @@ void libos_client_entry(unsigned long devtree_ptr)
 	out32(timer_regs + MPIC_TIMER_BCR0, 0x80000000);
 
 	for (i = 1; i < NUM_TIMESTAMPS - 1; i++)
-		printf("%lu %lu\n", t[i] - t[i - 1], t2[i] - t2[i - 1]);
+		printf("T1=%lu T2=%lu\n",
+		       tb_to_nsec(tb_freq, t[i] - t[i - 1]),
+		       tb_to_nsec(tb_freq, t2[i] - t2[i - 1]));
 }
 
 static void core_init(void)
