@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2010 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -877,6 +877,96 @@ void libos_client_entry(unsigned long devtree_ptr)
 		printf("T1=%lu T2=%lu\n",
 		       tb_to_nsec(tb_freq, t[i] - t[i - 1]),
 		       tb_to_nsec(tb_freq, t2[i] - t2[i - 1]));
+
+	printf("CTPR test (raise CTPR on pending IRQ):\n");
+	printf("Time is latency from raising CTPR to ISR.\n");
+	index = 0;
+
+	mpic_write(MPIC_CTPR, 15);
+	mpic_write(MPIC_IPIVPR0, 0xF0000);
+	count = 10;
+	while (--count) {
+		unsigned long delay;
+		i = index;
+		sync();
+		t[i] = 0;
+		out32(ipi_regs, 1); // Trigger an interrupt
+		in32(ipi_regs);
+
+		/* Wait a little while to ensure the interrupt gets pending */
+		delay = mfspr(SPR_TBL);
+		while (mfspr(SPR_TBL) - delay < 100);
+
+		if (index > i)
+			printf("FAIL: index %u i %u\n", index, i);
+
+		t1 = mfspr(SPR_TBL);
+		isync();
+		mpic_write(MPIC_CTPR, 0);
+
+		while (t[i] == 0);
+		printf("Time=%lu\n",
+		       tb_to_nsec(tb_freq,t[i] - t1));
+
+		mpic_write(MPIC_CTPR, 15);
+	}
+	mpic_write(MPIC_CTPR, 0);
+	mpic_write(MPIC_IPIVPR0, 0);
+
+	printf("CTPR test (lower CTPR on pending IRQ):\n");
+	printf("Time is time to write CTPR.\n");
+	index = 0;
+
+	disable_int();
+	mpic_write(MPIC_IPIVPR0, 0xF0000);
+	count = 10;
+	while (--count) {
+		unsigned long delay;
+		int fail = 0;
+
+		i = index;
+		sync();
+		t3 = 0;
+		t[i] = 0;
+		out32(ipi_regs, 1); // Trigger an interrupt
+		in32(ipi_regs);
+
+		/* Wait a little while to ensure the interrupt gets pending */
+		delay = mfspr(SPR_TBL);
+		while (mfspr(SPR_TBL) - delay < 100);
+
+		if (index > i) {
+			printf("FAIL MSR[EE]: index %u i %u\n", index, i);
+			fail = 1;
+		}
+
+		t1 = mfspr(SPR_TBL);
+		isync();
+		mpic_write(MPIC_CTPR, 15);
+		t3 = mfspr(SPR_TBL);
+
+		/* Make sure the CTPR write has fully taken effect --
+		 * not needed on KVM, but maybe on hardware.
+		 */
+		mpic_read(MPIC_CTPR);
+
+		delay = mfspr(SPR_TBL);
+		while (mfspr(SPR_TBL) - delay < 100);
+
+		enable_int();
+
+		if (!fail && index > i)
+			printf("FAIL CTPR: index %u i %u\n", index, i);
+
+		mpic_write(MPIC_CTPR, 0);
+
+		while (t[i] == 0);
+		printf("Time=%lu\n",
+		       tb_to_nsec(tb_freq, t3 - t1));
+
+		disable_int();
+	}
+	mpic_write(MPIC_IPIVPR0, 0);
 }
 
 static void core_init(void)
