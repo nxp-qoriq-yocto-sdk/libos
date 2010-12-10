@@ -694,7 +694,8 @@ static void init_kvm_magic(void)
 		}
 	}
 
-	coreint = 1;
+	if (kvm_magic_features & KVM_MAGIC_FEAT_EPR)
+		coreint = 1;
 
 	printf("KVM: paravirt on\n");
 }
