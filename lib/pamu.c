@@ -179,8 +179,7 @@ int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 		pamu_offset = pamu_reg_base + pamu_reg_off;
 
 		/* if this PAMU enabled then it must already be configured so error*/
-		pamubypenr = in32(pamubypenreg_vaddr);
-		if ((pamubypenr && PAMU_BYP_BIT(pamu_offset - pamu_reg_space_vaddr)) == 0) {
+		if (in32((uint32_t *)(pamu_offset + PAMU_PC)) & PAMU_PC_PE) {
 			printlog(LOGTYPE_PAMU, LOGLEVEL_ERROR,
 				"PAMU %lu already configured\n",
 				(PAMU_IDX((pamu_offset - pamu_reg_space_vaddr))+1));
@@ -213,6 +212,7 @@ int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 		out32(&pamu_regs->olal, (uint32_t)phys);
 
 		/* Disable PAMU bypass for this PAMU */
+		pamubypenr = in32(pamubypenreg_vaddr);
 		pamubypenr &= ~(PAMU_BYP_BIT(pamu_offset - pamu_reg_space_vaddr));
 		out32(pamubypenreg_vaddr, pamubypenr);
 
