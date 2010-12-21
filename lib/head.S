@@ -55,28 +55,8 @@
 
 .globl _start
 _start:
-
-	/* Translate the device tree address to physical.
-	 * FIXME: 36-bit physical
-	 */
-
-	mfmsr	%r16		
-	mfspr	%r17, SPR_PID
-	rlwinm	%r17, %r17, 16, 0x3fff0000 /* turn PID into MAS6[SPID] */
-	rlwimi	%r17, %r16, 28, 0x00000001 /* turn MSR[DS] into MAS6[SAS] */
-	mtspr	SPR_MAS6, %r17
-
-	tlbsx	0, %r3			/* must succeed */
-	mfspr	%r16, SPR_MAS1
-	rlwinm	%r17, %r16, 25, 0x1e	/* r17 = tsize*2 */
-	li	%r18, 1024
-	slw	%r18, %r18, %r17	/* r18 = page size */
-	addi	%r18, %r18, -1
-	and	%r19, %r3, %r18		/* r19 = page offset */
-	mr	%r30, %r3
-	andc	%r3, %r3, %r18		/* r3 = page base */
-	or	%r3, %r3, %r19		/* r3 = devtree phys addr */
-	subf	%r30, %r30, %r3		/* IMA effective + %r30 = physcial */
+	bl calc_ea_phys_off
+	add %r3, %r3, %r30 /* physical = IMA effective + %r30 */
 	
 	/* Issue INV_ALL Invalidate on TLB0 */
 	li      %r16, 0x04
@@ -121,6 +101,7 @@ _start:
 #ifdef CONFIG_LIBOS_MP
 	.global secondary_start
 secondary_start:
+	bl	calc_ea_phys_off
 
 	li	%r23, fixup_mmu_end - 1f
 	b	fixup_mmu
@@ -144,6 +125,47 @@ secondary_start:
 	b	1b
 #endif
 
+/*
+ * Calculate in r30 the offset between phys addr and effective addr where .text is
+ * mapped
+ */
+calc_ea_phys_off:
+	/* Translate the program counter address to physical.
+	 * FIXME: 36-bit physical
+	 */
+
+	mflr	%r16			/* save LR so we know where to return */
+	bl	1f
+1:
+	mflr	%r19			/* r19 = program counter */
+	mtlr	%r16			/* restore LR */
+
+#ifdef HYPERVISOR
+	li	%r16, 0
+	mtspr	SPR_MAS5, %r16		/* SGS = SLPID = 0 */
+#endif
+
+	mfmsr	%r16
+	mfspr	%r17, SPR_PID
+	rlwinm	%r17, %r17, 16, 0x3fff0000 /* turn PID into MAS6[SPID] */
+	rlwimi	%r17, %r16, 28, 0x00000001 /* turn MSR[DS] into MAS6[SAS] */
+	mtspr	SPR_MAS6, %r17
+
+	tlbsx	0, %r19			/* must succeed */
+	mfspr	%r16, SPR_MAS1
+	rlwinm	%r17, %r16, 25, 0x1e	/* r17 = tsize*2 */
+	li	%r18, 1024
+	slw	%r18, %r18, %r17	/* r18 = page size */
+	addi	%r18, %r18, -1
+	and	%r16, %r19, %r18	/* r16 = page offset */
+	mr	%r30, %r19
+	mfspr   %r19, SPR_MAS3		/* r19 = rpn */
+	andc	%r17, %r19, %r18	/* r17 = page base */
+	or	%r17, %r17, %r16	/* r17 = pc phys addr */
+	subf	%r30, %r30, %r17	/* %r30 = physical - IMA effective */
+	blr
+
+/* input: r30 = physical - effective addr (returned by calc_ea_phys_off) */
 fixup_mmu:
 	bl	1f
 	/* Find entry that maps current address */
