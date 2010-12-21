@@ -64,8 +64,8 @@
 #define MSR_RI           (1 << (63 - MSRBIT_RI))
 
 // MOVE
-#define MSR_HVPRIV       (MSR_GS | MSR_UCLE | MSR_DE | MSR_WE | MSR_PMM)
-#define MSR_HVPRIV_GDEBUG (MSR_GS | MSR_UCLE | MSR_WE | MSR_PMM)
+#define MSR_HVPRIV       (MSR_GS | MSR_UCLE | MSR_DE | MSR_WE)
+#define MSR_HVPRIV_GDEBUG (MSR_GS | MSR_UCLE | MSR_WE)
 
 #define SPR_XER          1    // Integer Exception Register
 #define SPR_LR           8    // Link Register
