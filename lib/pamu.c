@@ -165,12 +165,6 @@ int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 	/* Check the version of the PAMU */
 	reg_val = in32((uint32_t *)(pamu_reg_vaddr + PAMU_PC3));
 	max_subwindow_count = 1 << (1 + PAMU_PC3_MWCE(reg_val));
-	/* FIXME: simics returns MWCE=3 even for Rev 2 so read PVR to clarify */
-	reg_val = mfspr(SPR_PVR) & 0xfffffff0;
-	/* FIXME: P4080RM r.H says PVR=0xnnnnn1nn, but is 0 for sim&HW rev1&2 */
-	if ((reg_val >> 12) == 0x00080230 && (reg_val & 0xf0) != 0x10 &&
-	    max_subwindow_count == 16)
-		max_subwindow_count = 256;
 
 	if (hw_ready)
 		return 0;
