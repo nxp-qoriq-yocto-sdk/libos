@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2009-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,14 +96,24 @@ static int coreint;
 
 void ext_int_handler(trapframe_t *frameptr)
 {
-	if (coreint)
-		mfspr(SPR_EPR);
-	else
-		mpic_read(MPIC_IACK);
+	int vec;
 
-	t[index] = mfspr(SPR_TBL);
-	index = (index + 1) & (NUM_TIMESTAMPS - 1);
-	mpic_write(MPIC_EOI, 0);
+	if (coreint)
+		vec = mfspr(SPR_EPR);
+	else
+		vec = mpic_read(MPIC_IACK);
+
+	if (vec == 0) {
+		t[index] = mfspr(SPR_TBL);
+		index = (index + 1) & (NUM_TIMESTAMPS - 1);
+	}
+
+	/* Don't EOI spurious interrupts.
+	 * See arch/powerpc/include/asm/kvm_para.h for why we get
+	 * spurious interrupts (it should be rare in real usage).
+	 */
+	if (vec != 0xffff)
+		mpic_write(MPIC_EOI, 0);
 }
 
 static int get_stdout(void)
@@ -558,6 +568,7 @@ static uint32_t kvm_features, kvm_magic_features;
 #define KVM_MAGIC_FEAT_SR            0x1
 #define KVM_MAGIC_FEAT_MAS0_TO_SPRG7 0x2
 #define KVM_MAGIC_FEAT_EPR           0x4
+#define KVM_MAGIC_FEAT_MPIC_CTPR     0x8
 
 #define MAGIC_ADDR 0xfffff000
 #define MAGIC_OFFSET(x) (((x) + MAGIC_ADDR) & 0xffff)
@@ -569,27 +580,29 @@ typedef struct spr_patch {
 	uint32_t features;
 } spr_patch_t;
 
-#define KVM_MAGIC_OFF_SPRG0    32
-#define KVM_MAGIC_OFF_SPRG1    40
-#define KVM_MAGIC_OFF_SPRG2    48
-#define KVM_MAGIC_OFF_SPRG3    56
-#define KVM_MAGIC_OFF_SPRG4    208
-#define KVM_MAGIC_OFF_SPRG5    216
-#define KVM_MAGIC_OFF_SPRG6    224
-#define KVM_MAGIC_OFF_SPRG7    232
-#define KVM_MAGIC_OFF_DEAR     80
-#define KVM_MAGIC_OFF_ESR      200
-#define KVM_MAGIC_OFF_SRR0     64
-#define KVM_MAGIC_OFF_SRR1     72
-#define KVM_MAGIC_OFF_PIR      204
-#define KVM_MAGIC_OFF_EPR      240
-#define KVM_MAGIC_OFF_MAS0     168
-#define KVM_MAGIC_OFF_MAS1     172
-#define KVM_MAGIC_OFF_MAS2     184
-#define KVM_MAGIC_OFF_MAS3     180
-#define KVM_MAGIC_OFF_MAS4     192
-#define KVM_MAGIC_OFF_MAS6     196
-#define KVM_MAGIC_OFF_MAS7     176
+#define KVM_MAGIC_OFF_SPRG0           32
+#define KVM_MAGIC_OFF_SPRG1           40
+#define KVM_MAGIC_OFF_SPRG2           48
+#define KVM_MAGIC_OFF_SPRG3           56
+#define KVM_MAGIC_OFF_SPRG4           208
+#define KVM_MAGIC_OFF_SPRG5           216
+#define KVM_MAGIC_OFF_SPRG6           224
+#define KVM_MAGIC_OFF_SPRG7           232
+#define KVM_MAGIC_OFF_DEAR            80
+#define KVM_MAGIC_OFF_ESR             200
+#define KVM_MAGIC_OFF_SRR0            64
+#define KVM_MAGIC_OFF_SRR1            72
+#define KVM_MAGIC_OFF_PIR             204
+#define KVM_MAGIC_OFF_EPR             240
+#define KVM_MAGIC_OFF_MAS0            168
+#define KVM_MAGIC_OFF_MAS1            172
+#define KVM_MAGIC_OFF_MAS2            184
+#define KVM_MAGIC_OFF_MAS3            180
+#define KVM_MAGIC_OFF_MAS4            192
+#define KVM_MAGIC_OFF_MAS6            196
+#define KVM_MAGIC_OFF_MAS7            176
+#define KVM_MAGIC_OFF_MPIC_CTPR       244
+#define KVM_MAGIC_OFF_MPIC_PRIO_PEND  248
 
 extern uint32_t text_start, text_end;
 
@@ -675,6 +688,53 @@ static void patch_spr(struct spr_patch *p, uint32_t *insn)
 	icache_block_sync(insn);
 }
 
+static uint32_t mpic_read_ctpr(void)
+{
+	return mpic_read(MPIC_CTPR);
+}
+
+static uint32_t kvm_read_ctpr(void)
+{
+	return *(uint32_t *)(MAGIC_ADDR + KVM_MAGIC_OFF_MPIC_CTPR);
+}
+
+static void mpic_write_ctpr(uint32_t ctpr)
+{
+	mpic_write(MPIC_CTPR, ctpr);
+}
+
+static void kvm_write_ctpr(uint32_t ctpr)
+{
+	/* This sync is to make sure that, when writing to CTPR to end a
+	 * critical section, all of the caller's memory accesses have
+	 * completed.  This is done here because the paravirt CTPR is
+	 * cacheable, unlike the real CTPR, and the caller may have used
+	 * "mbar 1" to order non-cacheable accesses in the critical section
+	 * with the end of the critical section.  This allows the paravirt
+	 * to be a drop-in replacement fo a store to the real CTPR.
+	 *
+	 * This sync can be removed if the above does not apply to your
+	 * application.
+	 */
+	smp_sync();
+
+	*(uint32_t *)(MAGIC_ADDR + KVM_MAGIC_OFF_MPIC_CTPR) = ctpr;
+
+	/* This sync is needed to ensure that either KVM sees the new CTPR,
+	 * or we see the new PRIO_PEND.
+	 */
+	smp_sync();
+
+	/* Can change "> ctpr" to "!= 0" to avoid
+	 * spurious interrupt generation (see ext_int_handler).
+	 */
+	if (*(uint32_t *)(MAGIC_ADDR + KVM_MAGIC_OFF_MPIC_PRIO_PEND) > ctpr)
+		mpic_write_ctpr(ctpr);
+}
+
+static uint32_t (*read_ctpr)(void) = mpic_read_ctpr;
+static void (*write_ctpr)(uint32_t ctpr) = mpic_write_ctpr;
+
 static void init_kvm_magic(void)
 {
 	uint32_t *insn;
@@ -696,6 +756,11 @@ static void init_kvm_magic(void)
 
 	if (kvm_magic_features & KVM_MAGIC_FEAT_EPR)
 		coreint = 1;
+
+	if (kvm_magic_features & KVM_MAGIC_FEAT_MPIC_CTPR) {
+		read_ctpr = kvm_read_ctpr;
+		write_ctpr = kvm_write_ctpr;
+	}
 
 	printf("KVM: paravirt on\n");
 }
@@ -838,7 +903,7 @@ void libos_client_entry(unsigned long devtree_ptr)
 	isync();
 	enable_int();
 
-	mpic_write(MPIC_CTPR, 0);
+	write_ctpr(0);
 	mpic_write(MPIC_IPIVPR0, 0xF0000);
 
 	index = 0;
@@ -883,9 +948,9 @@ void libos_client_entry(unsigned long devtree_ptr)
 	printf("Time is latency from raising CTPR to ISR.\n");
 	index = 0;
 
-	mpic_write(MPIC_CTPR, 15);
+	write_ctpr(15);
 	mpic_write(MPIC_IPIVPR0, 0xF0000);
-	count = 10;
+	count = 5;
 	while (--count) {
 		unsigned long delay;
 		i = index;
@@ -903,24 +968,24 @@ void libos_client_entry(unsigned long devtree_ptr)
 
 		t1 = mfspr(SPR_TBL);
 		isync();
-		mpic_write(MPIC_CTPR, 0);
+		write_ctpr(0);
 
 		while (t[i] == 0);
 		printf("Time=%lu\n",
 		       tb_to_nsec(tb_freq,t[i] - t1));
 
-		mpic_write(MPIC_CTPR, 15);
+		write_ctpr(15);
 	}
-	mpic_write(MPIC_CTPR, 0);
+	write_ctpr(0);
 	mpic_write(MPIC_IPIVPR0, 0);
 
 	printf("CTPR test (lower CTPR on pending IRQ):\n");
-	printf("Time is time to write CTPR.\n");
+	printf("Time is time to raise CTPR.\n");
 	index = 0;
 
 	disable_int();
 	mpic_write(MPIC_IPIVPR0, 0xF0000);
-	count = 10;
+	count = 5;
 	while (--count) {
 		unsigned long delay;
 		int fail = 0;
@@ -943,13 +1008,13 @@ void libos_client_entry(unsigned long devtree_ptr)
 
 		t1 = mfspr(SPR_TBL);
 		isync();
-		mpic_write(MPIC_CTPR, 15);
+		write_ctpr(15);
 		t3 = mfspr(SPR_TBL);
 
 		/* Make sure the CTPR write has fully taken effect --
 		 * not needed on KVM, but maybe on hardware.
 		 */
-		mpic_read(MPIC_CTPR);
+		read_ctpr();
 
 		delay = mfspr(SPR_TBL);
 		while (mfspr(SPR_TBL) - delay < 100);
@@ -959,7 +1024,7 @@ void libos_client_entry(unsigned long devtree_ptr)
 		if (!fail && index > i)
 			printf("FAIL CTPR: index %u i %u\n", index, i);
 
-		mpic_write(MPIC_CTPR, 0);
+		write_ctpr(0);
 
 		while (t[i] == 0);
 		printf("Time=%lu\n",
