@@ -41,7 +41,7 @@ export CC_OPTS_NODEP := -include $(PWD)/include/config/autoconf.h
 
 CC_OPTS_C= -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing \
 	-fno-common -O2 -pipe -ffixed-r2 -mmultiple -mno-altivec -funit-at-a-time \
-        -mno-string -fomit-frame-pointer -Wno-unused -Werror -g3
+        -mno-string -fomit-frame-pointer -fno-stack-protector -Wno-unused -Werror -g3
 
 export CC_OPTS_ASM=-D_ASM -include $(LIBOS_BIN)/assym.s
 
