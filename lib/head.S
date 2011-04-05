@@ -1,7 +1,7 @@
 
 
 /*
- * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -182,7 +182,7 @@ fixup_mmu:
 
 	/* Copy entry number to r10 */
 	mfspr	%r17, SPR_MAS0
-	rlwinm	%r10, %r17, 16, 28, 31
+	rlwinm	%r10, %r17, 16, 26, 31
 
 	/* Invalidate TLB1, skipping our entry. */
 
@@ -212,7 +212,7 @@ fixup_mmu:
  * Create temporary mapping in the other Address Space
  */
 	lis	%r17, MAS0_TLBSEL1@h	/* Select TLB1 */
-	rlwimi	%r17, %r10, 16, 12, 15	/* Select our entry */
+	rlwimi	%r17, %r10, 16, 10, 15	/* Select our entry */
 	mtspr	SPR_MAS0, %r17
 	isync
 	tlbre				/* Read it in */
@@ -220,7 +220,7 @@ fixup_mmu:
 	/* Prepare and write temp entry */
 	lis	%r17, MAS0_TLBSEL1@h	/* Select TLB1 */
 	addi	%r11, %r10, 0x1		/* Use next entry. */
-	rlwimi	%r17, %r11, 16, 12, 15	/* Select temp entry */
+	rlwimi	%r17, %r11, 16, 10, 15	/* Select temp entry */
 	mtspr	SPR_MAS0, %r17
 	isync
 
@@ -321,7 +321,7 @@ fixup_mmu_end:
 
 tlb1_inval_entry:
 	lis	%r17, MAS0_TLBSEL1@h	/* Select TLB1 */
-	rlwimi	%r17, %r22, 16, 12, 15	/* Select our entry */
+	rlwimi	%r17, %r22, 16, 10, 15	/* Select our entry */
 	mtspr	SPR_MAS0, %r17
 	isync
 	tlbre				/* Read it in */
