@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -118,7 +118,8 @@ static inline void spin_lock(uint32_t *ptr)
 
 	if (spin_lock_held(ptr)) {
 		set_crashing(1);
-		printf("Recursive spin_lock detected on %p\n", ptr);
+		printlog(LOGTYPE_MP, LOGLEVEL_ALWAYS,
+		         "Recursive spin_lock detected on %p\n", ptr);
 		set_crashing(0);
 		BUG();
 	}

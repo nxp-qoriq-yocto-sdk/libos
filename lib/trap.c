@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,19 +78,20 @@ static const char *trapname(int vector)
 static void traceback(trapframe_t *regs)
 {
 	unsigned long *sp = ((unsigned long *)regs->gpregs[1]);
-	printf("sp %p %lx %lx %lx %lx\n", sp, sp[0], sp[1], sp[2], sp[3]);
+	printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,
+	         "sp %p %lx %lx %lx %lx\n", sp, sp[0], sp[1], sp[2], sp[3]);
 	sp = ((unsigned long **)regs->gpregs[1])[0];
 
-	printf("Traceback: ");
+	printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,"Traceback: ");
 
 	for (int i = 1; sp != NULL; i++, sp = (unsigned long *)sp[0]) {
 		if ((i % 7) == 0)
-			printf("\n");
+			printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,"\n");
 
-		printf("0x%08lx ", sp[1] - 4);
+		printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS, "0x%08lx ", sp[1] - 4);
 	}
 
-	printf("\n");
+	printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,"\n");
 }
 
 void dump_regs(trapframe_t *regs)
@@ -104,20 +105,22 @@ void dump_regs(trapframe_t *regs)
 		saved = spin_lock_intsave(&dump_lock);
 	}
 
-	printf("%s\n", trapname(regs->exc));
+	printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS, "%s\n", trapname(regs->exc));
 
-	printf("NIP 0x%08lx MSR 0x%08lx LR 0x%08lx ESR 0x%08lx EXC %d\n"
-	       "CTR 0x%08lx CR 0x%08x XER 0x%08x DEAR 0x%08lx PIR %lu\n"
-	       "Prev trap level %d\n",
-	       regs->srr0, regs->srr1, regs->lr, mfspr(SPR_ESR), regs->exc,
-	       regs->ctr, regs->cr, regs->xer, mfspr(SPR_DEAR), mfspr(SPR_PIR),
-	       regs->traplevel);
+	printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,
+	         "NIP 0x%08lx MSR 0x%08lx LR 0x%08lx ESR 0x%08lx EXC %d\n"
+	         "CTR 0x%08lx CR 0x%08x XER 0x%08x DEAR 0x%08lx PIR %lu\n"
+	         "Prev trap level %d\n",
+	         regs->srr0, regs->srr1, regs->lr, mfspr(SPR_ESR), regs->exc,
+	         regs->ctr, regs->cr, regs->xer, mfspr(SPR_DEAR), mfspr(SPR_PIR),
+	         regs->traplevel);
 
 	for (int i = 0; i < 32; i++) {
-		printf("r%02d 0x%08lx  ", i, regs->gpregs[i]);
+		printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,
+		         "r%02d 0x%08lx  ", i, regs->gpregs[i]);
 
 		if ((i & 3) == 3)
-			printf("\n");
+			printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS, "\n");
 	}
 
 #ifdef HYPERVISOR
@@ -133,7 +136,8 @@ void dump_regs(trapframe_t *regs)
 
 void unknown_exception(trapframe_t *regs)
 {
-	printf("unknown exception: %s\n", trapname(regs->exc));
+	printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,
+	         "unknown exception: %s\n", trapname(regs->exc));
 	dump_regs(regs); 
 	
 	stopsim();

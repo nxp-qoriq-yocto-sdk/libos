@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2008-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2011 Freescale Semiconductor, Inc.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -266,8 +266,9 @@ void mpic_reset_core(void)
 	}
 
 	if (!mpic_coreint)
-		printf("mpic_reset_core(): too many interrupts, vector %x\n",
-		       vector);
+		printlog(LOGTYPE_IRQ, LOGLEVEL_ERROR,
+		         "mpic_reset_core(): too many interrupts, vector %x\n",
+		         vector);
 }
 
 static int error_int_p4080_rev1(void *arg)
@@ -275,10 +276,12 @@ static int error_int_p4080_rev1(void *arg)
 	interrupt_t *irq = arg;
 
 	set_crashing(1);
-	printf("Shared error interrupt received, EISR0: %#x\n",
-	       in32((uint32_t *)(CCSRBAR_VA + MPIC + MPIC_ERROR_INT_SUMMARY)));
-	printf("Future error interrupts will be disabled "
-	       "due to p4080 rev 1 limitations.\n");
+	printlog(LOGTYPE_IRQ, LOGLEVEL_ALWAYS,
+		"Shared error interrupt received, EISR0: %#x\n",
+	        in32((uint32_t *)(CCSRBAR_VA + MPIC + MPIC_ERROR_INT_SUMMARY)));
+	printlog(LOGTYPE_IRQ, LOGLEVEL_ALWAYS,
+	         "Future error interrupts will be disabled "
+	         "due to p4080 rev 1 limitations.\n");
 	set_crashing(0);
 
 	mpic_irq_mask(irq);

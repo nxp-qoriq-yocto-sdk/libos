@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2009,2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2011 Freescale Semiconductor, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -461,7 +461,8 @@ void init(unsigned long devtree_ptr)
 		if (!fdt_node_check_compatible(fdt, node, "ns16550"))
 			stdout = test_init_uart(node);
 		else {
-			printf("Unrecognized stdout compatible.\n");
+			printlog(LOGTYPE_DEV, LOGLEVEL_ERROR,
+			         "Unrecognized stdout compatible.\n");
 			stdout = NULL;
 		}
 
@@ -469,9 +470,11 @@ void init(unsigned long devtree_ptr)
 			console_init(stdout);
 		else
 			/* The message will at least go to the log buffer... */
-			printf("Failed to initialize stdout.\n");
+			printlog(LOGTYPE_MISC, LOGLEVEL_ERROR,
+			         "Failed to initialize stdout.\n");
 	} else {
-		printf("No stdout found.\n");
+		printlog(LOGTYPE_MISC, LOGLEVEL_ERROR,
+		         "No stdout found.\n");
 	}
 }
 
