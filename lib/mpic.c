@@ -188,7 +188,11 @@ static int mpic_irq_set_config(interrupt_t *irq, int config)
 static int mpic_irq_get_config(interrupt_t *irq)
 {
 	mpic_interrupt_t *mirq = to_container(irq, mpic_interrupt_t, irq);
-	return (in32(&mirq->hw->vecpri) >> MPIC_IVPR_CONFIG_SHIFT) & 3;
+	vpr_t vpr;
+
+	vpr.data = in32(&mirq->hw->vecpri);
+
+	return vpr.polarity | (vpr.sense << 1);
 }
 
 static int mpic_irq_set_destcpu(interrupt_t *irq, uint32_t destcpu)
