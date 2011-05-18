@@ -1,7 +1,7 @@
 /*
  * Exception vectors
  *
- * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2011 Freescale Semiconductor, Inc.
  * Author: Scott Wood <scottwood@freescale.com>
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -146,8 +146,8 @@
 #ifdef CONFIG_LIBOS_STATISTICS
 	mfspr	%r3, SPR_TBL
 	li	%r4, 0
-	STORE	%r3, FRAME_INITIAL_CYCLES(%r1)
-	STORE	%r4, FRAME_CURRENT_EVENT(%r1)
+	stw	%r3, FRAME_INITIAL_CYCLES(%r1)
+	stw	%r4, FRAME_CURRENT_EVENT(%r1)
 #endif
 	mfspr	%r3, SPR_EPLC
 	mfspr	%r4, SPR_EPSC
@@ -226,8 +226,8 @@
 	LOAD	%r10, FRAME_SRR1(%r1)
 	andis.	%r0, %r10, MSR_GS@h
 	beq-	4f
-	LOAD	%r3, FRAME_INITIAL_CYCLES(%r1)
-	LOAD	%r4, FRAME_CURRENT_EVENT(%r1)
+	lwz	%r3, FRAME_INITIAL_CYCLES(%r1)
+	lwz	%r4, FRAME_CURRENT_EVENT(%r1)
 	bl	UPDATE_STATS
 4:
 #endif
