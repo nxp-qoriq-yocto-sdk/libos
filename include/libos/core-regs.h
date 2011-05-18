@@ -189,7 +189,7 @@
 #define   DBCR1_IAC1ER_EAMSK 0x30000000 // IAC1 effective address mask
 #define   DBCR1_IAC1ER_RADDR 0x10000000 // IAC1 real addr unsupported
 #define   DBCR1_IAC2ER_EAMSK 0x03000000 // IAC2 effective address mask
-#define   DBCR1_IAC2ER_RADDR 0x10000000 // IAC2 real addr unsupported
+#define   DBCR1_IAC2ER_RADDR 0x01000000 // IAC2 real addr unsupported
 
 #define SPR_DBCR2        310  // Debug control register 2
 #define   DBCR2_DAC1US_MSK   0xc0000000 // DAC1 User/Supervisor mode mask
