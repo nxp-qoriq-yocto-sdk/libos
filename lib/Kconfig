@@ -147,6 +147,12 @@ config LIBOS_POWERISA_E_PC
 		category, such as the Freescale e500mc.  The resulting image
 		will only run on such an implementation.
 		
+config LIBOS_POWERISA_E_ED
+	bool "Support Power ISA Embedded.Enhanced Debug (E.ED)"
+	help
+		This option specifies that the target CPU supports
+		Power ISA category Embedded.Enhanced Debug.
+
 menu "Platform Support"
 
 endmenu

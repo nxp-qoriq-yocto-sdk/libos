@@ -399,7 +399,11 @@ interrupt_vector_base:
 	critexception EXC_WDOG int_watchdog EXC_WDOG_HANDLER
 	baseexception EXC_DTLB int_data_tlb_error EXC_DTLB_HANDLER 1
 	baseexception EXC_ITLB int_inst_tlb_error EXC_ITLB_HANDLER 1
+#ifdef CONFIG_LIBOS_POWERISA206
 	debugexception EXC_DEBUG int_debug EXC_DEBUG_HANDLER
+#else
+	critexception EXC_DEBUG int_debug EXC_DEBUG_HANDLER
+#endif
 	baseexception EXC_PERFMON int_perf_mon EXC_PERFMON_HANDLER 0
 	baseexception EXC_DOORBELL int_doorbell EXC_DOORBELL_HANDLER 0
 	critexception EXC_DOORBELLC int_doorbell_critical EXC_DOORBELLC_HANDLER
