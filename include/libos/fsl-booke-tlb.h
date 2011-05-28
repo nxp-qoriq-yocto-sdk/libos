@@ -172,14 +172,19 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 void tlb1_clear_entry(unsigned int idx);
 void tlb1_write_entry(unsigned int idx);
 
-static inline unsigned int pages_to_tsize(unsigned long epn)
+static inline unsigned int pages_to_tsize_msb(unsigned long epn)
+{
+	return epn != 0 ? ilog2(epn) / 2 + 1 : 0;
+}
+
+static inline unsigned int pages_to_tsize_lsb(unsigned long epn)
 {
 	return epn != 0 ? count_lsb_zeroes(epn) / 2 + 1 : 0;
 }
 
 static inline unsigned int natural_alignment(unsigned long epn)
 {
-	return epn != 0 ? pages_to_tsize(epn) : TLB_TSIZE_4G;
+	return epn != 0 ? pages_to_tsize_lsb(epn) : TLB_TSIZE_4G;
 }
 
 static inline unsigned long tsize_to_pages(unsigned int tsize)
@@ -192,7 +197,7 @@ static inline unsigned long tsize_to_pages(unsigned int tsize)
 static inline unsigned int max_page_size(unsigned long start,
                                          unsigned long num)
 {
-	return min(natural_alignment(start), pages_to_tsize(num));
+	return min(natural_alignment(start), pages_to_tsize_msb(num));
 }
 
 // Return the tsize of the largest page size that can be used
