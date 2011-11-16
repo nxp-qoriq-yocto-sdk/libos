@@ -399,7 +399,7 @@ interrupt_vector_base:
 	critexception EXC_WDOG int_watchdog EXC_WDOG_HANDLER
 	baseexception EXC_DTLB int_data_tlb_error EXC_DTLB_HANDLER 1
 	baseexception EXC_ITLB int_inst_tlb_error EXC_ITLB_HANDLER 1
-#ifdef CONFIG_LIBOS_POWERISA206
+#ifdef CONFIG_LIBOS_POWERISA_E_ED
 	debugexception EXC_DEBUG int_debug EXC_DEBUG_HANDLER
 #else
 	critexception EXC_DEBUG int_debug EXC_DEBUG_HANDLER
