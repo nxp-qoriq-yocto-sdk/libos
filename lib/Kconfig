@@ -123,6 +123,8 @@ config LIBOS_MAX_BUILD_LOGLEVEL
 		enabled debug output.  Set to 15 to compile support for all
 		messages.
 
+menu "Processor Support"
+
 config LIBOS_64BIT
 	bool "64-bit Processor Support"
 	help
@@ -152,8 +154,6 @@ config LIBOS_POWERISA_E_ED
 	help
 		This option specifies that the target CPU supports
 		Power ISA category Embedded.Enhanced Debug.
-
-menu "Platform Support"
 
 endmenu
 
