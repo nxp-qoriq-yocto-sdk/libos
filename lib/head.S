@@ -305,7 +305,7 @@ fixup_mmu:
 
 6:
 	LOADIMM	%r18, physbase_phys
-	stw	%r17, 0(%r18)
+	STORE	%r17, 0(%r18)
 
 /*
  * Invalidate temp mapping
@@ -412,10 +412,10 @@ clear_bss:
 
 	/* This is written before the BSS is cleared, so put in .data */
 	.section .data, "aw"
-	.balign 4
+	.balign 8
 	.global physbase_phys
 physbase_phys:
-	.space 4
+	.space 8
 
 	.section .stack, "aw", @nobits
 	.balign 16
