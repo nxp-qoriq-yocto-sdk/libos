@@ -50,7 +50,7 @@
 /* For compatibility with Linux which shares a file like this one */
 #define be32_to_cpu(x) cpu_from_be32(x)
 
-#define FH_API_VERSION			2
+#define FH_API_VERSION			3
 #define FH_API_COMPAT_VERSION		2
 
 #define FH_ERR_GET_INFO			1
@@ -71,6 +71,8 @@
 #define FH_EXIT_NAP			16
 #define FH_CLAIM_DEVICE			17
 #define FH_PARTITION_STOP_DMA		18
+#define FH_DMA_ATTR_SET			19
+#define FH_DMA_ATTR_GET			20
 
 /* vendor ID: Freescale Semiconductor */
 #define FH_HCALL_TOKEN(num)		_EV_HCALL_TOKEN(EV_FSL_VENDOR_ID, num)
@@ -674,4 +676,82 @@ static inline unsigned int fh_partition_stop_dma(unsigned int handle)
 
 	return r3;
 }
+
+#define FSL_PAMU_ATTR_STASH		2
+
+struct fh_dma_attr_stash {
+	uint32_t vcpu;      // vcpu number
+	uint32_t cache;     // cache to stash to: 1=L1, 2=L2, 3=L3
+};
+
+/**
+ * Configure a DMA window
+ *
+ * @param[in] handle value from fsl,hv-device-handle property
+ * @param[in] attr_name the FSL_PAMU_ATTR_xxx attribute to change
+ * @param[in] attr_address the physical address of the attribute structure
+ *
+ * FSL_PAMU_ATTR_STASH: Configure the target CPU and cache level for stashing
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_dma_attr_set(unsigned int handle,
+	unsigned int attr_name, phys_addr_t attr_address)
+{
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r6 __asm__("r6");
+
+	r11 = FH_HCALL_TOKEN(FH_DMA_ATTR_SET);
+	r3 = handle;
+	r4 = attr_name;
+	r5 = (uint64_t)attr_address >> 32;
+	r6 = (uint32_t)attr_address;
+
+	__asm__ __volatile__ (FSL_HCALL_RESOLVER
+		: "+r" (r11),
+		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6)
+		: : EV_HCALL_CLOBBERS4
+	);
+
+	return r3;
+}
+
+/**
+ * Query the DMA window configuration
+ *
+ * @param[in] handle value from fsl,hv-device-handle property
+ * @param[in] attr_name the FSL_PAMU_ATTR_xxx attribute to change
+ * @param[in] attr_address the physical address of the attribute structure
+ *
+ * FSL_PAMU_ATTR_STASH: Query the target CPU and cache level for stashing
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline unsigned int fh_dma_attr_get(unsigned int handle,
+	unsigned int attr_name, phys_addr_t attr_address)
+{
+	register uintptr_t r11 __asm__("r11");
+	register uintptr_t r3 __asm__("r3");
+	register uintptr_t r4 __asm__("r4");
+	register uintptr_t r5 __asm__("r5");
+	register uintptr_t r6 __asm__("r6");
+
+	r11 = FH_HCALL_TOKEN(FH_DMA_ATTR_GET);
+	r3 = handle;
+	r4 = attr_name;
+	r5 = (uint64_t)attr_address >> 32;
+	r6 = (uint32_t)attr_address;
+
+	__asm__ __volatile__ (FSL_HCALL_RESOLVER
+		: "+r" (r11),
+		  "+r" (r3), "+r" (r4), "+r" (r5), "+r" (r6)
+		: : EV_HCALL_CLOBBERS4
+	);
+
+	return r3;
+}
+
 #endif
