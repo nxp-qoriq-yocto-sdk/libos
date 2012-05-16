@@ -59,6 +59,7 @@ static const struct powerpc_exception powerpc_exceptions[] = {
 	{ EXC_GDOORBELLC, "guest doorbell critical"},
 	{ EXC_HCALL, "hcall"},
 	{ EXC_EHPRIV, "ehpriv"},
+	{ EXC_LRAT, "lrat miss"},
 #endif
 	{ EXC_LAST, NULL }
 };

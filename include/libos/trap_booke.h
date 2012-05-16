@@ -53,6 +53,7 @@
 #define EXC_GDOORBELLC 39   /* guest doorbell critical, machine check */
 #define EXC_HCALL      40   /* hcall */
 #define EXC_EHPRIV     41   /* hypervisor privilege trap */
+#define EXC_LRAT       42   /* LRAT error */
 
 #define EXC_LAST 255
 
@@ -124,6 +125,9 @@
 #endif
 #ifndef EXC_EHPRIV_HANDLER
 #define EXC_EHPRIV_HANDLER unknown_exception
+#endif
+#ifndef EXC_LRAT_HANDLER
+#define EXC_LRAT_HANDLER unknown_exception
 #endif
 
 #ifndef _ASM

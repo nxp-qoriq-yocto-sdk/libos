@@ -412,4 +412,5 @@ interrupt_vector_base:
 	critexception EXC_GDOORBELLC int_guest_doorbell_critical EXC_GDOORBELLC_HANDLER
 	baseexception EXC_HCALL int_hypercall EXC_HCALL_HANDLER 1
 	baseexception EXC_EHPRIV int_ehpriv EXC_EHPRIV_HANDLER 1
+	baseexception EXC_LRAT int_lrat_error EXC_LRAT_HANDLER 1
 #endif

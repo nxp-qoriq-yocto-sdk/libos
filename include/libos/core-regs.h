@@ -95,6 +95,8 @@
 #define   ESR_PUO          0x00040000 // Unimplemented Operation (Prog)
 #define   ESR_BO           0x00020000 // Byte-ordering (DSI, ISI)
 #define   ESR_PIE          0x00010000 // Imprecise Exception (Prog)
+#define   ESR_DATA         0x00000400 // Data access (LRAT errror)
+#define   ESR_PT           0x00000100 // Page table translation (DSI, ISI, LRAT)
 #define   ESR_SPE          0x00000080 // SPE/Embedded FP/Altivec
                                       // (Align, DSI, DTLB,
                                       //  Embedded FP Data/Round)
@@ -249,6 +251,9 @@
 #define   TCR_INT_TO_FP(x) \
 	((((x) << 11) & TCR_FPEXT) | (((x) << 24) & TCR_FP))
 
+#define SPR_LRATCFG      342 // LRAT Configuration Register
+#define LRATCFG_NENTRY_MASK    0x00000fff // Number of entries in LRAT
+#define SPR_LRATPS       343 // LRAT Page Size Register
 #define SPR_TLB1PS       345 // TLB1 Page Size Register (MMUv2)
 
 // Guest SPR General Registers
@@ -286,6 +291,7 @@
 #define SPR_IVOR39       433  // Guest Processor Doorbell Critical
 #define SPR_IVOR40       434  // Hypervisor System Call
 #define SPR_IVOR41       435  // Hypervisor Privelege
+#define SPR_IVOR42       436  // LRAT Error
 
 #define SPR_GIVOR2       440  // Guest DSI
 #define SPR_GIVOR3       441  // guest ISI
