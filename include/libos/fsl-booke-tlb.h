@@ -53,11 +53,11 @@
 #define   MAS1_TID_SHIFT     16
 #define   MAS1_TS            0x00001000
 #define   MAS1_TS_SHIFT      12
-#define   MAS1_TSIZE_MASK    0x00000F00
-#define   MAS1_TSIZE_SHIFT   8
+#define   MAS1_TSIZE_MASK    0x00000F80
+#define   MAS1_TSIZE_SHIFT   7
 #define   MAS1_GETTID(mas1)  (((mas1) & MAS1_TID_MASK) >> MAS1_TID_SHIFT)
 #define   MAS1_GETTSIZE(mas1)(((mas1) & MAS1_TSIZE_MASK) >> MAS1_TSIZE_SHIFT)
-#define   MAS1_RESERVED      0x0000e0ff
+#define   MAS1_RESERVED      0x0000e07f
 
 #define SPR_MAS2         626  // MMU Assist Register 2
 #define   MAS2_EPN           (~0xfffUL)
@@ -123,17 +123,35 @@
 #define   MAS8_VF_SHIFT      30
 #define   MAS8_TLPID         0x000000ff
 
-#define TLB_TSIZE_4K   1
-#define TLB_TSIZE_16K  2
-#define TLB_TSIZE_64K  3
-#define TLB_TSIZE_256K 4
-#define TLB_TSIZE_1M   5
-#define TLB_TSIZE_4M   6
-#define TLB_TSIZE_16M  7
-#define TLB_TSIZE_64M  8
-#define TLB_TSIZE_256M 9
-#define TLB_TSIZE_1G   10
-#define TLB_TSIZE_4G   11
+#define TLB_TSIZE_4K   2
+#define TLB_TSIZE_8K   3
+#define TLB_TSIZE_16K  4
+#define TLB_TSIZE_32K  5
+#define TLB_TSIZE_64K  6
+#define TLB_TSIZE_128K 7
+#define TLB_TSIZE_256K 8
+#define TLB_TSIZE_512K 9
+#define TLB_TSIZE_1M   10
+#define TLB_TSIZE_2M   11
+#define TLB_TSIZE_4M   12
+#define TLB_TSIZE_8M   13
+#define TLB_TSIZE_16M  14
+#define TLB_TSIZE_32M  15
+#define TLB_TSIZE_64M  16
+#define TLB_TSIZE_128M 17
+#define TLB_TSIZE_256M 18
+#define TLB_TSIZE_512M 19
+#define TLB_TSIZE_1G   20
+#define TLB_TSIZE_2G   21
+#define TLB_TSIZE_4G   22
+#define TLB_TSIZE_8G   23
+#define TLB_TSIZE_16G  24
+#define TLB_TSIZE_32G  25
+#define TLB_TSIZE_64G  26
+#define TLB_TSIZE_128G 27
+#define TLB_TSIZE_256G 28
+#define TLB_TSIZE_512G 29
+#define TLB_TSIZE_1T   30
 
 #define TLB_MAS2_IO    (MAS2_I | MAS2_G)
 #define TLB_MAS2_MEM   (MAS2_M)
@@ -172,40 +190,56 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 void tlb1_clear_entry(unsigned int idx);
 void tlb1_write_entry(unsigned int idx);
 
+extern const uint32_t valid_tsize_mask;
+
 static inline unsigned int pages_to_tsize_msb(unsigned long epn)
 {
-	return epn != 0 ? ilog2(epn) / 2 + 1 : 0;
+	return epn != 0 ? ilog2(epn) + 2 : 0;
 }
 
 static inline unsigned int pages_to_tsize_lsb(unsigned long epn)
 {
-	return epn != 0 ? count_lsb_zeroes(epn) / 2 + 1 : 0;
+	return epn != 0 ? count_lsb_zeroes(epn) + 2 : 0;
 }
 
-static inline unsigned int natural_alignment(unsigned long epn)
+// Returns a maximum *valid* TSIZE, equal or smaller than the
+// (potentially invalid on the core running on) input TSIZE.
+// Note that the function expects a sane TSIZE value, between
+// the minimum and maximum possible values (4K min, 1T max)
+static inline int max_valid_tsize(unsigned int tsize)
 {
-	return epn != 0 ? pages_to_tsize_lsb(epn) : TLB_TSIZE_4G;
+	assert(tsize >= TLB_TSIZE_4K && tsize <= 31);
+
+	return tsize - count_msb_zeroes_32(valid_tsize_mask << (31 - tsize));
+}
+
+static inline int natural_alignment(unsigned long epn)
+{
+	return epn != 0 ?
+	       max_valid_tsize(pages_to_tsize_lsb(epn)) :
+	       TLB_TSIZE_4G;
 }
 
 static inline unsigned long tsize_to_pages(unsigned int tsize)
 {
-	return tsize != 0 ? 1UL << (tsize - 1) * 2 : 0;
+	return tsize != 0 ? 1UL << (tsize - 2) : 0;
 }
 
 // Return the tsize of the largest page size that can be used
 // to map the specified range (in pages).
-static inline unsigned int max_page_size(unsigned long start,
-                                         unsigned long num)
+static inline int max_page_size(unsigned long start,
+				unsigned long num)
 {
-	return min(natural_alignment(start), pages_to_tsize_msb(num));
+	return min(natural_alignment(start),
+		   max_valid_tsize(pages_to_tsize_msb(num)));
 }
 
 // Return the tsize of the largest page size that can be used
 // to map the specified range (in tsize).
-static inline unsigned int max_page_tsize(unsigned long start,
-                                          unsigned int tsize)
+static inline int max_page_tsize(unsigned long start,
+				 unsigned int tsize)
 {
-	return min(natural_alignment(start), tsize);
+	return min(natural_alignment(start), max_valid_tsize(tsize));
 }
 
 #endif

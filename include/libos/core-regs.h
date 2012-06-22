@@ -249,6 +249,8 @@
 #define   TCR_INT_TO_FP(x) \
 	((((x) << 11) & TCR_FPEXT) | (((x) << 24) & TCR_FP))
 
+#define SPR_TLB1PS       345 // TLB1 Page Size Register (MMUv2)
+
 // Guest SPR General Registers
 #define SPR_GSPRG0       368
 #define SPR_GSPRG1       369
@@ -354,6 +356,10 @@
 #define SPR_TLB1CFG      689  // TLB 1 Config Register
 #define   TLBCFG_ASSOC_MASK  0xff000000 // Associativity of TLB
 #define   TLBCFG_ASSOC_SHIFT 24
+#define   TLBCFG_PT_MASK     0x00040000 // (MMUv2) Page Table
+#define   TLBCFG_IND_MASK    0x00020000 // (MMUv2) Supports indirect entries
+#define   TLBCFG_GTWE_MASK   0x00010000 // (MMUv2) Guest TLB write enabled
+#define   TLBCFG_HES_MASK    0x00002000 // (MMUv2) Harware entry select
 #define   TLBCFG_NENTRY_MASK 0x00000fff // Number of entries in TLB
 
 #define SPR_CDCSR0       696  // Core Device Control and Status 0
@@ -473,6 +479,8 @@
 #define   MMUCFG_LPIDSIZE_SHIFT 24
 #define   MMUCFG_RASIZE    0x00fe0000 // Number of real-address bits
 #define   MMUCFG_RASIZE_SHIFT   17
+#define   MMUCFG_LRAT      0x00010000 // (MMUv2) LRAT supported
+#define   MMUCFG_TWC       0x00008000 // (MMUv2) TLB write cnditional
 #define   MMUCFG_NPIDS     0x00007800 // Number of PID registers
 #define   MMUCFG_NPIDS_SHIFT    11
 #define   MMUCFG_PIDSIZE   0x000007c0 // Bits in a PID register, minus one

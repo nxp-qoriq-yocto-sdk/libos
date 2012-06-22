@@ -88,6 +88,19 @@ _start:
 	slw	%r17, %r17, %r16
 	stw	%r17, 0(%r18)
 
+	/* Build a mask of valid TSIZEs based on MMU version */
+	mfspr	%r16, SPR_MMUCFG	/* Check MAVN */
+	andi.	%r16, %r16, MMUCFG_MAVN
+	beq	1f
+	mfspr	%r17, SPR_TLB1PS	/* MMUv2: r17 = TLB1PS */
+	b	2f
+1:
+	/* MMUv1: r17 = synthetic mask */
+	LOADIMM %r17, 0b10101010101010101010100
+2:
+	LOADIMM %r18, valid_tsize_mask
+	stw	%r17, 0(%r18)
+
 	LOADIMM	%r1, init_stack_top - 16
 
 	bl	ivor_setup
@@ -271,7 +284,7 @@ fixup_mmu:
 	isync
 
 	/* Align mapping to size */
-	#define MAP_MASK ((1 << ((PHYSMAPSIZE - 1) * 2 + 12)) - 1)
+	#define MAP_MASK ((1024 << PHYSMAPSIZE) - 1)
 
 	/* We may have relocated away from address zero,
 	 * and want the secondaries to map PHYSBASE to whatever
@@ -428,4 +441,7 @@ init_stack_top:
 	.global cache_block_size
 	.balign 4
 cache_block_size:
+	.space 4
+	.global valid_tsize_mask
+valid_tsize_mask:
 	.space 4

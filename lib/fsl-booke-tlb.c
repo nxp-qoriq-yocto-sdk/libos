@@ -54,6 +54,8 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 {
 	register_t ts, tid;
 
+	assert((1 << tsize) & valid_tsize_mask);
+
 	tid = (_tid <<  MAS1_TID_SHIFT) & MAS1_TID_MASK;
 	ts = (_ts) ? MAS1_TS : 0;
 	cpu->tlb1[idx].mas1 = MAS1_VALID | MAS1_IPROT | ts | tid;
