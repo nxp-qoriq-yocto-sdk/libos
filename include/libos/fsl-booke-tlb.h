@@ -258,6 +258,13 @@ static inline unsigned long tsize_to_pages(unsigned int tsize)
 	return tsize != 0 ? 1UL << (tsize - 2) : 0;
 }
 
+// return 1 page for 1K and 2K sizes. 1K and 2K are supported sizes
+// for page table in case of indirect entries
+static inline unsigned long tsize_to_pages_roundup(unsigned int tsize)
+{
+	return tsize > 1 ? 1UL << (tsize - 2) : 1;
+}
+
 // Return the tsize of the largest page size that can be used
 // to map the specified range (in pages).
 static inline int max_page_size(unsigned long start,
