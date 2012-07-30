@@ -50,7 +50,8 @@
  */
 void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
                     register_t tsize, register_t mas2flags, register_t mas3flags,
-                    unsigned int _tid, unsigned int _ts, register_t mas8)
+                    unsigned int _tid, unsigned int _ts, register_t mas8,
+                    unsigned int indirect)
 {
 	register_t ts, tid;
 
@@ -60,6 +61,7 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 	ts = (_ts) ? MAS1_TS : 0;
 	cpu->tlb1[idx].mas1 = MAS1_VALID | MAS1_IPROT | ts | tid;
 	cpu->tlb1[idx].mas1 |= ((tsize << MAS1_TSIZE_SHIFT) & MAS1_TSIZE_MASK);
+	cpu->tlb1[idx].mas1 |= (indirect << MAS1_IND_SHIFT) & MAS1_IND;
 
 	cpu->tlb1[idx].mas2 = (va & MAS2_EPN) | mas2flags;
 

@@ -79,6 +79,13 @@
 
 #define SPR_DECAR        54   // Decrementer Auto-Reload
 
+#define SPR_LPER         56 // Logical Page Exception Register
+#define LPER_ALPN        0x000FFFFFFFFFF000 // Abbreviated logical page number
+#define LPER_ALPN_SHIFT  12
+#define LPER_WIMGE       0x0000000000000F80 // WIMGE bits
+#define LPER_WIMGE_SHIFT 7
+#define LPER_LPS         0x000000000000000F // logical page size
+
 #define SPR_CSRR0        58   // Critical SRR0
 #define SPR_CSRR1        59   // Critical SRR1
 #define SPR_DEAR         61   // Data Error Address Register
@@ -254,7 +261,11 @@
 #define SPR_LRATCFG      342 // LRAT Configuration Register
 #define LRATCFG_NENTRY_MASK    0x00000fff // Number of entries in LRAT
 #define SPR_LRATPS       343 // LRAT Page Size Register
+
+#define SPR_TLB0PS       344 // TLB0 Page Size Register (MMUv2)
 #define SPR_TLB1PS       345 // TLB1 Page Size Register (MMUv2)
+
+#define SPR_EPTCFG       350 // Embedded Page Table Configuration Register
 
 // Guest SPR General Registers
 #define SPR_GSPRG0       368

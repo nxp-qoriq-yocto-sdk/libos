@@ -52,13 +52,15 @@
 #define   MAS1_IPROT_SHIFT   30
 #define   MAS1_TID_MASK      0x00FF0000
 #define   MAS1_TID_SHIFT     16
+#define   MAS1_IND           0x00002000
+#define   MAS1_IND_SHIFT     13
 #define   MAS1_TS            0x00001000
 #define   MAS1_TS_SHIFT      12
 #define   MAS1_TSIZE_MASK    0x00000F80
 #define   MAS1_TSIZE_SHIFT   7
 #define   MAS1_GETTID(mas1)  (((mas1) & MAS1_TID_MASK) >> MAS1_TID_SHIFT)
 #define   MAS1_GETTSIZE(mas1)(((mas1) & MAS1_TSIZE_MASK) >> MAS1_TSIZE_SHIFT)
-#define   MAS1_RESERVED      0x0000e07f
+#define   MAS1_RESERVED      0x0000C07f
 
 #define SPR_MAS2         626  // MMU Assist Register 2
 #define   MAS2_EPN           (~0xfffUL)
@@ -91,6 +93,9 @@
 #define   MAS3_SR            0x00000001
 #define   MAS3_RESERVED      0x00000c00
 #define   MAS3_FLAGS         0x0000003f
+#define   MAS3_SPSIZE_MASK   0x0000003e
+#define   MAS3_SPSIZE_SHIFT  1
+#define   MAS3_GETSPSIZE(mas3) (((mas3) & MAS3_SPSIZE_MASK) >> MAS3_SPSIZE_SHIFT)
 
 #define SPR_MAS4         628  // MMU Assist Register 4
 #define   MAS4_TLBSELD1      0x10000000
@@ -113,6 +118,8 @@
 #define   MAS6_SPID_MASK     0x00FF0000
 #define   MAS6_SPID_SHIFT    16
 #define   MAS6_SAS           0x00000001
+#define   MAS6_SIND          0x00000002
+#define   MAS6_SIND_SHIFT    1
 
 #define SPR_MAS7         944  // MMU Assist Register 7
 #define   MAS7_RPN           0x0000000f
@@ -171,6 +178,30 @@
 #define TLBIVAX_TLB1     0x008
 #define TLBIVAX_TLB_NUM_SHIFT 3
 
+/* page table entry */
+#define HPTE_ARPN       (~0xffffffULL)
+#define HPTE_ARPN_SHIFT 24
+#define HPTE_WIMGE_W    0x00800000
+#define HPTE_WIMGE_I    0x00400000
+#define HPTE_WIMGE_M    0x00200000
+#define HPTE_WIMGE_G    0x00100000
+#define HPTE_WIMGE_E    0x00080000
+#define HPTE_R          0x00040000
+#define HPTE_U0         0x00020000
+#define HPTE_U1         0x00010000
+#define HPTE_SW0        0x00002000
+#define HPTE_C          0x00001000
+#define HPTE_PS         0x00000f00
+#define HPTE_PS_SHIFT   8
+#define HPTE_BAP_SR     0x00000004
+#define HPTE_BAP_UR     0x00000008
+#define HPTE_BAP_SW     0x00000010
+#define HPTE_BAP_UW     0x00000020
+#define HPTE_BAP_SX     0x00000040
+#define HPTE_BAP_UX     0x00000080
+#define HPTE_BAP_SW1    0x00000002
+#define HPTE_VALID      0x00000001
+
 #if !defined(_ASM)
 
 #include <libos/libos.h>
@@ -187,7 +218,8 @@ typedef struct tlb_entry {
 
 void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
                     register_t size, register_t mas2flags, register_t mas3flags,
-                    unsigned int _tid, unsigned int _ts, register_t mas8);
+                    unsigned int _tid, unsigned int _ts, register_t mas8,
+                    unsigned int indirect);
 void tlb1_clear_entry(unsigned int idx);
 void tlb1_write_entry(unsigned int idx);
 
