@@ -250,7 +250,7 @@ static inline int natural_alignment(unsigned long epn)
 {
 	return epn != 0 ?
 	       max_valid_tsize(pages_to_tsize_lsb(epn)) :
-	       TLB_TSIZE_4G;
+	       max_valid_tsize(TLB_TSIZE_1T);
 }
 
 static inline unsigned long tsize_to_pages(unsigned int tsize)
