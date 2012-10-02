@@ -1,0 +1,5 @@
+libos is a library that can be used to create bare metal applications and is
+part of Embedded Hypervisor.
+
+For more details see the README in Hypervisor's directory.
+
