@@ -312,12 +312,50 @@
 #define SPR_GIVOR14      445  // Guest ITLB Error
 #define SPR_GIVPR        447  // Guest IVPR
 
-#define SPR_L1CFG0       515
-#define SPR_L1CFG1       516
+#define SPR_L1CFG0       515 // L1 Cache Configuration Register 0
+#define   L1CFG0_CARCH     0xc0000000 // Cache architecture
+#define   L1CFG0_CARCH_SHIFT   30
+#define   L1CFG0_CWPA      0x20000000 // Cache way partitioning available
+#define   L1CFG0_CFAHA     0x10000000 // Cache flush all by hardware available
+#define   L1CFG0_CFISWA    0x08000000 // Direct cache flush available
+#define   L1CFG0_CBSIZE    0x01800000 // Cache block size
+#define   L1CFG0_CBSIZE_SHIFT  23
+#define   L1CFG0_CREPL     0x00600000 // Cache replacement policy
+#define   L1CFG0_CREPL_SHIFT   21
+#define   L1CFG0_CLA       0x00100000 // Cache locking available
+#define   L1CFG0_CPA       0x00080000 // Cache parity available
+#define   L1CFG0_CNWAY     0x0007f800 // Cache number of ways
+#define   L1CFG0_CNWAY_SHIFT   11
+#define   L1CFG0_CSIZE     0x000007ff // Cache size
+
+#define SPR_L1CFG1       516 // L1 Cache Configuration Register 1
+#define   L1CFG0_ICFISWA   0x08000000 // Direct cache flush available
+#define   L1CFG0_ICBSIZE   0x01800000 // Instruction cache block size
+#define   L1CFG0_ICBSIZE_SHIFT 23
+#define   L1CFG0_ICREPL    0x00600000 // Instruction cache replacement policy
+#define   L1CFG0_ICREPL_SHIFT  21
+#define   L1CFG0_ICLA      0x00100000 // Instruction cache locking available
+#define   L1CFG0_ICPA      0x00080000 // Instruction cache parity available
+#define   L1CFG0_ICNWAY    0x0007f800 // Instruction cache number of ways
+#define   L1CFG0_ICNWAY_SHIFT  11
+#define   L1CFG0_ICSIZE    0x000007ff // Instruction cache size
 
 #define SPR_NPIDR        517 // Nexus Processor ID Register
 
 #define SPR_L2CFG0       519 // L2 Cache Configuration Register 0
+#define   L2CFG0_CTEHA     0x60000000 // L2 cache tags error handling available
+#define   L2CFG0_CTEHA_SHIFT   29
+#define   L2CFG0_CDEHA     0x18000000 // L2 cache data error handling available
+#define   L2CFG0_CDEHA_SHIFT   27
+#define   L2CFG0_CIDPA     0x04000000 // Cache instruction and data partitioning available
+#define   L2CFG0_CBSIZE    0x03800000 // Cache line size
+#define   L2CFG0_CBSIZE_SHIFT  23
+#define   L2CFG0_CREPL     0x00600000 // Cache default replacement policy
+#define   L2CFG0_CREPL_SHIFT   21
+#define   L2CFG0_CLA       0x00100000 // Cache line locking available
+#define   L2CFG0_CNWAY     0x0007c000 // Cache number of ways
+#define   L2CFG0_CNWAY_SHIFT   14
+#define   L2CFG0_CSIZE     0x00003fff // Cache size
 
 #define SPR_ATBL         526  // Alternate Time Base Lower
 #define SPR_ATBU         527  // Alternate Time Base Upper
