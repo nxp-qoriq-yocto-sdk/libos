@@ -104,6 +104,7 @@ _start:
 	LOADIMM	%r1, init_stack_top - 16
 
 	bl	ivor_setup
+	bl	init_cpu_caps
 	bl	libos_client_entry
 
 1:	lis	%r3, 0xffff
