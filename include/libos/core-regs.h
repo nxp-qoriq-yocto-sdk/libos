@@ -304,12 +304,19 @@
 #define SPR_IVOR41       435  // Hypervisor Privelege
 #define SPR_IVOR42       436  // LRAT Error
 
+#define SPR_TENSR        437  // Thread Enable Status Register
+#define SPR_TENS         438  // Thread Enable Set Register
+#define SPR_TENC         439  // Thread Enable Clear Register
+
 #define SPR_GIVOR2       440  // Guest DSI
 #define SPR_GIVOR3       441  // guest ISI
 #define SPR_GIVOR4       442  // Guest External Input
 #define SPR_GIVOR8       443  // Guest System Call
 #define SPR_GIVOR13      444  // Guest DTLB Error
 #define SPR_GIVOR14      445  // Guest ITLB Error
+
+#define SPR_TIR          446  // Thread Identification Register
+
 #define SPR_GIVPR        447  // Guest IVPR
 
 #define SPR_L1CFG0       515 // L1 Cache Configuration Register 0
@@ -587,5 +594,17 @@
 #define   PMGC0_FAC        0x80000000
 #define   PMGC0_PMIE       0x40000000
 #define   PMGC0_FCECE      0x20000000
+
+#define TMR_TMCFG0      16 // Thread Management Configuration Register 0
+#define   TMCFG0_NPRIBITS       0x003f0000 // Bits of thread priority
+#define   TMCFG0_NPRIBITS_SHIFT 16
+#define   TMCFG0_NATHRD         0x00003f00 // Number of active threads
+#define   TMCFG0_NATHRD_SHIFT   8
+#define   TMCFG0_NTHRD          0x0000003f // Number of threads
+
+#define TMR_IMSR0      288 // Initial MSR Register 0
+#define TMR_IMSR1      289 // Initial MSR Register 1
+#define TMR_INIA0      320 // Next Instruction Address Register 0
+#define TMR_INIA1      321 // Next Instruction Address Register 1
 
 #endif
