@@ -120,6 +120,7 @@ secondary_start:
 	li	%r23, fixup_mmu_end - 1f
 	b	fixup_mmu
 
+common_secondary_start:
 #ifndef CONFIG_LIBOS_64BIT
 1:	mr	%r2, %r3
 #else
@@ -137,6 +138,27 @@ secondary_start:
 	mtctr	%r3
 2:	bdnz	2b
 	b	1b
+#endif
+
+#if CONFIG_LIBOS_MAX_HW_THREADS > 1
+	.global hw_thread_start
+hw_thread_start:
+	/* Fixup PIR */
+	mfspr   %r3, SPR_PIR
+	rlwimi  %r3, %r3, 30, 2, 30
+	mtspr   SPR_PIR, %r3
+	/*
+	 * Get the adress of this thread's percpu struct in %r3
+	 * The address is computed like this:
+	 *	%r3 = hw_thread_percpus + pir * sizeof(cpu_t *)
+	 */
+	mulli	%r3, %r3, LONGBYTES
+	LOADIMM %r4, hw_thread_percpus
+	add	%r4, %r4, %r3
+	/* Read the pointer to our cpu_t percpu struct and branch to common init */
+	LOAD	%r3, 0(%r4)
+
+	b common_secondary_start
 #endif
 
 /*
@@ -446,6 +468,16 @@ physbase_phys:
 	.space KSTACK_SIZE
 	.global init_stack_top
 init_stack_top:
+
+#if CONFIG_LIBOS_MAX_HW_THREADS > 1
+	/*
+	 * Reserve space for pointers to the per cpu structs (cpu_t *)
+	 * for hw threads.
+	 */
+	.global hw_thread_percpus
+hw_thread_percpus:
+	.space LONGBYTES * CONFIG_LIBOS_MAX_HW_THREADS * MAX_CORES
+#endif
 
 	.section .bss
 	.global cache_block_size

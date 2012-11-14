@@ -155,6 +155,13 @@ config LIBOS_POWERISA_E_ED
 		This option specifies that the target CPU supports
 		Power ISA category Embedded.Enhanced Debug.
 
+config LIBOS_MAX_HW_THREADS
+	int "Maximum number of hardware threads"
+	help
+		Specify here the maximum number of hardware threads that
+		libos should be able to support.
+	default 2
+
 endmenu
 
 menu "Device Drivers"
