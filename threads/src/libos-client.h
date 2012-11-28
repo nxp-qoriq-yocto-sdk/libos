@@ -25,8 +25,6 @@
 #ifndef LIBOS_CLIENT_H
 #define LIBOS_CLIENT_H
 
-#define MAX_CORES 12
-
 // PHYSBASE must match the starting address in the .lds file
 #define PHYSBASE 0x40000000
 
