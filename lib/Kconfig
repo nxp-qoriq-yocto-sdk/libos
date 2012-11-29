@@ -125,6 +125,12 @@ config LIBOS_MAX_BUILD_LOGLEVEL
 
 menu "Processor Support"
 
+config LIBOS_MAX_CORES
+	int "Maximum number of cores"
+	default 12
+	help
+		Specify here the maximum number of cores that libos should support.
+
 config LIBOS_64BIT
 	bool "64-bit Processor Support"
 	help
