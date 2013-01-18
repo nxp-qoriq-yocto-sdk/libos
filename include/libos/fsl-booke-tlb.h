@@ -42,8 +42,8 @@
 #define   MAS0_ESEL_TLB0MASK 0x00030000
 #define   MAS0_ESEL_MASK     0x0fff0000
 #define   MAS0_ESEL_SHIFT    16
-#define   MAS0_HES           0x00008000
-#define   MAS0_HES_SFIFT     14
+#define   MAS0_HES           0x00004000
+#define   MAS0_HES_SHIFT     14
 #define   MAS0_NV_MASK       0x00000003
 #define   MAS0_NV_SHIFT      0
 #define   MAS0_RESERVED      0xe000b000
