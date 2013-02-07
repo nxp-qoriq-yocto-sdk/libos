@@ -28,6 +28,7 @@
 #include <libos/percpu.h>
 #include <libos/io.h>
 #include <libos/printlog.h>
+#include <libos/cache.h>
 
 extern int secondary_start;
 
