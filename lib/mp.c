@@ -41,6 +41,15 @@ int start_secondary_spin_table(struct boot_spin_table *table, int num,
 	         "table %p addr %x pir %x entry %llx\n",
 	         table, table->addr_lo, table->pir, entry);
 
+	/*
+	 * To keep compatibility with older boot programs which may use
+	 * caching inhibited memory we must flush the cache before accessing
+	 * the spin table to invalidate staled data and after accessing the
+	 * spin table in order to push the changes to memory
+	 */
+	dcache_range_flush(table, sizeof(struct boot_spin_table));
+
+
 #ifdef CONFIG_LIBOS_64BIT
 	/*
 	 * NOTE:
@@ -59,6 +68,8 @@ int start_secondary_spin_table(struct boot_spin_table *table, int num,
 
 	out32((uint32_t *)&table->addr_hi, entry >> 32);
 	out32((uint32_t *)&table->addr_lo, (uint32_t)entry);
+
+	dcache_range_flush(table, sizeof(struct boot_spin_table));
 
 	return 0;
 }
