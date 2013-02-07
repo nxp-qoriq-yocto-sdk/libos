@@ -85,8 +85,6 @@ struct boot_spin_table {
 	uint32_t r3_lo;
 	uint32_t reserved;
 	uint32_t pir;
-	uint32_t r6_hi;
-	uint32_t r6_lo;
 };
 
 typedef void (*entry_t)(void);
