@@ -31,6 +31,8 @@
 
 #include <stdint.h>
 
+#define MAX_CACHE_LINE_SIZE  64
+
 int dcache_range_flush(void *ptr, size_t len);
 int icache_range_sync(void *ptr, size_t len);
 

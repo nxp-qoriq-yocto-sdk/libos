@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <libos/libos.h>
 #include <libos/fsl-booke-tlb.h>
+#include <libos/cache.h>
 #endif
 
 #define CPUSAVE_LEN 2
@@ -85,7 +86,7 @@ struct boot_spin_table {
 	uint32_t r3_lo;
 	uint32_t reserved;
 	uint32_t pir;
-};
+} __attribute__((aligned(MAX_CACHE_LINE_SIZE)));
 
 typedef void (*entry_t)(void);
 int start_secondary_spin_table(struct boot_spin_table *table, int num,
