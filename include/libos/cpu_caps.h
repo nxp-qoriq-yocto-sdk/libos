@@ -41,6 +41,10 @@
 #define CPU_FTR_TLB1_IND	(1 << 4)
 /// LRAT support
 #define CPU_FTR_LRAT		(1 << 5)
+/// Altivec support
+#define CPU_FTR_ALTIVEC     (1 << 6)
+
+#if !defined(_ASM)
 
 /// Structure containing cpu capabilities
 typedef struct {
@@ -93,4 +97,5 @@ static inline int cpu_has_ftr(unsigned int cpu_ftr)
 	return cpu_ftrs & cpu_ftr;
 }
 
+#endif
 #endif

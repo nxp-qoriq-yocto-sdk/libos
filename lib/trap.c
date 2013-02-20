@@ -52,6 +52,8 @@ static const struct powerpc_exception powerpc_exceptions[] = {
 	{ EXC_ITLB, "instruction tlb miss" },
 	{ EXC_DEBUG, "debug" },
 	{ EXC_PERFMON, "performance monitoring" },
+	{ EXC_ALTIVECUNAVAIL, "altivec unavailable" },
+	{ EXC_ALTIVECASSIST, "altivec assist" },
 	{ EXC_DOORBELL, "doorbell"},
 	{ EXC_DOORBELLC, "doorbell critical"},
 #ifdef HYPERVISOR

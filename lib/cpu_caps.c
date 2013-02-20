@@ -50,7 +50,7 @@ static struct {
 		0x80400000,
 		0xffff0000,
 		CPU_FTR_MMUV2 | CPU_FTR_THREADS | CPU_FTR_TLB0_HES |
-			CPU_FTR_TLB1_IND | CPU_FTR_LRAT
+			CPU_FTR_TLB1_IND | CPU_FTR_LRAT | CPU_FTR_ALTIVEC
 	},
 	{	/* Default generic core */
 		0,

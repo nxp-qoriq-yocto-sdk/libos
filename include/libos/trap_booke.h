@@ -46,6 +46,8 @@
 #define EXC_DTLB       13   /* data tlb error */
 #define EXC_ITLB       14   /* instruction tlb error */
 #define EXC_DEBUG      15   /* debug */
+#define EXC_ALTIVECUNAVAIL 32  /* altivec unvailable */
+#define EXC_ALTIVECASSIST  33  /* altivec assist */
 #define EXC_PERFMON    35   /* performance monitor */
 #define EXC_DOORBELL   36   /* doorbell */
 #define EXC_DOORBELLC  37   /* doorbell critical */
@@ -104,6 +106,12 @@
 #endif
 #ifndef EXC_DEBUG_HANDLER
 #define EXC_DEBUG_HANDLER unknown_exception
+#endif
+#ifndef EXC_ALTIVECUNAVAIL_HANDLER
+#define EXC_ALTIVECUNAVAIL_HANDLER unknown_exception
+#endif
+#ifndef EXC_ALTIVECASSIST_HANDLER
+#define EXC_ALTIVECASSIST_HANDLER  unknown_exception
 #endif
 #ifndef EXC_PERFMON_HANDLER
 #define EXC_PERFMON_HANDLER unknown_exception

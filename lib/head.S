@@ -27,6 +27,7 @@
 #include <libos/core-regs.h>
 #include <libos/fsl-booke-tlb.h>
 #include <libos/asm-macros.S>
+#include <libos/cpu_caps.h>
 
 #ifndef CONFIG_LIBOS_64BIT
 /* 32-bit */
@@ -103,8 +104,8 @@ _start:
 
 	LOADIMM	%r1, init_stack_top - 16
 
-	bl	ivor_setup
 	bl	init_cpu_caps
+	bl	ivor_setup
 	bl	libos_client_entry
 
 1:	lis	%r3, 0xffff
@@ -412,7 +413,17 @@ ivor_setup:
 	mtspr	SPR_IVOR14, %r21
 	li	%r21, int_debug@l
 	mtspr	SPR_IVOR15, %r21
-	li	%r21, int_perf_mon@l
+
+	LOADIMM %r23, cpu_ftrs
+	lwz %r23, 0(%r23)
+	andi. %r21, %r23, CPU_FTR_ALTIVEC
+	beq 1f
+	li	%r21, int_altivec_unavail@l
+	mtspr	SPR_IVOR32, %r21
+	li	%r21, int_altivec_assist@l
+	mtspr	SPR_IVOR33, %r21
+
+1:	li	%r21, int_perf_mon@l
 	mtspr	SPR_IVOR35, %r21
 #ifdef CONFIG_LIBOS_POWERISA_E_PC
 	li	%r21, int_doorbell@l

@@ -404,6 +404,8 @@ interrupt_vector_base:
 #else
 	critexception EXC_DEBUG int_debug EXC_DEBUG_HANDLER
 #endif
+	baseexception EXC_ALTIVECUNAVAIL int_altivec_unavail EXC_ALTIVECUNAVAIL_HANDLER 0
+	baseexception EXC_ALTIVECASSIST int_altivec_assist EXC_ALTIVECASSIST_HANDLER 0
 	baseexception EXC_PERFMON int_perf_mon EXC_PERFMON_HANDLER 0
 	baseexception EXC_DOORBELL int_doorbell EXC_DOORBELL_HANDLER 0
 	critexception EXC_DOORBELLC int_doorbell_critical EXC_DOORBELLC_HANDLER
