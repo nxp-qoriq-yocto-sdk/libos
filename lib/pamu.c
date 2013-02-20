@@ -521,7 +521,7 @@ int32_t pamu_reconfig_subwin(uint32_t liodn,  uint32_t subwin, unsigned long rpn
 
 paace_t *pamu_get_ppaace(uint32_t liodn)
 {
-	if (!ppaact) {
+	if (!ppaact || liodn >= PAACE_NUMBER_ENTRIES) {
 		printlog(LOGTYPE_PAMU, LOGLEVEL_ERROR,
 			 "%s: PPAACT doesn't exist\n", __func__);
 		return NULL;

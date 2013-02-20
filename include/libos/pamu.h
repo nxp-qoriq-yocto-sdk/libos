@@ -260,7 +260,7 @@ typedef struct pfa1_t {
 #define PAACE_TCEF_FORMAT0_8B   0x00
 #define PAACE_TCEF_FORMAT1_RSVD 0x01
 
-#define PAACE_NUMBER_ENTRIES    0xFF
+#define PAACE_NUMBER_ENTRIES    0x500
 /*
  * SPAACT table size assumption : 8 devices * 8 partitions * 256 subwindows * 2
  */
