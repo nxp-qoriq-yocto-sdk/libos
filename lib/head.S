@@ -441,11 +441,8 @@ ivor_setup:
 	li	%r21, int_ehpriv@l
 	mtspr	SPR_IVOR41, %r21
 
-	/* lrat interrupt is supported only on MMU V2 */
-	mfspr	%r21, SPR_MMUCFG	/* Check MAVN */
-	andi.	%r21, %r21, MMUCFG_MAVN
-	beq	1f
-
+	andi. %r21, %r23, CPU_FTR_LRAT
+	beq 1f
 	li	%r21, int_lrat_error@l
 	mtspr	SPR_IVOR42, %r21
 1:
