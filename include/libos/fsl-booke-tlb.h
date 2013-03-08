@@ -229,12 +229,20 @@ extern const uint32_t valid_tsize_mask;
 
 static inline unsigned int pages_to_tsize_msb(unsigned long epn)
 {
-	return epn != 0 ? ilog2(epn) + 2 : 0;
+	int tsize;
+
+	tsize = epn != 0 ? ilog2(epn) + 2 : 0;
+
+	return tsize > 31 ? 31 : tsize;
 }
 
 static inline unsigned int pages_to_tsize_lsb(unsigned long epn)
 {
-	return epn != 0 ? count_lsb_zeroes(epn) + 2 : 0;
+	int tsize;
+
+	tsize = epn != 0 ? count_lsb_zeroes(epn) + 2 : 0;
+
+	return tsize > 31 ? 31 : tsize;
 }
 
 // Returns a maximum *valid* TSIZE, equal or smaller than the
