@@ -77,7 +77,7 @@ static inline unsigned get_hw_thread_id(void)
 static inline void start_hw_thread(unsigned int tid, uint32_t msr, cpu_t *cpu)
 {
 	void hw_thread_start(void);
-	extern cpu_t *hw_thread_percpus[CONFIG_LIBOS_MAX_CORES * CONFIG_LIBOS_MAX_HW_THREADS];
+	extern cpu_t *hw_thread_percpus[CONFIG_LIBOS_MAX_CPUS];
 
 	assert(tid != get_hw_thread_id());
 	assert(tid < cpu_caps.threads_per_core);

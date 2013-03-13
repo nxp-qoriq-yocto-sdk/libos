@@ -484,7 +484,7 @@ init_stack_top:
 	 */
 	.global hw_thread_percpus
 hw_thread_percpus:
-	.space LONGBYTES * CONFIG_LIBOS_MAX_HW_THREADS * CONFIG_LIBOS_MAX_CORES
+	.space LONGBYTES * CONFIG_LIBOS_MAX_CPUS
 #endif
 
 	.section .bss

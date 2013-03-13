@@ -45,8 +45,8 @@ cpu_t cpu0 = {
 	.client = 0,
 };
 
-cpu_t secondary_cpus[CONFIG_LIBOS_MAX_CORES * CONFIG_LIBOS_MAX_HW_THREADS - 1];
-static uint8_t secondary_stacks[CONFIG_LIBOS_MAX_CORES * CONFIG_LIBOS_MAX_HW_THREADS - 1][KSTACK_SIZE];
+cpu_t secondary_cpus[CONFIG_LIBOS_MAX_CPUS - 1];
+static uint8_t secondary_stacks[CONFIG_LIBOS_MAX_CPUS - 1][KSTACK_SIZE];
 
 static unsigned long devtree_ptr;
 void *fdt;

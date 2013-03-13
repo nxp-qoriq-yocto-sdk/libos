@@ -125,11 +125,13 @@ config LIBOS_MAX_BUILD_LOGLEVEL
 
 menu "Processor Support"
 
-config LIBOS_MAX_CORES
-	int "Maximum number of cores"
-	default 12
+config LIBOS_MAX_CPUS
+	int "Maximum number of supported CPUs"
+	default 24
 	help
-		Specify here the maximum number of cores that libos should support.
+		Specify here the maximum number of cpus that libos should support.
+		Note that hardware threads are regarded as CPUs so, for platforms
+		that support hardware threads, this value must include them.
 
 config LIBOS_64BIT
 	bool "64-bit Processor Support"
