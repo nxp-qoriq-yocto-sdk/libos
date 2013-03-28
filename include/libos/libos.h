@@ -115,9 +115,14 @@ typedef struct device {
 	struct chardev *chardev;
 } device_t;
 
-typedef struct driver {
+typedef struct dev_compat {
 	const char *compatible;
-	int (*probe)(struct driver *driver, device_t *dev);
+	void *data;
+} dev_compat_t;
+
+typedef struct driver {
+	const dev_compat_t *compatibles;
+	int (*probe)(device_t *dev, const dev_compat_t *compat_id);
 } driver_t;
 
 #define __driver __attribute__((section(".libos.drivers"))) \
@@ -127,6 +132,9 @@ int libos_bind_driver(device_t *dev, const char *compat_strlist, size_t compat_l
 
 const char *strlist_iterate(const char *strlist, size_t len,
                             size_t *pos);
+
+const dev_compat_t *match_compat(const char *strlist, size_t len,
+                                 const dev_compat_t *compat_list);
 
 extern const int cache_block_size;
 

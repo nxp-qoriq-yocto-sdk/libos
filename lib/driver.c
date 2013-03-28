@@ -33,32 +33,44 @@ extern driver_t driver_begin, driver_end;
 
 int libos_bind_driver(device_t *dev, const char *compat_strlist, size_t compat_len)
 {
-	const char *end_compat = compat_strlist + compat_len;
+	const dev_compat_t *compat_id;
+	int ret;
 
-	/* Search for matches from the most-specific name to the least-specific name */
-	while (compat_strlist < end_compat) {
-		for (driver_t *drv = &driver_begin; drv < &driver_end; drv++) {
-			int ret;
+	for (driver_t *drv = &driver_begin; drv < &driver_end; drv++) {
+		compat_id = match_compat(compat_strlist, compat_len, drv->compatibles);
+		if (!compat_id)
+			continue;
 
-			if (strcmp(compat_strlist, drv->compatible))
-				continue;
+		dev->driver = drv;
 
-			ret = drv->probe(drv, dev);
-			if (ret == ERR_UNHANDLED)
-				continue;
+		ret = drv->probe(dev, compat_id);
 
-			return ret;
-		}
+		if (ret)
+			dev->driver = NULL;
 
-		compat_strlist = memchr(compat_strlist, 0, end_compat - compat_strlist);
+		if (ret ==  ERR_UNHANDLED)
+			continue;
 
-		if (!compat_strlist)
-			break;
+		return ret;
 
-		compat_strlist++;
 	}
 
 	return ERR_UNHANDLED;
+}
+
+const dev_compat_t *match_compat(const char *strlist, size_t len,
+                                 const dev_compat_t *compat_list)
+{
+	size_t pos = 0;
+	const char *str;
+
+	while ((str = strlist_iterate(strlist, len, &pos))) {
+		for (int i = 0; compat_list[i].compatible; i++)
+			if (!strcmp(str, compat_list[i].compatible))
+				return &compat_list[i];
+	}
+
+	return NULL;
 }
 
 const char *strlist_iterate(const char *strlist, size_t len,
