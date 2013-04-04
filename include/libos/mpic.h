@@ -111,7 +111,7 @@ typedef struct error_interrupt {
 } error_interrupt_t;
 
 #define MPIC_NUM_EXT_SRCS	12
-#define MPIC_NUM_INT_SRCS	128
+#define MPIC_NUM_INT_SRCS	512
 #define MPIC_NUM_MSG_SRCS	8
 #define MPIC_NUM_MSI_SRCS	24
 #define MPIC_NUM_ERR_SRCS	32 /* corresponds to number of bits in EISR0 */
