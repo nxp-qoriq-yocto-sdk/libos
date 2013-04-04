@@ -532,7 +532,9 @@
 #define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
 #define   MMUCSR_L2TLB1_FI 0x00000002 // Invalidate TLB1
 
-#define SPR_BUCSR        1013
+#define SPR_BUCSR        1013 // Branch Unit Control and Status Register
+#define   BUCSR_STAC_EN    0x01000000 // Segment Target Address Cache
+#define   BUCSR_LS_EN      0x00400000 // Link Stack
 #define   BUCSR_BBFI       0x00000200 // Branch Buffer Flash Invalidate
 #define   BUCSR_BPEN       0x00000001 // Branch Prediction Enable
 

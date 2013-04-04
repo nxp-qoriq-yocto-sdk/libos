@@ -144,6 +144,9 @@ common_secondary_start:
 #if CONFIG_LIBOS_MAX_HW_THREADS > 1
 	.global hw_thread_start
 hw_thread_start:
+	/* Enable branch prediction on secondary threads */
+	LOADIMM %r3, (BUCSR_STAC_EN | BUCSR_LS_EN | BUCSR_BBFI | BUCSR_BPEN)
+	mtspr   SPR_BUCSR, %r3
 	/* Fixup PIR */
 	mfspr   %r3, SPR_PIR
 	rlwimi  %r3, %r3, 30, 2, 30
