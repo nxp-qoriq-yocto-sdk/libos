@@ -142,7 +142,6 @@ common_secondary_start:
 	mtctr	%r3
 2:	bdnz	2b
 	b	1b
-#endif
 
 #if CONFIG_LIBOS_MAX_HW_THREADS > 1
 	.global hw_thread_start
@@ -166,6 +165,7 @@ hw_thread_start:
 	LOAD	%r3, 0(%r4)
 
 	b common_secondary_start
+#endif
 #endif
 
 /*
