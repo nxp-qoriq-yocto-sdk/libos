@@ -476,7 +476,7 @@ static void tlb1_init(void)
 	if (uart_virt)
 		tlb1_set_entry(UART_TLB_ENTRY, (uintptr_t)uart_virt,
 		               uart_addr, TLB_TSIZE_4K, TLB_MAS2_IO,
-		               TLB_MAS3_KDATA, 0, 0, 0);
+		               TLB_MAS3_KDATA, 0, 0, 0, 0);
 
 	cpu->console_ok = 1;
 }
@@ -816,7 +816,7 @@ void init(unsigned long devtree_ptr)
 	 */
 	tlb1_set_entry(DEVTREE_TLB_ENTRY, dtmap_base,
 	               devtree_ptr & ~(dtmap_size - 1), dtmap_tsize,
-	               TLB_MAS2_MEM, TLB_MAS3_KDATA, 0, 0, 0);
+	               TLB_MAS2_MEM, TLB_MAS3_KDATA, 0, 0, 0, 0);
 
 	fdt = (void *)(dtmap_base + (devtree_ptr & (dtmap_size - 1)));
 
@@ -869,13 +869,13 @@ void init(unsigned long devtree_ptr)
 	timer_regs = valloc(PAGE_SIZE, PAGE_SIZE);
 
 	tlb1_set_entry(MPIC_TLB_ENTRY, (uintptr_t)mpic_regs, mpic_paddr,
-	               TLB_TSIZE_16K, TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0);
+	               TLB_TSIZE_16K, TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0, 0);
 	tlb1_set_entry(IPI_TLB_ENTRY, (uintptr_t)ipi_regs,
 	               ipi_paddr & ~(PAGE_SIZE - 1), TLB_TSIZE_4K,
-	               TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0);
+	               TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0, 0);
 	tlb1_set_entry(TIMER_TLB_ENTRY, (uintptr_t)timer_regs,
 	               timer_paddr & ~(PAGE_SIZE - 1), TLB_TSIZE_4K,
-	               TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0);
+	               TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0, 0, 0);
 
 	ipi_regs += ipi_paddr & (PAGE_SIZE - 1);
 	timer_regs += timer_paddr & (PAGE_SIZE - 1);
