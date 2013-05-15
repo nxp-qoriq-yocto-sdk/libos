@@ -96,6 +96,51 @@ static inline void start_hw_thread(unsigned int tid, uint32_t msr, cpu_t *cpu)
 	mtspr(SPR_TENS, 1 << tid);
 }
 
+/** Pauses the other threads
+ *
+ * @param[in]  timeout maximum period of time in TB ticks to wait for the
+ *             other threads to stop
+ * @param[in]  lock spinlock to be held while threads are paused
+ * @param[out] saved place to save the interrupt state when taking the lock
+ *
+ * @return 0 for success, or an error code.
+ */
+static inline int pause_other_hw_threads(register_t timeout, uint32_t *lock, register_t *saved)
+{
+	register_t mask;
+
+	if (cpu_caps.threads_per_core > 1) {
+		register_t tb = mfspr(SPR_TBL);
+
+		*saved = spin_lock_intsave(lock);
+		mask = ((1 << cpu_caps.threads_per_core) - 1) & ~(1 << get_hw_thread_id());
+		mtspr(SPR_TENC, mask);
+		while (mfspr(SPR_TENSR) & mask) {
+			if (mfspr(SPR_TBL) - tb > timeout) {
+				spin_unlock_intsave(lock, *saved);
+				return ERR_HARDWARE;
+			}
+		}
+	}
+
+	return 0;
+}
+/** Resumes the other threads
+ *
+ * @param[in]  lock spinlock held while threads were paused
+ * @param[out] saved interrupt state at the time the lock was taken
+ */
+static inline void resume_other_hw_threads(uint32_t *lock, register_t saved)
+{
+	register_t mask;
+
+	if (cpu_caps.threads_per_core > 1) {
+		mask = ((1 << cpu_caps.threads_per_core) - 1) & ~(1 << get_hw_thread_id());
+		mtspr(SPR_TENS, mask);
+		spin_unlock_intsave(lock, saved);
+	}
+}
+
 #else
 
 static inline int get_hw_thread_id(void)
@@ -106,6 +151,15 @@ static inline int get_hw_thread_id(void)
 static inline void start_hw_thread(unsigned int tid, uint32_t msr, cpu_t *cpu)
 {
 	assert(0);
+}
+
+static inline int pause_other_hw_threads(register_t timeout, uint32_t *lock, register_t *saved)
+{
+	return 0;
+}
+
+static inline void resume_other_hw_threads(uint32_t *lock, register_t saved)
+{
 }
 
 #endif
