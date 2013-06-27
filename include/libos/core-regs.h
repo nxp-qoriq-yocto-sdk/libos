@@ -416,13 +416,17 @@
 
 #define SPR_TLB0CFG      688  // TLB 0 Config Register
 #define SPR_TLB1CFG      689  // TLB 1 Config Register
-#define   TLBCFG_ASSOC_MASK  0xff000000 // Associativity of TLB
-#define   TLBCFG_ASSOC_SHIFT 24
-#define   TLBCFG_PT_MASK     0x00040000 // (MMUv2) Page Table
-#define   TLBCFG_IND_MASK    0x00020000 // (MMUv2) Supports indirect entries
-#define   TLBCFG_GTWE_MASK   0x00010000 // (MMUv2) Guest TLB write enabled
-#define   TLBCFG_HES_MASK    0x00002000 // (MMUv2) Harware entry select
-#define   TLBCFG_NENTRY_MASK 0x00000fff // Number of entries in TLB
+#define   TLBCFG_ASSOC_MASK   0xff000000 // Associativity of TLB
+#define   TLBCFG_ASSOC_SHIFT   24
+#define   TLBCFG_MINSIZE_MASK 0x00f00000 // Minimum page size of TLBn
+#define   TLBCFG_MINSIZE_SHIFT 20
+#define   TLBCFG_MAXSIZE_MASK 0x000f0000 // Maximum page size of TLBn
+#define   TLBCFG_MAXSIZE_SHIFT 16
+#define   TLBCFG_PT_MASK      0x00040000 // (MMUv2) Page Table
+#define   TLBCFG_IND_MASK     0x00020000 // (MMUv2) Supports indirect entries
+#define   TLBCFG_GTWE_MASK    0x00010000 // (MMUv2) Guest TLB write enabled
+#define   TLBCFG_HES_MASK     0x00002000 // (MMUv2) Harware entry select
+#define   TLBCFG_NENTRY_MASK  0x00000fff // Number of entries in TLB
 
 #define SPR_CDCSR0       696  // Core Device Control and Status 0
 #define   CDCSR0_SPE       0

@@ -94,7 +94,25 @@ void init_cpu_caps(void)
 
 	if (cpu_has_ftr(CPU_FTR_LRAT))
 		cpu_caps.lrat_nentries = mfspr(SPR_LRATCFG) & LRATCFG_NENTRY_MASK;
-	cpu_caps.valid_tsizes = valid_tsize_mask;
+	if (cpu_has_ftr(CPU_FTR_MMUV2)) {
+		cpu_caps.valid_tsizes = mfspr(SPR_TLB1PS);
+	} else {
+		int min_tsize, max_tsize;
+
+		/*
+		 * On cores with MMUv1 that don't have TLB1PS and support only
+		 * power of 4KB TLB entry sizes, start wth a synthetic mask
+		 * with all the possible TSIZEs and then mask out the unsupported
+		 * ones as per TLB1CFG[MIN_TSIZE] and TLB1CFG[MAX_TSIZE].
+		 */
+		cpu_caps.valid_tsizes = 0x55555555;
+
+		spr = mfspr(SPR_TLB1CFG);
+		min_tsize = ((spr & TLBCFG_MINSIZE_MASK) >> TLBCFG_MINSIZE_SHIFT) * 2;
+		max_tsize = ((spr & TLBCFG_MAXSIZE_MASK) >> TLBCFG_MAXSIZE_SHIFT) * 2;
+		cpu_caps.valid_tsizes &= ~((1 << min_tsize) - 1);
+		cpu_caps.valid_tsizes &= (2 << max_tsize) - 1;
+	}
 	spr = mfspr(SPR_TLB0CFG);
 	cpu_caps.tlb0_nentries = spr & TLBCFG_NENTRY_MASK;
 	cpu_caps.tlb0_assoc = (spr & TLBCFG_ASSOC_MASK) >> TLBCFG_ASSOC_SHIFT;

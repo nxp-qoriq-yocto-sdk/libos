@@ -208,6 +208,7 @@
 
 #include <libos/libos.h>
 #include <libos/bitops.h>
+#include <libos/cpu_caps.h>
 
 typedef struct tlb_entry {
 	register_t mas0;
@@ -224,8 +225,6 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
                     unsigned int indirect);
 void tlb1_clear_entry(unsigned int idx);
 void tlb1_write_entry(unsigned int idx);
-
-extern const uint32_t valid_tsize_mask;
 
 static inline unsigned int pages_to_tsize_msb(unsigned long epn)
 {
@@ -253,7 +252,7 @@ static inline int max_valid_tsize(unsigned int tsize)
 {
 	assert(tsize >= TLB_TSIZE_4K && tsize <= 31);
 
-	return tsize - count_msb_zeroes_32(valid_tsize_mask << (31 - tsize));
+	return tsize - count_msb_zeroes_32(cpu_caps.valid_tsizes << (31 - tsize));
 }
 
 static inline int natural_alignment(unsigned long epn)
