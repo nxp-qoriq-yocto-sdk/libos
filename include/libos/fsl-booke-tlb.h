@@ -32,7 +32,7 @@
 #define   MAS0_TLBSEL(x)     ((x << 28) & 0x10000000)
 #define   MAS0_ESEL(x)       ((x << 16) & 0x003F0000)
 #define   MAS0_GET_TLBSEL(x) ((x >> 28) & 3)
-#define   MAS0_GET_TLB0ESEL(x)((x >> 16) & 3)
+#define   MAS0_GET_TLB0ESEL(x)((x >> 16) & 63)
 #define   MAS0_GET_TLB1ESEL(x)((x >> 16) & 63)
 #define   MAS0_TLBSEL1       0x10000000
 #define   MAS0_TLBSEL0       0x00000000
