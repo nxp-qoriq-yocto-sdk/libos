@@ -82,6 +82,10 @@ static inline void start_hw_thread(unsigned int tid, uint32_t msr, cpu_t *cpu)
 	assert(tid != get_hw_thread_id());
 	assert(tid < cpu_caps.threads_per_core);
 
+	mtspr(SPR_TENC, 1 << tid);
+	while (mfspr(SPR_TENSR) & (1 << tid))
+		;
+
 	if (tid == 1) {
 		mttmr(TMR_IMSR1, msr);
 		mttmr(TMR_INIA1, (register_t)&hw_thread_start);
@@ -93,6 +97,15 @@ static inline void start_hw_thread(unsigned int tid, uint32_t msr, cpu_t *cpu)
 	} else {
 		assert(0);
 	}
+	/*
+	 * Ensure that the mtspr() below doesn't get scheduled
+	 * before the hw_thread_percpus[] update above finishes.
+	 * Otherwise the thread that we're trying to start will
+	 * crash when it tries to access its per-cpu from the
+	 * hw_thread_percpus[] array.
+	 * (this race was seen on a e6500rev2 core)
+	 */
+	sync();
 	mtspr(SPR_TENS, 1 << tid);
 }
 
