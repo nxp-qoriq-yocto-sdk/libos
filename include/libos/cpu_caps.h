@@ -43,6 +43,8 @@
 #define CPU_FTR_LRAT		(1 << 5)
 /// Altivec support
 #define CPU_FTR_ALTIVEC     (1 << 6)
+/// core specific power management features (PWRMGTCR0 SPR)
+#define CPU_FTR_PWRMGTCR0	(1 << 7)
 
 #if !defined(_ASM)
 

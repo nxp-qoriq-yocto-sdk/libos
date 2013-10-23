@@ -46,11 +46,18 @@ static struct {
 		0xffff0000,
 		CPU_FTR_L2_CORE_LOCAL
 	},
-	{	/* e6500 */
-		0x80400000,
-		0xffff0000,
+	{	/* e6500 rev1 */
+		0x80400010,
+		0xffffffff,
 		CPU_FTR_MMUV2 | CPU_FTR_THREADS | CPU_FTR_TLB0_HES |
 			CPU_FTR_TLB1_IND | CPU_FTR_LRAT | CPU_FTR_ALTIVEC
+	},
+	{	/* e6500 rev2 */
+		0x80400020,
+		0xffffffff,
+		CPU_FTR_MMUV2 | CPU_FTR_THREADS | CPU_FTR_TLB0_HES |
+			CPU_FTR_TLB1_IND | CPU_FTR_LRAT | CPU_FTR_ALTIVEC |
+			CPU_FTR_PWRMGTCR0
 	},
 	{	/* Default generic core */
 		0,

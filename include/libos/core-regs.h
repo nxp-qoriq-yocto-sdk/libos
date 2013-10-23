@@ -532,6 +532,14 @@
 
 #define SPR_L2CSR1       1018 // L2 Cache Control and Status Register 1
 
+#define SPR_PWRMGTCR0    1019 // Power management control register 0
+#define   PWRMGTCR0_AV_IDLE_PD_EN  0x00400000 // AltiVec core device idle power down enable
+#define   PWRMGTCR0_AV_IDLE_CNT_P  0x003f0000 // AltiVec core device idle count period
+#define   PWRMGTCR0_AV_IDLE_CNT_P_SHIFT  16
+#define   PWRMGTCR0_PW20_WAIT      0x00004000 // PW20 state enable bit
+#define   PWRMGTCR0_PW20_ENT_P     0x00003f00 // PW20 enter count period
+#define   PWRMGTCR0_PW20_ENT_P_SHIFT     8
+
 #define SPR_MMUCSR0      1012 // MMU Control and Status Register 0
 #define   MMUCSR_L2TLB0_FI 0x00000004 // Invalidate TLB0
 #define   MMUCSR_L2TLB1_FI 0x00000002 // Invalidate TLB1
