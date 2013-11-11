@@ -54,7 +54,7 @@ static struct {
 	},
 	{	/* e6500 rev2 */
 		0x80400020,
-		0xffffffff,
+		0xffff00ff,
 		CPU_FTR_MMUV2 | CPU_FTR_THREADS | CPU_FTR_TLB0_HES |
 			CPU_FTR_TLB1_IND | CPU_FTR_LRAT | CPU_FTR_ALTIVEC |
 			CPU_FTR_PWRMGTCR0
