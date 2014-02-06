@@ -182,6 +182,20 @@ int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 
 		pamu_regs = (pamu_mmap_regs_t *) (pamu_offset + PAMU_MMAP_REGS_BASE);
 
+		/* Workaround for erratum A-005982
+		 *
+		 * Writing either the primary PAACT base address high or low
+		 * registers (PAMUx_PPBAH and PAMUx_PPBAL) or the secondary
+		 * PAACT base address high or low registers (PAMUx_SPBAH and
+		 * PAMUx_SPBAL) will not invalidate the contents of the primary
+		 * PAACT cache as intended if the OMT cache is disabled
+		 * (PAMUx_PC[OCE] = 0).
+		 *
+		 * To workaround, do a dummy OMT cache enable just before
+		 * setting the PPAACT & SPAACT base registers.
+		 */
+		out32((uint32_t *)(pamu_offset + PAMU_PC), PAMU_PC_OCE);
+
 		/* set up pointers to corenet control blocks */
 
 		phys = virt_to_phys(ppaact);
