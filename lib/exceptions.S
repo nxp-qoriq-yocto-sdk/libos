@@ -144,7 +144,7 @@
 	andis.	%r0, %r10, MSR_GS@h
 	beq-	2f
 #ifdef CONFIG_LIBOS_STATISTICS
-	mfspr	%r3, SPR_TBL
+	GET_TBL %r3, 99
 	li	%r4, 0
 	stw	%r3, FRAME_INITIAL_CYCLES(%r1)
 	stw	%r4, FRAME_CURRENT_EVENT(%r1)

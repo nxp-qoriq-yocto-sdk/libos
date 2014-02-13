@@ -95,6 +95,26 @@ static inline phys_addr_t virt_to_phys(void *ptr)
 }
 #endif
 
+/* Returns the current timebase taking care of erratum A-006958.
+ * The erratum states that a 64-bit read of TBL may appear to
+ * count backwards if the timebase increment causes a carry out
+ * from TBL into TBU.
+ *
+ * The workaround consists in reading the TB by using the same procedure
+ * as for 32-bit cpus.
+ **/
+static inline uint64_t get_tb(void)
+{
+	register_t tbl, tbu;
+again:
+	tbu = mfspr(SPR_TBU);
+	tbl = mfspr(SPR_TBL);
+	if (tbu != mfspr(SPR_TBU))
+		goto again;
+
+	return ((uint64_t) tbu << 32 | tbl);
+}
+
 typedef struct mem_resource {
 	phys_addr_t start, size;
 	void *virt;

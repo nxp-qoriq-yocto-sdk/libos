@@ -34,3 +34,23 @@
 	ori     \register, \register, (\value)@l
 #endif
 	.endm
+
+/* Reads the current timebase (only the low part for 32-bit)
+ * with workaround for erratum A-006958.
+ * The erratum states that: a 64-bit read of TBL may appear
+ * to count backwards if the timebase increment causes a carry
+ * out from TBL into TBU.
+ *
+ * The workaround consists in looping while the lower half of
+ * timebase is zero. This simple workaround avoids using scratch
+ * registers and overwrites only CR0.
+ **/
+	.macro GET_TBL, register, label
+\label:
+	mfspr   \register, SPR_TBL
+#ifdef CONFIG_LIBOS_64BIT
+	cmpwi   \register, 0
+	beq     \label\()b
+#endif
+	.endm
+

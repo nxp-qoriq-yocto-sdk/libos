@@ -123,13 +123,13 @@ static inline int pause_other_hw_threads(register_t timeout, uint32_t *lock, reg
 	register_t mask;
 
 	if (cpu_caps.threads_per_core > 1) {
-		register_t tb = mfspr(SPR_TBL);
+		uint64_t tb = get_tb();
 
 		*saved = spin_lock_intsave(lock);
 		mask = ((1 << cpu_caps.threads_per_core) - 1) & ~(1 << get_hw_thread_id());
 		mtspr(SPR_TENC, mask);
 		while (mfspr(SPR_TENSR) & mask) {
-			if (mfspr(SPR_TBL) - tb > timeout) {
+			if (get_tb() - tb > timeout) {
 				spin_unlock_intsave(lock, *saved);
 				return ERR_HARDWARE;
 			}
