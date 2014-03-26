@@ -457,8 +457,8 @@ int release_secondary_cores(void)
 
 		tlb1_set_entry(SPINTABLE_TLB_ENTRY, (unsigned long)map,
 			       (*table) & ~(PAGE_SIZE - 1),
-			       TLB_TSIZE_4K, TLB_MAS2_MEM,
-			       TLB_MAS3_KDATA, 0, 0, 0, 0);
+			       TLB_TSIZE_4K, MAS1_IPROT, TLB_MAS2_MEM,
+			       TLB_MAS3_KDATA, 0, 0);
 
 		char *table_va = map;
 
@@ -502,8 +502,8 @@ static void tlb1_init(void)
 {
 	if (uart_virt)
 		tlb1_set_entry(UART_TLB_ENTRY, (uintptr_t)uart_virt,
-		               uart_addr, TLB_TSIZE_4K, TLB_MAS2_IO,
-		               TLB_MAS3_KDATA, 0, 0, 0, 0);
+		               uart_addr, TLB_TSIZE_4K, MAS1_IPROT,
+		               TLB_MAS2_IO, TLB_MAS3_KDATA, 0, 0);
 
 	cpu->console_ok = 1;
 }
@@ -556,7 +556,7 @@ void *map_fdt(void)
 	 */
 	tlb1_set_entry(DEVTREE_TLB_ENTRY, dtmap_base,
 	               devtree_ptr & ~(dtmap_size - 1), dtmap_tsize,
-	               TLB_MAS2_MEM, TLB_MAS3_KDATA, 0, 0, 0, 0);
+	               MAS1_IPROT, TLB_MAS2_MEM, TLB_MAS3_KDATA, 0, 0);
 
 	return (void *)(dtmap_base + (devtree_ptr & (dtmap_size - 1)));
 }

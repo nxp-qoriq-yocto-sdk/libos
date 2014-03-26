@@ -49,19 +49,14 @@
  * Entry TS is set to either 0 or MAS1_TS based on provided _ts.
  */
 void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
-                    register_t tsize, register_t mas2flags, register_t mas3flags,
-                    unsigned int _tid, unsigned int _ts, register_t mas8,
-                    unsigned int indirect)
+                    register_t tsize, register_t mas1flags, register_t mas2flags,
+                    register_t mas3flags, unsigned int tid, register_t mas8)
 {
-	register_t ts, tid;
-
 	assert((1 << tsize) & cpu_caps.valid_tsizes);
 
-	tid = (_tid <<  MAS1_TID_SHIFT) & MAS1_TID_MASK;
-	ts = (_ts) ? MAS1_TS : 0;
-	cpu->tlb1[idx].mas1 = MAS1_VALID | MAS1_IPROT | ts | tid;
-	cpu->tlb1[idx].mas1 |= ((tsize << MAS1_TSIZE_SHIFT) & MAS1_TSIZE_MASK);
-	cpu->tlb1[idx].mas1 |= (indirect << MAS1_IND_SHIFT) & MAS1_IND;
+	cpu->tlb1[idx].mas1 = mas1flags | MAS1_VALID | tid;
+	cpu->tlb1[idx].mas1 |= (tid <<  MAS1_TID_SHIFT) & MAS1_TID_MASK;
+	cpu->tlb1[idx].mas1 |= (tsize << MAS1_TSIZE_SHIFT) & MAS1_TSIZE_MASK;
 
 	cpu->tlb1[idx].mas2 = (va & MAS2_EPN) | mas2flags;
 

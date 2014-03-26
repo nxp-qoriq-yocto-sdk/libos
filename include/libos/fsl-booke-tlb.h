@@ -220,9 +220,9 @@ typedef struct tlb_entry {
 } tlb_entry_t;
 
 void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
-                    register_t size, register_t mas2flags, register_t mas3flags,
-                    unsigned int _tid, unsigned int _ts, register_t mas8,
-                    unsigned int indirect);
+                    register_t tsize, register_t mas1flags, register_t mas2flags,
+                    register_t mas3flags, unsigned int tid, register_t mas8);
+
 void tlb1_clear_entry(unsigned int idx);
 void tlb1_write_entry(unsigned int idx);
 
