@@ -70,7 +70,7 @@ void init_cpu_caps(void)
 	int i;
 	register_t spr;
 
-	spr = mfspr(SPR_PVR);
+	spr = get_pvr();
 	for (i = 0; pvr_to_ftrs[i].pvr; i++) {
 		if ((spr & pvr_to_ftrs[i].pvr_mask) == pvr_to_ftrs[i].pvr) {
 			cpu_ftrs = pvr_to_ftrs[i].ftrs;

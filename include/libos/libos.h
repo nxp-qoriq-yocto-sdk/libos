@@ -115,6 +115,24 @@ again:
 	return ((uint64_t) tbu << 32 | tbl);
 }
 
+#define SVR_T104x_CPU_FAMILY 	0x85200000
+#define PVR_E5500		0x80241020
+
+/* Reads the PVR with workaround for erratum A-008007 impacting
+ * the t104x processor family.
+ * The issue in the erratum is related to reset and causes PVR
+ * contents to be unreliable. The workaround is to return the
+ * hardcoded PVR if one of the impacted processors is detected
+ * based on SVR.
+ */
+static inline register_t get_pvr(void)
+{
+	if ((mfspr(SPR_SVR) & 0xfff00000) == SVR_T104x_CPU_FAMILY)
+		return PVR_E5500;
+	else
+		return mfspr(SPR_PVR);
+}
+
 typedef struct mem_resource {
 	phys_addr_t start, size;
 	void *virt;
