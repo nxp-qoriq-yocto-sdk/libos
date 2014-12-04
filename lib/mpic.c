@@ -621,6 +621,7 @@ static void error_int_init(mpic_interrupt_t *mirq)
 	for (int i = 0; i < MPIC_NUM_ERR_SRCS; i++) {
 		error_subints[i].dev_err_irq.ops = &error_int_ops;
 		error_subints[i].dev_err_irq.parent = &mirq->irq;
+		error_subints[i].subintnum = i;
 		interrupt_reset(&error_subints[i].dev_err_irq);
 	}
 }
