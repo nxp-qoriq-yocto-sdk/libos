@@ -79,8 +79,30 @@ void init_cpu_caps(void)
 	}
 
 	/* if no pvr matched fallback to default features */
-	if (!pvr_to_ftrs[i].pvr)
+	if (!pvr_to_ftrs[i].pvr) {
 		cpu_ftrs = pvr_to_ftrs[i].ftrs;
+
+		/*
+		 * In case the cpu features table wasn't updated with the PVR
+		 * we're running on we'll end up with the default feature mask.
+		 * This might mean a mismatch between the actual MMUv2 presence
+		 * and its flag not being set in the cpu features mask. This will
+		 * cause weird crashes further in the code, e.g. because TLBxCFG
+		 * is parsed using MMUv1 format instead of MMUv2.
+		 * (Example below, where valid_tsizes mask is calculated)
+		 */
+		if (mfspr(SPR_MMUCFG) & MMUCFG_MAVN) {
+			/*
+			 * Hot fix the cpu features mask so execution has a
+			 * chance to continue and add a big warning
+			 */
+			cpu_ftrs |= CPU_FTR_MMUV2;
+			printlog(LOGTYPE_MISC, LOGLEVEL_CRIT,
+				 "\n\n*CRITICAL* Unknown PVR %lx.\n"
+				 "Check cpu capability table in libos's 'cpu_caps.c'\n\n",
+				 spr);
+		}
+	}
 
 	spr = mfspr(SPR_L1CFG0);
 	cpu_caps.l1_size = (spr & L1CFG0_CSIZE) * 1024;
