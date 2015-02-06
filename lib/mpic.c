@@ -565,7 +565,7 @@ static int error_int_register(interrupt_t *irq, int_handler_t handler,
 	spin_unlock_intsave(&error_int_lock, saved);
 
 	/* if the interrupt is shared, don't unmask repeatedly */
-	if (action->next)
+	if (!action->next)
 		interrupt_unmask(irq);
 
 	return 0;
