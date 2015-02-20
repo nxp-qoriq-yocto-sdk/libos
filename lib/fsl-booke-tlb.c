@@ -35,6 +35,33 @@
 #include <libos/bitops.h>
 #include <libos/printlog.h>
 
+void apply_a008139_workaround(unsigned int entry)
+{
+	if (cpu_caps.threads_per_core > 1) {
+		register_t mas1, old_mas5, old_mas6;
+
+		mtspr(SPR_MAS0, MAS0_ESEL(entry) | MAS0_TLBSEL(1));
+		asm volatile("isync; tlbre; isync" : : : "memory");
+
+		mas1 = mfspr(SPR_MAS1);
+		if (mas1 & MAS1_VALID) {
+			old_mas5 = mfspr(SPR_MAS5);
+			old_mas6 = mfspr(SPR_MAS6);
+			mtspr(SPR_MAS5, mfspr(SPR_MAS8) & (MAS8_GTS | MAS8_TLPID));
+			mtspr(SPR_MAS6, ((mas1 & MAS1_IND) ? MAS6_SIND : 0) |
+					((mas1 & MAS1_TS) ? MAS6_SAS : 0) |
+					(mas1 & MAS1_TID_MASK));
+
+			isync();
+			tlb_inv_addr(mfspr(SPR_MAS2));
+			isync();
+
+			mtspr(SPR_MAS5, old_mas5);
+			mtspr(SPR_MAS6, old_mas6);
+		}
+	}
+}
+
 /*
  * Setup entry in a sw tlb1 table, write entry to TLB1 hardware.
  * This routine is used for low level operations on the TLB1,
@@ -82,6 +109,8 @@ void tlb1_clear_entry(unsigned int idx)
 void tlb1_write_entry(unsigned int idx)
 {
 	register_t mas0;
+
+	apply_a008139_workaround(idx);
 
 	/* Select entry */
 	mas0 = MAS0_TLBSEL(1) | MAS0_ESEL(idx);

@@ -226,6 +226,17 @@ void tlb1_set_entry(unsigned int idx, unsigned long va, phys_addr_t pa,
 void tlb1_clear_entry(unsigned int idx);
 void tlb1_write_entry(unsigned int idx);
 
+/*
+ * Erratum A-008139 workaround
+ *
+ * A duplicate TLB0 entry may be created if a Hardware Tablewalk is
+ * active on one thread and the corresponding TLB1 indirect entry is
+ * replaced by the other thread.
+ * Workaround consists in using tlbilx to invalidate the valid
+ * indirect entry before writing.
+ */
+void apply_a008139_workaround(unsigned int entry);
+
 static inline unsigned int pages_to_tsize_msb(unsigned long epn)
 {
 	int tsize;
