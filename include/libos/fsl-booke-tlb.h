@@ -124,8 +124,8 @@
 #define   MAS6_SIND_SHIFT    1
 
 #define SPR_MAS7         944  // MMU Assist Register 7
-#define   MAS7_RPN           0x0000000f
-#define   MAS7_RESERVED      0xfffffff0
+#define   MAS7_RPN           0x000000ff
+#define   MAS7_RESERVED      0xffffff00
 
 #define SPR_MAS8         341  // MMU Assist Register 8
 #define   MAS8_GTS           0x80000000 /* Guest space */
