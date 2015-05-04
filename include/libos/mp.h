@@ -59,10 +59,13 @@ static inline register_t mftmr(int reg)
  */
 static inline unsigned get_hw_thread_id(void)
 {
+	register_t tir;
+
 	if (!cpu_has_ftr(CPU_FTR_THREADS))
 		return 0;
 
-	return mfspr(SPR_TIR);
+	tir = mfspr(SPR_TIR);
+	return tir < CONFIG_LIBOS_MAX_HW_THREADS ? tir : 0;
 }
 
 /** Start a the specified hardware thread on the core currently running on
