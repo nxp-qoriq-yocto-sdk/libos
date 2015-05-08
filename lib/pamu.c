@@ -172,12 +172,17 @@ int32_t pamu_hw_init(void *pamu_reg_vaddr, size_t reg_space_size,
 	for (pamu_reg_off = 0; pamu_reg_off < pamu_reg_space_size; pamu_reg_off += PAMU_OFFSET) {
 		pamu_offset = pamu_reg_base + pamu_reg_off;
 
-		/* if this PAMU enabled then it must already be configured so error*/
+		/* if this PAMU is already enabled just disable it back and
+		 * enable it later. This should be safe as the boot-loader
+		 * shouldn't be leaving in-flight dma transactions.
+		 */
 		if (in32((uint32_t *)(pamu_offset + PAMU_PC)) & PAMU_PC_PE) {
-			printlog(LOGTYPE_PAMU, LOGLEVEL_ERROR,
+			out32((uint32_t *)(pamu_offset + PAMU_PC),
+			      in32((uint32_t *)(pamu_offset + PAMU_PC)) & ~PAMU_PC_PE);
+
+			printlog(LOGTYPE_PAMU, LOGLEVEL_DEBUG,
 				"PAMU %lu already configured\n",
 				(PAMU_IDX((pamu_offset - pamu_reg_space_vaddr))+1));
-			return ERR_INVALID;
 		}
 
 		pamu_regs = (pamu_mmap_regs_t *) (pamu_offset + PAMU_MMAP_REGS_BASE);
