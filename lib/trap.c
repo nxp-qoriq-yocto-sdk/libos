@@ -89,12 +89,12 @@ static void traceback(trapframe_t *regs)
 
 	for (int i = 1; sp != NULL; i++, sp = (unsigned long *)sp[0]) {
 		if ((i % 7) == 0)
-			printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,"\n");
+			printf("\n");
 
-		printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS, "0x%08lx ", sp[1] - 4);
+		printf("0x%08lx ", sp[1] - 4);
 	}
 
-	printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,"\n");
+	printf("\n");
 }
 
 void dump_regs(trapframe_t *regs)
@@ -119,11 +119,10 @@ void dump_regs(trapframe_t *regs)
 	         regs->traplevel);
 
 	for (int i = 0; i < 32; i++) {
-		printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS,
-		         "r%02d 0x%08lx  ", i, regs->gpregs[i]);
+		printf("r%02d 0x%08lx  ", i, regs->gpregs[i]);
 
 		if ((i & 3) == 3)
-			printlog(LOGTYPE_MISC, LOGLEVEL_ALWAYS, "\n");
+			printf("\n");
 	}
 
 #ifdef HYPERVISOR
